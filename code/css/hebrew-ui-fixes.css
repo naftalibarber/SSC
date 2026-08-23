@@ -1,0 +1,42 @@
+/* Hebrew readability improvements */
+html[lang="he"] body,
+html[dir="rtl"] body {
+  font-family: Arial, "Segoe UI", Tahoma, sans-serif;
+}
+
+html[lang="he"] .scramble-title,
+html[dir="rtl"] .scramble-title {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+html[lang="he"] .section-title,
+html[dir="rtl"] .section-title,
+html[lang="he"] .eyebrow-inline,
+html[dir="rtl"] .eyebrow-inline {
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 800;
+}
+
+html[lang="he"] .toolbar-button,
+html[dir="rtl"] .toolbar-button,
+html[lang="he"] .history-settings-link,
+html[dir="rtl"] .history-settings-link,
+html[lang="he"] .clear-history-flat,
+html[dir="rtl"] .clear-history-flat {
+  letter-spacing: 0;
+  font-weight: 800;
+}
+
+html[lang="he"] #status,
+html[dir="rtl"] #status,
+html[lang="he"] .empty-history,
+html[dir="rtl"] .empty-history {
+  font-weight: 700;
+  color: var(--text);
+}
