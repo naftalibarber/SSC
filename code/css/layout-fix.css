@@ -1,0 +1,107 @@
+/* Physical desktop layout must stay stable regardless of the document language. */
+.workspace.cstimer-layout,
+html[dir="rtl"] .workspace.cstimer-layout,
+html[dir="ltr"] .workspace.cstimer-layout {
+  direction: ltr !important;
+  grid-template-columns: 395px minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.flat-panel,
+html[dir="rtl"] .flat-panel,
+html[dir="ltr"] .flat-panel {
+  grid-column: 1 !important;
+  direction: ltr !important;
+  width: 395px !important;
+  min-width: 0 !important;
+  border-right: 1px solid var(--border) !important;
+  border-left: 0 !important;
+}
+
+.flat-timer,
+html[dir="rtl"] .flat-timer,
+html[dir="ltr"] .flat-timer {
+  grid-column: 2 !important;
+  direction: ltr !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.timer-wrap {
+  width: 100% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px !important;
+}
+
+.timer-wrap > div {
+  width: min(100%, 1050px) !important;
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+#timer {
+  width: 100% !important;
+  max-width: 100% !important;
+  font-size: clamp(82px, 10vw, 176px) !important;
+  letter-spacing: -5px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-align: center !important;
+}
+
+#status {
+  direction: rtl;
+  text-align: center !important;
+}
+
+.quick-stats {
+  width: 100% !important;
+  max-width: 430px !important;
+  margin-inline: auto !important;
+}
+
+.stats-section,
+.times-section,
+.history-settings,
+.history-settings-link {
+  direction: ltr !important;
+}
+
+@media (max-width: 900px) {
+  .workspace.cstimer-layout,
+  html[dir="rtl"] .workspace.cstimer-layout,
+  html[dir="ltr"] .workspace.cstimer-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .flat-timer,
+  html[dir="rtl"] .flat-timer,
+  html[dir="ltr"] .flat-timer {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    min-height: 62vh !important;
+  }
+
+  .flat-panel,
+  html[dir="rtl"] .flat-panel,
+  html[dir="ltr"] .flat-panel {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    border-right: 0 !important;
+    border-top: 1px solid var(--border) !important;
+  }
+
+  #timer {
+    font-size: clamp(70px, 20vw, 145px) !important;
+  }
+
+  .timer-wrap {
+    padding: 18px 12px !important;
+  }
+}
