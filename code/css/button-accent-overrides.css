@@ -1,0 +1,98 @@
+/* Interaction color rules: buttons stay neutral by default and use the primary color only on hover/focus/press. */
+button,
+.toolbar-button,
+.icon-btn,
+.scramble-nav,
+.history-settings-link,
+.clear-history-flat,
+.small-btn,
+.modal-close,
+.color-control button,
+.theme-options button,
+.file-label,
+.btn {
+  background: var(--soft) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: none !important;
+  outline: none;
+  transition: background .15s ease, color .15s ease, border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+button:hover,
+.toolbar-button:hover,
+.icon-btn:hover,
+.scramble-nav:hover,
+.history-settings-link:hover,
+.clear-history-flat:hover,
+.small-btn:hover,
+.modal-close:hover,
+.color-control button:hover,
+.theme-options button:hover,
+.file-label:hover,
+.btn:hover,
+button:focus-visible,
+.toolbar-button:focus-visible,
+.icon-btn:focus-visible,
+.scramble-nav:focus-visible,
+.history-settings-link:focus-visible,
+.clear-history-flat:focus-visible,
+.small-btn:focus-visible,
+.modal-close:focus-visible,
+.color-control button:focus-visible,
+.theme-options button:focus-visible,
+.file-label:focus-within,
+.btn:focus-visible {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent) !important;
+}
+
+button:active,
+.toolbar-button:active,
+.icon-btn:active,
+.scramble-nav:active,
+.history-settings-link:active,
+.clear-history-flat:active,
+.small-btn:active,
+.modal-close:active,
+.color-control button:active,
+.theme-options button:active,
+.file-label:active,
+.btn:active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+  transform: scale(.96);
+}
+
+/* Selected controls remain neutral after the click. */
+.puzzle-btn.active,
+.theme-options button.active {
+  background: var(--card-solid) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Average cards are always outlined with the chosen primary color, without being filled. */
+.quick-stats > div,
+.stat-best:not(.empty) {
+  border: 1px solid var(--accent) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.stat-best:not(.empty) {
+  border-radius: 9px;
+  padding: 4px 8px;
+}
+
+/* Keep image icons readable when a button turns into the primary color. */
+button:hover img,
+button:focus-visible img,
+button:active img {
+  filter: brightness(0) invert(1);
+}
