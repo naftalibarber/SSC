@@ -1,37 +1,34 @@
-/* SSC — premium, resolution-safe 2D preview shell.
-   All physical sizing comes from code/js/preview-sizing.js. */
+/* SSC — clean, flat, resolution-safe 2D preview.
+   Physical sizing comes from code/js/preview-sizing.js. */
 
 .cube-preview-card{
   --ssc-preview-padding:6px;
-  --ssc-preview-badge-space:8px;
+  --ssc-preview-badge-space:0px;
   position:fixed!important;
   bottom:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-bottom,0px))!important;
   z-index:80!important;
   isolation:isolate!important;
   box-sizing:border-box!important;
-  width:var(--ssc-preview-card-width,116px)!important;
-  min-width:var(--ssc-preview-card-width,116px)!important;
-  height:var(--ssc-preview-card-height,88px)!important;
-  min-height:var(--ssc-preview-card-height,88px)!important;
+  width:var(--ssc-preview-card-width,174px)!important;
+  min-width:var(--ssc-preview-card-width,174px)!important;
+  height:var(--ssc-preview-card-height,132px)!important;
+  min-height:var(--ssc-preview-card-height,132px)!important;
   max-width:calc(100vw - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
   max-height:calc(100vh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
   max-height:calc(100dvh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
-  padding:
-    calc(var(--ssc-preview-padding) + var(--ssc-preview-badge-space))
-    var(--ssc-preview-padding)
-    var(--ssc-preview-padding)!important;
+  padding:var(--ssc-preview-padding)!important;
   display:grid!important;
   place-items:center!important;
   overflow:hidden!important;
-  border:1px solid color-mix(in srgb,var(--border) 78%,var(--accent) 22%)!important;
-  border-radius:11px!important;
-  background:linear-gradient(145deg,color-mix(in srgb,var(--card-solid) 96%,var(--accent) 4%),var(--soft))!important;
-  box-shadow:0 10px 24px rgba(15,23,42,.09),inset 0 1px 0 rgba(255,255,255,.62)!important;
+  border:1px solid #d7d7d7!important;
+  border-radius:4px!important;
+  background:#fff!important;
+  box-shadow:none!important;
   contain:layout paint style;
-  transition:width .14s ease,height .14s ease,border-color .18s ease,box-shadow .18s ease!important;
+  transition:width .14s ease,height .14s ease,border-color .18s ease!important;
 }
 
-/* Hebrew = bottom-left, English = bottom-right. Keep the existing behavior. */
+/* Hebrew = bottom-left, English = bottom-right. */
 html[dir="rtl"] .cube-preview-card{
   left:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-left,0px))!important;
   right:auto!important;
@@ -45,44 +42,18 @@ html[dir="ltr"] .cube-preview-card{
 .scramble-bar{grid-template-columns:42px minmax(0,1fr) 42px!important}
 .scramble-side{width:42px!important;min-width:42px!important}
 
-.cube-preview-card::before{
-  content:attr(data-puzzle);
-  position:absolute;
-  inset-block-start:4px;
-  inset-inline-end:5px;
-  z-index:3;
-  max-width:52px;
-  padding:1px 5px;
-  overflow:hidden;
-  border:1px solid color-mix(in srgb,var(--border) 82%,transparent);
-  border-radius:999px;
-  background:color-mix(in srgb,var(--card-solid) 90%,transparent);
-  color:var(--muted);
-  font-size:7.5px;
-  font-weight:800;
-  line-height:1.35;
-  letter-spacing:.04em;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-  pointer-events:none;
-  backdrop-filter:blur(6px);
-}
-
-.cube-preview-card.ssc-preview-small{
-  --ssc-preview-badge-space:0px;
-}
-.cube-preview-card.ssc-preview-small::before{display:none}
+/* The reference layout is intentionally label-free and visually flat. */
+.cube-preview-card::before{display:none!important}
 
 .cube-preview-card:hover{
-  border-color:color-mix(in srgb,var(--accent) 42%,var(--border))!important;
-  box-shadow:0 13px 28px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.7)!important;
+  border-color:#bfc3c9!important;
+  box-shadow:none!important;
 }
 
-/* Native SSC NxN net. The face size is computed by fitPreviewToContainer(). */
+/* Native SSC NxN net: classic cross layout with visible space between faces. */
 .cube-preview-net{
-  --ssc-preview-face:21px;
-  --ssc-preview-net-gap:2px;
-  --ssc-preview-detail-scale:1;
+  --ssc-preview-face:34px;
+  --ssc-preview-net-gap:9px;
   position:relative!important;
   z-index:1!important;
   display:grid!important;
@@ -96,24 +67,26 @@ html[dir="ltr"] .cube-preview-card{
   direction:ltr!important;
   align-self:center!important;
   justify-self:center!important;
-  filter:drop-shadow(0 2px 4px rgba(15,23,42,.15));
+  filter:none!important;
 }
 
+/* Each face uses a one-pixel black grid, like a printed cube net. */
 .cube-preview-face{
   width:var(--ssc-preview-face)!important;
   height:var(--ssc-preview-face)!important;
   min-width:0!important;
   min-height:0!important;
+  box-sizing:border-box!important;
   aspect-ratio:1 / 1!important;
   display:grid!important;
   grid-template-columns:repeat(var(--n),minmax(0,1fr))!important;
   grid-template-rows:repeat(var(--n),minmax(0,1fr))!important;
-  gap:calc(1px * var(--ssc-preview-detail-scale))!important;
-  padding:calc(1px * var(--ssc-preview-detail-scale))!important;
+  gap:1px!important;
+  padding:1px!important;
   overflow:hidden!important;
-  border-radius:calc(3.5px * var(--ssc-preview-detail-scale))!important;
-  background:color-mix(in srgb,var(--text) 88%,#000 12%)!important;
-  box-shadow:0 1px 2px rgba(0,0,0,.2),inset 0 0 0 1px rgba(255,255,255,.05)!important;
+  border-radius:0!important;
+  background:#222!important;
+  box-shadow:none!important;
 }
 
 .cube-preview-sticker{
@@ -123,28 +96,34 @@ html[dir="ltr"] .cube-preview-card{
   min-width:0!important;
   min-height:0!important;
   aspect-ratio:1 / 1!important;
-  border-radius:calc(1.35px * var(--ssc-preview-detail-scale))!important;
-  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
 }
 
-.face-u{grid-column:2;grid-row:1}.face-l{grid-column:1;grid-row:2}.face-f{grid-column:2;grid-row:2}.face-r{grid-column:3;grid-row:2}.face-b{grid-column:4;grid-row:2}.face-d{grid-column:2;grid-row:3}
+.face-u{grid-column:2;grid-row:1}
+.face-l{grid-column:1;grid-row:2}
+.face-f{grid-column:2;grid-row:2}
+.face-r{grid-column:3;grid-row:2}
+.face-b{grid-column:4;grid-row:2}
+.face-d{grid-column:2;grid-row:3}
 
-html[data-theme="dark"] .cube-preview-card,
-html[data-theme="oled"] .cube-preview-card{
-  box-shadow:0 12px 28px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)!important;
+html[data-theme="dark"] .cube-preview-card{
+  background:#f8f8f8!important;
+  border-color:#60646b!important;
 }
 html[data-theme="oled"] .cube-preview-card{
-  background:linear-gradient(145deg,#080808,#000)!important;
+  background:#f8f8f8!important;
+  border-color:#555!important;
 }
 
 @media(max-width:900px){
   .scramble-bar{grid-template-columns:36px minmax(0,1fr) 36px!important}
   .scramble-side{width:36px!important;min-width:36px!important}
-  .cube-preview-net{filter:drop-shadow(0 2px 3px rgba(15,23,42,.14))}
 }
 
 @media(max-width:560px){
   .scramble-bar{grid-template-columns:34px minmax(0,1fr) 34px!important}
   .scramble-side{width:34px!important;min-width:34px!important}
-  .cube-preview-card{box-shadow:0 7px 18px rgba(15,23,42,.09)!important}
+  .cube-preview-card{border-radius:3px!important}
 }
