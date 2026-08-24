@@ -8,7 +8,7 @@
   const DEFAULT_SIZE=150;
   const BASE_CARD_WIDTH=116;
   const BASE_CARD_HEIGHT=88;
-  const BASE_NET_GAP=2;
+  const BASE_NET_GAP=6;
   const FIT_PROFILES=Object.freeze({
     cube:{desktop:6,mobile:4},
     clock:{desktop:8,mobile:6},
