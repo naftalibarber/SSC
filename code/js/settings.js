@@ -4,9 +4,10 @@
   const SETTINGS_KEY='sscGeneralSettingsV1';
   const LANGUAGE_KEY='sscLanguageV1';
   const PREVIEW_SIZE_KEY='sscCubePreviewSizeV1';
-  const PREVIEW_MIN=50;
-  const PREVIEW_MAX=150;
+  const PREVIEW_MIN=150;
+  const PREVIEW_MAX=500;
   const PREVIEW_STEP=5;
+  const PREVIEW_DEFAULT=150;
   const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb'};
 
   const modal=document.getElementById('generalSettingsModal');
@@ -69,14 +70,14 @@
   function clampPreviewSize(value){
     if(window.SSCPreviewSizing?.clampSize)return window.SSCPreviewSizing.clampSize(value);
     const n=Number(value);
-    if(!Number.isFinite(n))return 100;
+    if(!Number.isFinite(n))return PREVIEW_DEFAULT;
     return Math.min(PREVIEW_MAX,Math.max(PREVIEW_MIN,n));
   }
 
   function getPreviewSize(){
     if(window.SSCPreviewSizing?.getPreviewSize)return window.SSCPreviewSizing.getPreviewSize();
     const raw=localStorage.getItem(PREVIEW_SIZE_KEY);
-    const value=clampPreviewSize(raw===null?100:raw);
+    const value=clampPreviewSize(raw===null?PREVIEW_DEFAULT:raw);
     if(raw===null||Number(raw)!==value)localStorage.setItem(PREVIEW_SIZE_KEY,String(value));
     return value;
   }
@@ -102,7 +103,7 @@
     if(!cubeColors)return;
     const row=document.createElement('label');
     row.className='general-setting-row';
-    row.innerHTML=`<span id="cubePreviewSizeSettingLabel">גודל התצוגה</span><div class="range-control"><input id="cubePreviewSizeRange" type="range" min="${PREVIEW_MIN}" max="${PREVIEW_MAX}" step="${PREVIEW_STEP}" value="100"><output id="cubePreviewSizeValue">100%</output></div>`;
+    row.innerHTML=`<span id="cubePreviewSizeSettingLabel">גודל התצוגה</span><div class="range-control"><input id="cubePreviewSizeRange" type="range" min="${PREVIEW_MIN}" max="${PREVIEW_MAX}" step="${PREVIEW_STEP}" value="${PREVIEW_DEFAULT}"><output id="cubePreviewSizeValue">${PREVIEW_DEFAULT}%</output></div>`;
     cubeColors.parentElement.insertBefore(row,cubeColors);
     const range=row.querySelector('#cubePreviewSizeRange');
     range.value=String(getPreviewSize());
