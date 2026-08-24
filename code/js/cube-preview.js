@@ -7,8 +7,8 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260824-3';
-    const wcaHref='./code/css/wca-previews.css?v=20260824-2';
+    const cubeHref='./code/css/cube-preview.css?v=20260824-4';
+    const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
     else{
