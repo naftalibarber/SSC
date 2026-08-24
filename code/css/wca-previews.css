@@ -1,6 +1,22 @@
-/* SSC — universal 2D WCA puzzle previews */
+/* SSC — universal WCA 2D previews.
+   No puzzle-specific transform:scale() hacks. The host fills the fitted card
+   and vector content keeps its own aspect ratio with xMidYMid meet. */
+
 .wca-preview-ready{
-  --wca-preview-pad:7px;
+  min-width:0!important;
+  min-height:0!important;
+}
+
+.wca-preview-ready .ssc-preview-content{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  display:grid!important;
+  place-items:center!important;
+  overflow:hidden!important;
 }
 
 .wca-preview-ready .ssc-wca-scramble-display,
@@ -13,27 +29,26 @@
   max-width:100%!important;
   max-height:100%!important;
   margin:0!important;
+  padding:0!important;
   overflow:hidden!important;
   background:transparent!important;
   border:0!important;
-  border-radius:inherit!important;
+  border-radius:0!important;
+  transform:none!important;
+  transform-origin:center!important;
   contain:layout paint style;
 }
 
-/* Give non-cube puzzles a little more breathing room inside the premium card. */
-.wca-family-clock .ssc-wca-scramble-display,
-.wca-family-minx .ssc-wca-scramble-display,
-.wca-family-pyram .ssc-wca-scramble-display,
-.wca-family-skewb .ssc-wca-scramble-display,
-.wca-family-sq1 .ssc-wca-scramble-display,
-.wca-family-fto .ssc-wca-scramble-display{
-  transform:scale(.94);
-  transform-origin:center;
+/* Light-DOM SVG/Canvas renderers; shadow-DOM SVG is tuned by preview-sizing.js. */
+.wca-preview-ready .ssc-wca-scramble-display svg,
+.wca-preview-ready .ssc-wca-scramble-display canvas{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  margin:auto!important;
 }
-
-.wca-event-minx .ssc-wca-scramble-display{transform:scale(.9)}
-.wca-event-clock .ssc-wca-scramble-display{transform:scale(.92)}
-.wca-event-fto .ssc-wca-scramble-display{transform:scale(.88)}
 
 .wca-preview-unsupported{
   width:100%;
@@ -45,33 +60,9 @@
   padding:6px;
 }
 
-/* The WCA badge reuses the existing cube-preview-card badge shell. */
 .wca-preview-ready::before{
-  max-width:48px;
+  max-width:52px;
   overflow:hidden;
   text-overflow:ellipsis;
   white-space:nowrap;
-}
-
-@media(max-width:900px){
-  .wca-family-clock .ssc-wca-scramble-display,
-  .wca-family-minx .ssc-wca-scramble-display,
-  .wca-family-pyram .ssc-wca-scramble-display,
-  .wca-family-skewb .ssc-wca-scramble-display,
-  .wca-family-sq1 .ssc-wca-scramble-display,
-  .wca-family-fto .ssc-wca-scramble-display{transform:scale(.9)}
-  .wca-event-minx .ssc-wca-scramble-display{transform:scale(.84)}
-  .wca-event-fto .ssc-wca-scramble-display{transform:scale(.82)}
-}
-
-@media(max-width:560px){
-  .wca-preview-ready{--wca-preview-pad:4px}
-  .wca-family-clock .ssc-wca-scramble-display,
-  .wca-family-minx .ssc-wca-scramble-display,
-  .wca-family-pyram .ssc-wca-scramble-display,
-  .wca-family-skewb .ssc-wca-scramble-display,
-  .wca-family-sq1 .ssc-wca-scramble-display,
-  .wca-family-fto .ssc-wca-scramble-display{transform:scale(.84)}
-  .wca-event-minx .ssc-wca-scramble-display{transform:scale(.78)}
-  .wca-event-fto .ssc-wca-scramble-display{transform:scale(.76)}
 }
