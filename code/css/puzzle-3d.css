@@ -1,0 +1,95 @@
+/* SSC — universal cubing.js 3D preview */
+.cube-preview-card.ssc-preview-mode-3d{
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  background:transparent!important;
+}
+
+.ssc-puzzle-3d-player{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  display:block!important;
+  background:transparent!important;
+  border:0!important;
+  outline:0!important;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y pinch-zoom;
+  overscroll-behavior:contain;
+  cursor:grab;
+}
+
+.ssc-puzzle-3d-player:active{cursor:grabbing}
+.ssc-preview-3d-static .ssc-puzzle-3d-player{cursor:default}
+
+.ssc-preview-mode-3d::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent) 7%,transparent),transparent 64%);
+  z-index:0;
+}
+
+.ssc-preview-mode-3d .ssc-puzzle-3d-player,
+.ssc-preview-mode-3d .ssc-puzzle-3d-loading,
+.ssc-preview-mode-3d .ssc-puzzle-3d-fallback{
+  position:relative;
+  z-index:1;
+}
+
+.ssc-puzzle-3d-loading{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+}
+
+.ssc-puzzle-3d-loading::before{
+  content:"";
+  width:22px;
+  aspect-ratio:1;
+  border-radius:50%;
+  border:2px solid color-mix(in srgb,var(--border) 75%,transparent);
+  border-top-color:var(--accent);
+  animation:ssc3dSpin .75s linear infinite;
+}
+
+.ssc-puzzle-3d-fallback{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  padding:10px;
+  text-align:center;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.25;
+}
+
+.ssc-puzzle-3d-test-host{
+  position:fixed!important;
+  width:180px!important;
+  height:140px!important;
+  left:-10000px!important;
+  top:-10000px!important;
+  overflow:hidden!important;
+  pointer-events:none!important;
+  opacity:.001!important;
+}
+
+html[data-theme="dark"] .ssc-preview-mode-3d,
+html[data-theme="oled"] .ssc-preview-mode-3d{
+  background:transparent!important;
+}
+
+@keyframes ssc3dSpin{to{transform:rotate(360deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  .ssc-puzzle-3d-loading::before{animation-duration:1.5s}
+}
