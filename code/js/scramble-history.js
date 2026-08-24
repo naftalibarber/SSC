@@ -10,6 +10,10 @@
   let current=scrambleEl.dataset.scrambleTransient==='true'?'':scrambleEl.textContent.trim();
   let suppressObserver=false;
 
+  function isTransientText(value){
+    return value.startsWith('Unable to generate scramble')||value.startsWith('לא ניתן ליצור ערבוב');
+  }
+
   function setScrambleText(value){
     suppressObserver=true;
     scrambleEl.textContent=value;
@@ -19,7 +23,7 @@
   const observer=new MutationObserver(()=>{
     if(suppressObserver||scrambleEl.dataset.scrambleTransient==='true')return;
     const next=scrambleEl.textContent.trim();
-    if(!next||next===current)return;
+    if(!next||isTransientText(next)||next===current)return;
     if(current)backStack.push(current);
     current=next;
     prevButton.disabled=backStack.length===0;
