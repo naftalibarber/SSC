@@ -152,8 +152,9 @@
     player.style.pointerEvents = enabled ? 'auto' : 'none';
     player.tabIndex = enabled ? 0 : -1;
     try{
-      // Keep the scramble state immutable. Camera orbit remains handled by the 3D vantage.
-      player.experimentalDragInput = 'none';
+      // cubing.js camera orbit uses the drag tracker. Keep it enabled only for interactive previews,
+      // while move presses stay disabled so the displayed scramble cannot be edited accidentally.
+      player.experimentalDragInput = enabled ? 'auto' : 'none';
       player.experimentalMovePressInput = 'none';
     }catch{}
   }
