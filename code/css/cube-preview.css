@@ -13,8 +13,9 @@
   min-width:var(--ssc-preview-card-width,116px)!important;
   height:var(--ssc-preview-card-height,88px)!important;
   min-height:var(--ssc-preview-card-height,88px)!important;
-  max-width:calc(100vw - (var(--ssc-preview-safe-margin,18px) * 2))!important;
-  max-height:calc(100dvh - (var(--ssc-preview-safe-margin,18px) * 2))!important;
+  max-width:calc(100vw - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
+  max-height:calc(100vh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
+  max-height:calc(100dvh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
   padding:
     calc(var(--ssc-preview-padding) + var(--ssc-preview-badge-space))
     var(--ssc-preview-padding)
