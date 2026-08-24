@@ -16,6 +16,7 @@
     'pyram': { id:'pyram', label:'PYRA', name:'Pyraminx',                family:'pyram', puzzle:'pyraminx' },
     'skewb': { id:'skewb', label:'SKEWB',name:'Skewb',                   family:'skewb', puzzle:'skewb' },
     'sq1':   { id:'sq1',   label:'SQ-1', name:'Square-1',                family:'sq1',   puzzle:'square1' },
+    'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', officialFrom:'2027-01-02' },
     '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',       family:'cube',  puzzle:'4x4x4', baseEvent:'444' },
     '555bf': { id:'555bf', label:'5BLD', name:'5x5x5 Blindfolded',       family:'cube',  puzzle:'5x5x5', baseEvent:'555' },
     '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',       family:'cube',  puzzle:'3x3x3', baseEvent:'333' }
@@ -36,6 +37,7 @@
     'pyraminx':'pyram','pyra':'pyram','pyram':'pyram',
     'skewb':'skewb',
     'square-1':'sq1','square1':'sq1','sq-1':'sq1','sq1':'sq1',
+    'fto':'fto','face-turning-octahedron':'fto','face turning octahedron':'fto','octahedron':'fto',
     '4bld':'444bf','444bf':'444bf','4x4bf':'444bf',
     '5bld':'555bf','555bf':'555bf','5x5bf':'555bf',
     'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
@@ -63,6 +65,8 @@
     container.dataset.puzzle=event.label;
     container.dataset.wcaEvent=event.id;
     container.dataset.wcaPuzzle=event.puzzle;
+    if(event.officialFrom)container.dataset.wcaOfficialFrom=event.officialFrom;
+    else delete container.dataset.wcaOfficialFrom;
     container.title=event.name;
     container.setAttribute('aria-label',`${event.name} 2D scramble preview`);
   }
