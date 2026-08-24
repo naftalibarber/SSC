@@ -15,6 +15,7 @@
   }
 
   function normalizeEventId(eventId){
+    if(typeof eventId!=='string'||!eventId.trim())return null;
     const normalized=window.SSCCubePreview?.normalizeEventId?.(eventId);
     if(!normalized)return null;
     return registry()[normalized]?normalized:null;
@@ -47,8 +48,6 @@
   function generatorEventId(eventId){
     const event=getEvent(eventId);
     if(!event)throw new Error(`Unsupported scramble event: ${String(eventId)}`);
-    // Preview-specific mappings (for example FTO -> 333ft in scramble-display)
-    // do not change the cubing.js scramble event. randomScrambleForEvent uses "fto".
     return event.scrambleEvent||event.id;
   }
 
