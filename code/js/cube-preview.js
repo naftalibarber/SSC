@@ -21,16 +21,7 @@
     const wca=document.querySelector('link[href*="wca-previews.css"]');
     if(wca)wca.href=wcaHref;
   }
-  function ensureSizingEngine(){
-    if(window.SSCPreviewSizing||document.querySelector('script[data-ssc-preview-sizing]'))return;
-    const script=document.createElement('script');
-    script.src='./code/js/preview-sizing.js?v=20260824-1';
-    script.dataset.sscPreviewSizing='true';
-    script.addEventListener('load',()=>window.SSCPreviewSizing?.applyPreviewSize?.(),{once:true});
-    document.head.appendChild(script);
-  }
   ensureStyles();
-  ensureSizingEngine();
 
   function validColor(value){return /^#[0-9a-f]{6}$/i.test(value||'')}
   function loadColors(){
