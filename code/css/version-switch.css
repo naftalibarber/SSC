@@ -1,0 +1,28 @@
+#versionSwitchButton{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:38px;
+  padding:8px 12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--soft);
+  color:var(--text);
+  cursor:pointer;
+  font-weight:800;
+  font-size:.78em;
+  line-height:1;
+  white-space:nowrap;
+}
+#versionSwitchButton svg{width:17px;height:17px;display:block;flex:0 0 auto}
+#versionSwitchButton:hover,#versionSwitchButton:focus-visible{
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#fff;
+  outline:none;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);
+}
+#versionSwitchButton:active{transform:scale(.97)}
+@media(max-width:900px){#versionSwitchButton{min-height:36px;padding:7px 10px;font-size:.74em}}
+@media(max-width:560px){#versionSwitchButton .version-switch-label{display:none}#versionSwitchButton{width:38px;padding:0}}
