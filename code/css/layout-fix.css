@@ -8,13 +8,13 @@ html[dir="ltr"] .workspace.cstimer-layout {direction:ltr!important;grid-template
 /* Remove the black rule at the very top. */
 .compact-bar,.topbar.compact-bar{border-top:0!important}
 
-/* Medium-large logo, always fully visible. */
-.topbar-end{overflow:visible!important}
-.brand-link{display:flex!important;align-items:center!important;justify-content:center!important;width:120px!important;height:60px!important;overflow:visible!important}
-.small-logo,.site-logo.small-logo{width:120px!important;height:54px!important;max-width:120px!important;max-height:54px!important;object-fit:contain!important;object-position:center!important;transform:none!important}
+/* Slightly larger logo with a wider frame so the entire artwork remains visible. */
+.topbar-end{overflow:visible!important;min-width:190px!important}
+.brand-link{display:flex!important;align-items:center!important;justify-content:center!important;width:185px!important;height:64px!important;overflow:visible!important;padding:0 8px!important}
+.small-logo,.site-logo.small-logo{width:165px!important;height:58px!important;max-width:165px!important;max-height:58px!important;object-fit:contain!important;object-position:center!important;transform:none!important}
 
 .timer-wrap{width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important}
 .timer-wrap>div{width:min(100%,1050px)!important;min-width:0!important;text-align:center!important}
 #timer{width:100%!important;max-width:100%!important;font-size:clamp(82px,10vw,176px)!important;letter-spacing:-5px!important;white-space:nowrap!important;overflow:visible!important;text-align:center!important}
 #status{direction:rtl;text-align:center!important}.quick-stats{width:100%!important;max-width:430px!important;margin-inline:auto!important}.stats-section,.times-section,.history-settings,.history-settings-link{direction:ltr!important}
-@media(max-width:900px){.workspace.cstimer-layout,html[dir="rtl"] .workspace.cstimer-layout,html[dir="ltr"] .workspace.cstimer-layout{grid-template-columns:minmax(0,1fr)!important}.flat-timer,html[dir="rtl"] .flat-timer,html[dir="ltr"] .flat-timer{grid-column:1!important;grid-row:1!important;min-height:62vh!important}.flat-panel,html[dir="rtl"] .flat-panel,html[dir="ltr"] .flat-panel{grid-column:1!important;grid-row:2!important;width:100%!important;border-right:0!important;border-top:1px solid var(--border)!important}.brand-link{width:105px!important;height:54px!important}.small-logo,.site-logo.small-logo{width:105px!important;height:48px!important;max-width:105px!important;max-height:48px!important;transform:none!important}#timer{font-size:clamp(70px,20vw,145px)!important}.timer-wrap{padding:18px 12px!important}}
+@media(max-width:900px){.workspace.cstimer-layout,html[dir="rtl"] .workspace.cstimer-layout,html[dir="ltr"] .workspace.cstimer-layout{grid-template-columns:minmax(0,1fr)!important}.flat-timer,html[dir="rtl"] .flat-timer,html[dir="ltr"] .flat-timer{grid-column:1!important;grid-row:1!important;min-height:62vh!important}.flat-panel,html[dir="rtl"] .flat-panel,html[dir="ltr"] .flat-panel{grid-column:1!important;grid-row:2!important;width:100%!important;border-right:0!important;border-top:1px solid var(--border)!important}.topbar-end{min-width:150px!important}.brand-link{width:145px!important;height:56px!important;padding:0 6px!important}.small-logo,.site-logo.small-logo{width:132px!important;height:50px!important;max-width:132px!important;max-height:50px!important;transform:none!important}#timer{font-size:clamp(70px,20vw,145px)!important}.timer-wrap{padding:18px 12px!important}}
