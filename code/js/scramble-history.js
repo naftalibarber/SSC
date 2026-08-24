@@ -35,6 +35,9 @@
   });
   observer.observe(scrambleEl,{childList:true,characterData:true,subtree:true});
 
+  const initial=scrambleEl.textContent.trim();
+  if(scrambleEl.dataset.scrambleTransient!=='true'&&initial&&!isTransientText(initial))currentByEvent.set(currentEvent(),initial);
+
   prevButton.addEventListener('click',event=>{
     const eventId=currentEvent();
     const stack=stackFor(eventId);
