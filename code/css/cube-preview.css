@@ -1,125 +1,149 @@
-/* SSC — premium 2D cube preview */
+/* SSC — premium, resolution-safe 2D preview shell.
+   All physical sizing comes from code/js/preview-sizing.js. */
+
 .cube-preview-card{
+  --ssc-preview-padding:6px;
+  --ssc-preview-badge-space:8px;
   position:fixed!important;
-  bottom:18px!important;
+  bottom:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-bottom,0px))!important;
   z-index:80!important;
   isolation:isolate!important;
+  box-sizing:border-box!important;
+  width:var(--ssc-preview-card-width,116px)!important;
+  min-width:var(--ssc-preview-card-width,116px)!important;
+  height:var(--ssc-preview-card-height,88px)!important;
+  min-height:var(--ssc-preview-card-height,88px)!important;
+  max-width:calc(100vw - (var(--ssc-preview-safe-margin,18px) * 2))!important;
+  max-height:calc(100dvh - (var(--ssc-preview-safe-margin,18px) * 2))!important;
+  padding:
+    calc(var(--ssc-preview-padding) + var(--ssc-preview-badge-space))
+    var(--ssc-preview-padding)
+    var(--ssc-preview-padding)!important;
+  display:grid!important;
+  place-items:center!important;
   overflow:hidden!important;
-  border:1px solid color-mix(in srgb,var(--border) 72%,var(--accent) 28%)!important;
-  background:
-    linear-gradient(145deg,color-mix(in srgb,var(--card-solid) 94%,var(--accent) 6%),var(--soft))!important;
-  box-shadow:
-    0 10px 24px rgba(15,23,42,.08),
-    inset 0 1px 0 rgba(255,255,255,.65)!important;
-  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease!important;
+  border:1px solid color-mix(in srgb,var(--border) 78%,var(--accent) 22%)!important;
+  border-radius:11px!important;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--card-solid) 96%,var(--accent) 4%),var(--soft))!important;
+  box-shadow:0 10px 24px rgba(15,23,42,.09),inset 0 1px 0 rgba(255,255,255,.62)!important;
+  contain:layout paint style;
+  transition:width .14s ease,height .14s ease,border-color .18s ease,box-shadow .18s ease!important;
 }
 
-/* Hebrew = bottom-left, English = bottom-right. */
+/* Hebrew = bottom-left, English = bottom-right. Keep the existing behavior. */
 html[dir="rtl"] .cube-preview-card{
-  left:18px!important;
+  left:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-left,0px))!important;
   right:auto!important;
 }
 html[dir="ltr"] .cube-preview-card{
-  right:18px!important;
+  right:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-right,0px))!important;
   left:auto!important;
 }
 
-/* The preview no longer occupies space beside the scramble navigation button. */
-.scramble-bar{
-  grid-template-columns:42px minmax(0,1fr) 42px!important;
-}
-.scramble-side{
-  width:42px!important;
-  min-width:42px!important;
-}
+/* The preview remains detached from the scramble navigation layout. */
+.scramble-bar{grid-template-columns:42px minmax(0,1fr) 42px!important}
+.scramble-side{width:42px!important;min-width:42px!important}
 
-.cube-preview-card::after{
-  content:"";
-  position:absolute;
-  inset:-45% -30% auto auto;
-  width:90px;
-  height:90px;
-  border-radius:999px;
-  background:radial-gradient(circle,color-mix(in srgb,var(--accent) 18%,transparent),transparent 68%);
-  pointer-events:none;
-  z-index:-1;
-}
 .cube-preview-card::before{
   content:attr(data-puzzle);
   position:absolute;
-  inset-block-start:6px;
-  inset-inline-end:7px;
+  inset-block-start:4px;
+  inset-inline-end:5px;
   z-index:3;
-  padding:2px 5px;
+  max-width:52px;
+  padding:1px 5px;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--border) 82%,transparent);
   border-radius:999px;
-  background:color-mix(in srgb,var(--card-solid) 84%,transparent);
-  border:1px solid color-mix(in srgb,var(--border) 80%,transparent);
+  background:color-mix(in srgb,var(--card-solid) 90%,transparent);
   color:var(--muted);
-  font-size:8px;
+  font-size:7.5px;
   font-weight:800;
+  line-height:1.35;
   letter-spacing:.04em;
-  line-height:1.25;
-  backdrop-filter:blur(8px);
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  pointer-events:none;
+  backdrop-filter:blur(6px);
 }
+
+.cube-preview-card.ssc-preview-small{
+  --ssc-preview-badge-space:0px;
+}
+.cube-preview-card.ssc-preview-small::before{display:none}
+
 .cube-preview-card:hover{
-  transform:translateY(-1px)!important;
   border-color:color-mix(in srgb,var(--accent) 42%,var(--border))!important;
-  box-shadow:0 14px 30px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.72)!important;
+  box-shadow:0 13px 28px rgba(15,23,42,.12),inset 0 1px 0 rgba(255,255,255,.7)!important;
 }
+
+/* Native SSC NxN net. The face size is computed by fitPreviewToContainer(). */
 .cube-preview-net{
+  --ssc-preview-face:21px;
+  --ssc-preview-net-gap:2px;
+  --ssc-preview-detail-scale:1;
   position:relative!important;
   z-index:1!important;
-  gap:2px!important;
-  filter:drop-shadow(0 3px 5px rgba(15,23,42,.16));
-  transform:translateY(1px);
+  display:grid!important;
+  grid-template-columns:repeat(4,var(--ssc-preview-face))!important;
+  grid-template-rows:repeat(3,var(--ssc-preview-face))!important;
+  gap:var(--ssc-preview-net-gap)!important;
+  width:max-content!important;
+  height:max-content!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  direction:ltr!important;
+  align-self:center!important;
+  justify-self:center!important;
+  filter:drop-shadow(0 2px 4px rgba(15,23,42,.15));
 }
+
 .cube-preview-face{
-  gap:1px!important;
-  padding:1px!important;
-  border-radius:4px!important;
-  background:color-mix(in srgb,var(--text) 86%,#000 14%)!important;
-  box-shadow:
-    0 1px 2px rgba(0,0,0,.2),
-    inset 0 0 0 1px rgba(255,255,255,.05)!important;
+  width:var(--ssc-preview-face)!important;
+  height:var(--ssc-preview-face)!important;
+  min-width:0!important;
+  min-height:0!important;
+  aspect-ratio:1 / 1!important;
+  display:grid!important;
+  grid-template-columns:repeat(var(--n),minmax(0,1fr))!important;
+  grid-template-rows:repeat(var(--n),minmax(0,1fr))!important;
+  gap:calc(1px * var(--ssc-preview-detail-scale))!important;
+  padding:calc(1px * var(--ssc-preview-detail-scale))!important;
+  overflow:hidden!important;
+  border-radius:calc(3.5px * var(--ssc-preview-detail-scale))!important;
+  background:color-mix(in srgb,var(--text) 88%,#000 12%)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.2),inset 0 0 0 1px rgba(255,255,255,.05)!important;
 }
+
 .cube-preview-sticker{
-  border-radius:1.5px!important;
-  box-shadow:
-    inset 0 0 0 .5px rgba(0,0,0,.18),
-    inset 0 1px 0 rgba(255,255,255,.2)!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  aspect-ratio:1 / 1!important;
+  border-radius:calc(1.35px * var(--ssc-preview-detail-scale))!important;
+  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.18)!important;
 }
+
+.face-u{grid-column:2;grid-row:1}.face-l{grid-column:1;grid-row:2}.face-f{grid-column:2;grid-row:2}.face-r{grid-column:3;grid-row:2}.face-b{grid-column:4;grid-row:2}.face-d{grid-column:2;grid-row:3}
+
 html[data-theme="dark"] .cube-preview-card,
 html[data-theme="oled"] .cube-preview-card{
-  box-shadow:0 12px 28px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.04)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.04)!important;
 }
 html[data-theme="oled"] .cube-preview-card{
   background:linear-gradient(145deg,#080808,#000)!important;
 }
 
-/* Let the existing preview-size setting control the actual scramble preview. */
-.cube-preview-card{
-  width:var(--ssc-preview-width,116px)!important;
-  min-width:var(--ssc-preview-width,116px)!important;
-  height:var(--ssc-preview-height,76px)!important;
-  min-height:var(--ssc-preview-height,76px)!important;
-}
-.cube-preview-net{--face:var(--ssc-preview-face,23px)!important}
-
 @media(max-width:900px){
   .scramble-bar{grid-template-columns:36px minmax(0,1fr) 36px!important}
   .scramble-side{width:36px!important;min-width:36px!important}
-  .cube-preview-card{bottom:14px!important}
-  html[dir="rtl"] .cube-preview-card{left:14px!important}
-  html[dir="ltr"] .cube-preview-card{right:14px!important}
-  .cube-preview-card::before{inset-block-start:4px;inset-inline-end:5px;font-size:7px;padding:1px 4px}
-  .cube-preview-net{filter:drop-shadow(0 2px 4px rgba(15,23,42,.14))}
+  .cube-preview-net{filter:drop-shadow(0 2px 3px rgba(15,23,42,.14))}
 }
+
 @media(max-width:560px){
   .scramble-bar{grid-template-columns:34px minmax(0,1fr) 34px!important}
   .scramble-side{width:34px!important;min-width:34px!important}
-  .cube-preview-card{bottom:10px!important}
-  html[dir="rtl"] .cube-preview-card{left:10px!important}
-  html[dir="ltr"] .cube-preview-card{right:10px!important}
-  .cube-preview-card::before{display:none}
-  .cube-preview-card{box-shadow:0 7px 18px rgba(15,23,42,.08)!important}
+  .cube-preview-card{box-shadow:0 7px 18px rgba(15,23,42,.09)!important}
 }
