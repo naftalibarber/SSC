@@ -2,10 +2,10 @@
   'use strict';
 
   const STORAGE_KEY='sscCubePreviewSizeV1';
-  const MIN_SIZE=50;
-  const MAX_SIZE=150;
+  const MIN_SIZE=150;
+  const MAX_SIZE=500;
   const STEP=5;
-  const DEFAULT_SIZE=100;
+  const DEFAULT_SIZE=150;
   const BASE_CARD_WIDTH=116;
   const BASE_CARD_HEIGHT=88;
   const BASE_NET_GAP=2;
@@ -187,7 +187,7 @@
     const layout=computeLayout(requested);
     container.dataset.previewRequestedSize=String(requested);
     container.dataset.previewActualScale=layout.actualScale.toFixed(4);
-    container.classList.toggle('ssc-preview-small',requested<=60||layout.width<72||layout.height<56);
+    container.classList.toggle('ssc-preview-small',layout.width<72||layout.height<56);
     fitNativeCube(container);
     fitWcaPreview(container);
     container.querySelectorAll('svg').forEach(tuneSvg);
