@@ -1,12 +1,78 @@
 (() => {
   const COLORS={U:'#ffffff',D:'#ffd500',F:'#16a34a',B:'#2563eb',R:'#dc2626',L:'#f97316'};
   const FACE_ORDER=['U','L','F','R','B','D'];
-  const AXIS={U:'y',D:'y',R:'x',L:'x',F:'z',B:'z'};
+
+  function ensurePreviewPlacement(){
+    const preview=document.getElementById('cubePreview2D');
+    const timerCard=document.querySelector('.flat-timer');
+    if(!preview||!timerCard)return;
+    timerCard.appendChild(preview);
+
+    if(!document.getElementById('sscCubePreviewPositionStyles')){
+      const style=document.createElement('style');
+      style.id='sscCubePreviewPositionStyles';
+      style.textContent=`
+        .flat-timer{position:relative!important;}
+        .flat-timer .cube-preview-card{
+          position:absolute!important;
+          bottom:22px!important;
+          top:auto!important;
+          z-index:4!important;
+          width:116px!important;
+          min-width:116px!important;
+          height:76px!important;
+          min-height:76px!important;
+          margin:0!important;
+        }
+        html[dir="ltr"] .flat-timer .cube-preview-card{
+          right:22px!important;
+          left:auto!important;
+        }
+        html[dir="rtl"] .flat-timer .cube-preview-card{
+          left:22px!important;
+          right:auto!important;
+        }
+        .scramble-bar{
+          grid-template-columns:42px minmax(0,1fr) 42px!important;
+        }
+        .scramble-side{
+          width:42px!important;
+          min-width:42px!important;
+          display:flex!important;
+          justify-content:center!important;
+        }
+        @media(max-width:900px){
+          .flat-timer .cube-preview-card{
+            bottom:14px!important;
+            width:92px!important;
+            min-width:92px!important;
+            height:64px!important;
+            min-height:64px!important;
+          }
+          html[dir="ltr"] .flat-timer .cube-preview-card{right:14px!important;left:auto!important;}
+          html[dir="rtl"] .flat-timer .cube-preview-card{left:14px!important;right:auto!important;}
+          .scramble-bar{grid-template-columns:36px minmax(0,1fr) 36px!important;}
+          .scramble-side{width:36px!important;min-width:36px!important;}
+        }
+        @media(max-width:560px){
+          .flat-timer .cube-preview-card{
+            bottom:10px!important;
+            width:74px!important;
+            min-width:74px!important;
+            height:54px!important;
+            min-height:54px!important;
+          }
+          html[dir="ltr"] .flat-timer .cube-preview-card{right:10px!important;left:auto!important;}
+          html[dir="rtl"] .flat-timer .cube-preview-card{left:10px!important;right:auto!important;}
+          .scramble-bar{grid-template-columns:34px minmax(0,1fr) 34px!important;}
+          .scramble-side{width:34px!important;min-width:34px!important;}
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
 
   function rotateGridCW(grid,n){const next=Array.from({length:n},()=>Array(n));for(let r=0;r<n;r++)for(let c=0;c<n;c++)next[c][n-1-r]=grid[r][c];return next;}
-  function rotateGridCCW(grid,n){let out=grid;for(let i=0;i<3;i++)out=rotateGridCW(out,n);return out;}
-  function rotateGrid180(grid,n){return rotateGridCW(rotateGridCW(grid,n),n);}
-
   function solved(n){const s={};for(const f of FACE_ORDER)s[f]=Array.from({length:n},()=>Array(n).fill(f));return s;}
   function clone(s){const out={};for(const f of FACE_ORDER)out[f]=s[f].map(row=>[...row]);return out;}
 
@@ -48,6 +114,8 @@
   function applyScramble(scramble,n){let s=solved(n);for(const move of scramble)s=applyMove(s,move,n);return s;}
 
   function faceMarkup(face,grid,n){return `<div class="cube-preview-face face-${face.toLowerCase()}" data-face="${face}" style="--n:${n}">${grid.flat().map(v=>`<span class="cube-preview-sticker" style="background:${COLORS[v]}"></span>`).join('')}</div>`;}
-  function render(container,scramble,puzzle){if(!container)return;const n=puzzle==='2x2'?2:3;const moves=Array.isArray(scramble)?scramble:String(scramble||'').trim().split(/\s+/).filter(Boolean);const state=applyScramble(moves,n);container.innerHTML=`<div class="cube-preview-net" data-size="${n}">${FACE_ORDER.map(f=>faceMarkup(f,state[f],n)).join('')}</div>`;container.setAttribute('aria-label',`${puzzle} cube preview`);}
+  function render(container,scramble,puzzle){if(!container)return;ensurePreviewPlacement();const n=puzzle==='2x2'?2:3;const moves=Array.isArray(scramble)?scramble:String(scramble||'').trim().split(/\s+/).filter(Boolean);const state=applyScramble(moves,n);container.innerHTML=`<div class="cube-preview-net" data-size="${n}">${FACE_ORDER.map(f=>faceMarkup(f,state[f],n)).join('')}</div>`;container.setAttribute('aria-label',`${puzzle} cube preview`);}
+
+  ensurePreviewPlacement();
   window.SSCCubePreview={render,applyScramble};
 })();
