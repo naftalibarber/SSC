@@ -20,18 +20,20 @@
   contain:layout paint style;
 }
 
-/* Give non-cube WCA puzzles a little more breathing room inside the premium card. */
+/* Give non-cube puzzles a little more breathing room inside the premium card. */
 .wca-family-clock .ssc-wca-scramble-display,
 .wca-family-minx .ssc-wca-scramble-display,
 .wca-family-pyram .ssc-wca-scramble-display,
 .wca-family-skewb .ssc-wca-scramble-display,
-.wca-family-sq1 .ssc-wca-scramble-display{
+.wca-family-sq1 .ssc-wca-scramble-display,
+.wca-family-fto .ssc-wca-scramble-display{
   transform:scale(.94);
   transform-origin:center;
 }
 
 .wca-event-minx .ssc-wca-scramble-display{transform:scale(.9)}
 .wca-event-clock .ssc-wca-scramble-display{transform:scale(.92)}
+.wca-event-fto .ssc-wca-scramble-display{transform:scale(.88)}
 
 .wca-preview-unsupported{
   width:100%;
@@ -56,8 +58,10 @@
   .wca-family-minx .ssc-wca-scramble-display,
   .wca-family-pyram .ssc-wca-scramble-display,
   .wca-family-skewb .ssc-wca-scramble-display,
-  .wca-family-sq1 .ssc-wca-scramble-display{transform:scale(.9)}
+  .wca-family-sq1 .ssc-wca-scramble-display,
+  .wca-family-fto .ssc-wca-scramble-display{transform:scale(.9)}
   .wca-event-minx .ssc-wca-scramble-display{transform:scale(.84)}
+  .wca-event-fto .ssc-wca-scramble-display{transform:scale(.82)}
 }
 
 @media(max-width:560px){
@@ -66,6 +70,8 @@
   .wca-family-minx .ssc-wca-scramble-display,
   .wca-family-pyram .ssc-wca-scramble-display,
   .wca-family-skewb .ssc-wca-scramble-display,
-  .wca-family-sq1 .ssc-wca-scramble-display{transform:scale(.84)}
+  .wca-family-sq1 .ssc-wca-scramble-display,
+  .wca-family-fto .ssc-wca-scramble-display{transform:scale(.84)}
   .wca-event-minx .ssc-wca-scramble-display{transform:scale(.78)}
+  .wca-event-fto .ssc-wca-scramble-display{transform:scale(.76)}
 }
