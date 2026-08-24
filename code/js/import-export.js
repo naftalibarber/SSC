@@ -1,8 +1,11 @@
 (() => {
   const KEYS = [
-    'rubiksCubeTimerHistoryV1','rubiksCubeTimerPuzzleV1','sscHistoryMetricsV1','sscLanguageV1',
-    'sscSessionsV1','sscActiveSessionV1','sscSessionsByPuzzleV2','sscActiveSessionByPuzzleV2',
-    'sscThemeV1','sscTextSizeV1','sscFontV1','sscPrimaryColorV1'
+    'rubiksCubeTimerHistoryV1','rubiksCubeTimerPuzzleV1','rubiksCubeTimerEventV2',
+    'sscHistoryMetricsV1','sscLanguageV1',
+    'sscSessionsV1','sscActiveSessionV1',
+    'sscSessionsByPuzzleV2','sscActiveSessionByPuzzleV2',
+    'sscSessionsByEventV3','sscActiveSessionByEventV3',
+    'sscThemeV1','sscTextSizeV1','sscFontV1','sscPrimaryColorV1','sscGeneralSettingsV1'
   ];
   const modal=document.getElementById('importExportModal');
   const openBtn=document.getElementById('importExportButton');
@@ -18,7 +21,7 @@
   closeBtn?.addEventListener('click',close);
   modal.querySelector('[data-close-import-export]')?.addEventListener('click',close);
   exportBtn.addEventListener('click',()=>{
-    const data={version:1,exportedAt:new Date().toISOString(),storage:{}};
+    const data={version:2,exportedAt:new Date().toISOString(),storage:{}};
     KEYS.forEach(key=>{const value=localStorage.getItem(key);if(value!==null)data.storage[key]=value;});
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`ssc-backup-${new Date().toISOString().slice(0,10)}.json`;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href);
