@@ -8,6 +8,12 @@ html[dir="ltr"] .workspace.cstimer-layout {direction:ltr!important;grid-template
 /* Remove the black rule at the very top. */
 .compact-bar,.topbar.compact-bar{border-top:0!important}
 
+/* Keep toolbar icons and labels on exactly the same visual baseline. */
+.toolbar-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;vertical-align:middle!important;line-height:1!important}
+.toolbar-button svg{display:block!important;flex:0 0 auto!important;width:18px!important;height:18px!important;position:static!important;transform:none!important;margin:0!important}
+.toolbar-button span{display:block!important;line-height:18px!important;margin:0!important;padding:0!important;position:static!important;transform:none!important}
+.topbar-start{align-items:center!important}
+
 /* Make the logo itself visibly larger inside the site while preserving the whole image. */
 .topbar-end{overflow:visible!important;min-width:260px!important}
 .brand-link{display:flex!important;align-items:center!important;justify-content:center!important;width:250px!important;height:68px!important;overflow:visible!important;padding:0!important}
