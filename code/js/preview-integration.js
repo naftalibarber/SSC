@@ -51,13 +51,6 @@
     }
   }
 
-  function installConnectedRenderer(){
-    if(!basePreview || !baseRender)return;
-    // Replace the public facade instead of mutating the original object.
-    // SSCPreviewManager keeps the untouched renderer internally for real 2D rendering.
-    window.SSCCubePreview={...basePreview,render:connectedRender};
-  }
-
   async function rerenderLast(){
     const snapshot=lastRender;
     if(!snapshot?.container?.isConnected)return null;
@@ -65,6 +58,29 @@
     const result=await connectedRender(snapshot.container,snapshot.scramble,snapshot.eventId);
     if(token!==rerenderToken)return null;
     return result;
+  }
+
+  function installConnectedRenderer(){
+    if(!basePreview || !baseRender)return;
+
+    // Replace the public facade instead of mutating the original object.
+    // SSCPreviewManager keeps the untouched renderer internally for true 2D rendering.
+    window.SSCCubePreview={
+      ...basePreview,
+      render:connectedRender,
+      setColors(next){
+        const result=basePreview.setColors?.(next);
+        // The native 2D renderer rerenders its previous cube when colors change.
+        // Restore the active 3D viewer immediately if 3D is selected.
+        if(currentMode==='3d')queueMicrotask(()=>rerenderLast());
+        return result;
+      },
+      resetColors(){
+        const result=basePreview.resetColors?.();
+        if(currentMode==='3d')queueMicrotask(()=>rerenderLast());
+        return result;
+      }
+    };
   }
 
   function syncControls(){
