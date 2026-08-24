@@ -16,7 +16,7 @@
     'pyram': { id:'pyram', label:'PYRA', name:'Pyraminx',                family:'pyram', puzzle:'pyraminx' },
     'skewb': { id:'skewb', label:'SKEWB',name:'Skewb',                   family:'skewb', puzzle:'skewb' },
     'sq1':   { id:'sq1',   label:'SQ-1', name:'Square-1',                family:'sq1',   puzzle:'square1' },
-    'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', officialFrom:'2027-01-02' },
+    'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', scrambleDisplayEvent:'333ft', officialFrom:'2027-01-02' },
     '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',       family:'cube',  puzzle:'4x4x4', baseEvent:'444' },
     '555bf': { id:'555bf', label:'5BLD', name:'5x5x5 Blindfolded',       family:'cube',  puzzle:'5x5x5', baseEvent:'555' },
     '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',       family:'cube',  puzzle:'3x3x3', baseEvent:'333' }
@@ -37,7 +37,7 @@
     'pyraminx':'pyram','pyra':'pyram','pyram':'pyram',
     'skewb':'skewb',
     'square-1':'sq1','square1':'sq1','sq-1':'sq1','sq1':'sq1',
-    'fto':'fto','face-turning-octahedron':'fto','face turning octahedron':'fto','octahedron':'fto',
+    'fto':'fto','333ft':'fto','face-turning-octahedron':'fto','face turning octahedron':'fto','octahedron':'fto',
     '4bld':'444bf','444bf':'444bf','4x4bf':'444bf',
     '5bld':'555bf','555bf':'555bf','5x5bf':'555bf',
     'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
@@ -78,11 +78,12 @@
 
     const display=document.createElement('scramble-display');
     display.className='ssc-wca-scramble-display';
-    display.setAttribute('event',event.id);
+    display.setAttribute('event',event.scrambleDisplayEvent || event.id);
     display.setAttribute('visualization','2D');
     display.setAttribute('scramble',scrambleToText(scramble));
     display.setAttribute('aria-hidden','true');
     container.appendChild(display);
+    window.SSCPreviewSizing?.scheduleFit?.(container);
   }
 
   const legacy=window.SSCCubePreview || null;
@@ -99,6 +100,7 @@
       container.dataset.previewEngine='unsupported';
       container.innerHTML='<div class="wca-preview-unsupported" role="status">Preview not configured</div>';
       console.warn(`[SSC preview] Unsupported WCA event: ${eventValue}`);
+      window.SSCPreviewSizing?.scheduleFit?.(container);
       return;
     }
 
