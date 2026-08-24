@@ -40,10 +40,10 @@
 
   function viewportMetrics(){
     const viewport=window.visualViewport;
-    const width=Math.max(1,Math.floor(viewport?.width||window.innerWidth||document.documentElement.clientWidth||BASE_CARD_WIDTH));
-    const height=Math.max(1,Math.floor(viewport?.height||window.innerHeight||document.documentElement.clientHeight||BASE_CARD_HEIGHT));
-    const mobile=width<=560;
-    return{width,height,mobile,safeMargin:mobile?16:18};
+    const viewportWidth=Math.max(1,Math.floor(viewport?.width||window.innerWidth||document.documentElement.clientWidth||BASE_CARD_WIDTH));
+    const viewportHeight=Math.max(1,Math.floor(viewport?.height||window.innerHeight||document.documentElement.clientHeight||BASE_CARD_HEIGHT));
+    const mobile=viewportWidth<=560;
+    return{viewportWidth,viewportHeight,mobile,safeMargin:mobile?16:18};
   }
 
   function getFamily(container){
@@ -69,18 +69,18 @@
     const requestedScale=clampSize(size)/100;
     const requestedWidth=BASE_CARD_WIDTH*requestedScale;
     const requestedHeight=BASE_CARD_HEIGHT*requestedScale;
-    const maxWidth=Math.max(44,metrics.width-metrics.safeMargin*2);
-    const maxHeight=Math.max(44,metrics.height-metrics.safeMargin*2);
+    const maxWidth=Math.max(44,metrics.viewportWidth-metrics.safeMargin*2);
+    const maxHeight=Math.max(44,metrics.viewportHeight-metrics.safeMargin*2);
     const viewportScale=Math.min(maxWidth/BASE_CARD_WIDTH,maxHeight/BASE_CARD_HEIGHT);
     const actualScale=Math.max(.2,Math.min(requestedScale,viewportScale));
     return{
+      ...metrics,
       requestedScale,
       actualScale,
       requestedWidth,
       requestedHeight,
       width:BASE_CARD_WIDTH*actualScale,
-      height:BASE_CARD_HEIGHT*actualScale,
-      ...metrics
+      height:BASE_CARD_HEIGHT*actualScale
     };
   }
 
@@ -176,7 +176,7 @@
       content.style.maxHeight='100%';
     }
     tuneScrambleDisplay(display);
-    customElements?.whenDefined?.('scramble-display').then(()=>tuneScrambleDisplay(display)).catch?.(()=>{});
+    window.customElements?.whenDefined?.('scramble-display').then(()=>tuneScrambleDisplay(display)).catch(()=>{});
     return true;
   }
 
