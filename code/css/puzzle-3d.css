@@ -72,12 +72,15 @@
   line-height:1.25;
 }
 
+/* TwistyPlayer initializes its 3D vantage after viewport intersection.
+   Keep the test host inside the viewport while making it effectively invisible. */
 .ssc-puzzle-3d-test-host{
   position:fixed!important;
   width:180px!important;
   height:140px!important;
-  left:-10000px!important;
-  top:-10000px!important;
+  left:0!important;
+  top:0!important;
+  z-index:-1!important;
   overflow:hidden!important;
   pointer-events:none!important;
   opacity:.001!important;
