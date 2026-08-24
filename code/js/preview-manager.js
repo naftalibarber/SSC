@@ -63,10 +63,7 @@
 
     setModeClass(container,'3d');
     const player = await window.SSCPuzzle3D.render(container,scramble,eventId);
-    if(!isCurrent(container,token)){
-      window.SSCPuzzle3D.dispose(container);
-      return null;
-    }
+    if(!isCurrent(container,token)) return null;
     if(!player && fallbackTo2D) return render2D(container,scramble,eventId);
     return player;
   }
