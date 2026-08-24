@@ -29,6 +29,21 @@ html[dir="ltr"] .flat-timer {
   overflow: hidden !important;
 }
 
+/* Larger SSC logo while keeping the top bar compact. */
+.brand-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 60px !important;
+}
+.small-logo,
+.site-logo.small-logo {
+  height: 58px !important;
+  width: auto !important;
+  max-width: 150px !important;
+  object-fit: contain !important;
+}
+
 .timer-wrap {
   width: 100% !important;
   min-width: 0 !important;
@@ -96,6 +111,10 @@ html[dir="ltr"] .flat-timer {
     border-right: 0 !important;
     border-top: 1px solid var(--border) !important;
   }
+
+  .brand-link { height: 52px !important; }
+  .small-logo,
+  .site-logo.small-logo { height: 50px !important; max-width: 130px !important; }
 
   #timer {
     font-size: clamp(70px, 20vw, 145px) !important;
