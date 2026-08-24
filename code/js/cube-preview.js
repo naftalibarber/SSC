@@ -7,12 +7,19 @@
   let lastRender=null;
 
   function ensureStyles(){
-    if(document.querySelector('link[data-ssc-cube-preview-style]'))return;
-    const link=document.createElement('link');
-    link.rel='stylesheet';
-    link.href='./code/css/cube-preview.css?v=20260824-3';
-    link.dataset.sscCubePreviewStyle='true';
-    document.head.appendChild(link);
+    const cubeHref='./code/css/cube-preview.css?v=20260824-3';
+    const wcaHref='./code/css/wca-previews.css?v=20260824-2';
+    const existing=document.querySelector('link[data-ssc-cube-preview-style]');
+    if(existing)existing.href=cubeHref;
+    else{
+      const link=document.createElement('link');
+      link.rel='stylesheet';
+      link.href=cubeHref;
+      link.dataset.sscCubePreviewStyle='true';
+      document.head.appendChild(link);
+    }
+    const wca=document.querySelector('link[href*="wca-previews.css"]');
+    if(wca)wca.href=wcaHref;
   }
   function ensureSizingEngine(){
     if(window.SSCPreviewSizing||document.querySelector('script[data-ssc-preview-sizing]'))return;
