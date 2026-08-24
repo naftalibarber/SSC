@@ -10,11 +10,20 @@
     if(document.querySelector('link[data-ssc-cube-preview-style]'))return;
     const link=document.createElement('link');
     link.rel='stylesheet';
-    link.href='./code/css/cube-preview.css?v=20260824-1';
+    link.href='./code/css/cube-preview.css?v=20260824-3';
     link.dataset.sscCubePreviewStyle='true';
     document.head.appendChild(link);
   }
+  function ensureSizingEngine(){
+    if(window.SSCPreviewSizing||document.querySelector('script[data-ssc-preview-sizing]'))return;
+    const script=document.createElement('script');
+    script.src='./code/js/preview-sizing.js?v=20260824-1';
+    script.dataset.sscPreviewSizing='true';
+    script.addEventListener('load',()=>window.SSCPreviewSizing?.applyPreviewSize?.(),{once:true});
+    document.head.appendChild(script);
+  }
   ensureStyles();
+  ensureSizingEngine();
 
   function validColor(value){return /^#[0-9a-f]{6}$/i.test(value||'')}
   function loadColors(){
@@ -134,6 +143,7 @@
     container.setAttribute('aria-label',document.documentElement.lang==='en'?`${n} by ${n} cube scramble preview`:`תצוגת ערבוב קובייה ${n} על ${n}`);
     container.replaceChildren(net);
     lastRender={container,scramble:normalizeScramble(scramble),puzzle};
+    window.SSCPreviewSizing?.scheduleFit?.(container);
   }
   function rerenderLast(){if(lastRender&&lastRender.container?.isConnected)render(lastRender.container,lastRender.scramble,lastRender.puzzle)}
   function getColors(){return{...colors}}
