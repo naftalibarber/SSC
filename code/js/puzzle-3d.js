@@ -3,6 +3,7 @@
 
   const TWISTY_TAG = 'twisty-player';
   const TWISTY_LOAD_TIMEOUT_MS = 12000;
+  const TEST_CANVAS_FRAMES = 30;
   const states = new WeakMap();
   const activeContainers = new Set();
   let interactiveEnabled = true;
@@ -95,6 +96,10 @@
     return document.documentElement.dir === 'rtl';
   }
 
+  function nextAnimationFrame(){
+    return new Promise(resolve => requestAnimationFrame(resolve));
+  }
+
   function applyContainerMetadata(container,event){
     [...container.classList].forEach(className => {
       if(className.startsWith('wca-family-') || className.startsWith('wca-event-')){
@@ -102,7 +107,7 @@
       }
     });
     container.classList.add('wca-preview-ready','ssc-preview-mode-3d',`wca-family-${event.family}`,`wca-event-${event.id}`);
-    container.classList.remove('ssc-preview-mode-2d');
+    container.classList.remove('ssc-preview-mode-2d','ssc-preview-3d-unavailable');
     container.dataset.puzzle = event.label;
     container.dataset.wcaEvent = event.id;
     container.dataset.wcaPuzzle = event.puzzle;
@@ -144,7 +149,8 @@
       states.delete(container);
     }
     activeContainers.delete(container);
-    container.classList.remove('ssc-preview-mode-3d','ssc-preview-3d-unavailable');
+    container.classList.remove('ssc-preview-mode-3d','ssc-preview-3d-ready','ssc-preview-3d-static','ssc-preview-3d-unavailable');
+    delete container.dataset.previewReady;
     if(clearDOM) container.replaceChildren();
   }
 
@@ -262,7 +268,7 @@
       setupResetGesture(container,state);
 
       // Let the custom element connect, then jump directly to the scrambled state.
-      await new Promise(resolve => requestAnimationFrame(resolve));
+      await nextAnimationFrame();
       if(state.disposed || states.get(container)?.token !== token) return null;
       try{
         const result = player.jumpToEnd?.();
@@ -306,7 +312,6 @@
     if(!(container instanceof Element)) return;
     ++renderSequence;
     cleanupState(container);
-    delete container.dataset.previewReady;
   }
 
   function dispose(container){
@@ -324,6 +329,19 @@
     }
   }
 
+  async function waitForRenderedCanvases(player){
+    if(!player?.experimentalCurrentCanvases) return [];
+    for(let frame=0;frame<TEST_CANVAS_FRAMES;frame++){
+      try{
+        const canvases = await player.experimentalCurrentCanvases();
+        const ready = canvases.filter(canvas => canvas instanceof HTMLCanvasElement && canvas.width > 0 && canvas.height > 0);
+        if(ready.length) return ready;
+      }catch{}
+      await nextAnimationFrame();
+    }
+    return [];
+  }
+
   async function testAll(){
     await waitForTwistyPlayer();
     const testHost = document.createElement('div');
@@ -338,11 +356,12 @@
         try{
           scramble = await getRealScramble(event.id,event);
           const player = await render(testHost,scramble,event.id);
-          const ok = Boolean(player && scramble.trim());
-          results.push({eventId:event.id,puzzle:event.puzzle,ok,scramble});
+          const canvases = await waitForRenderedCanvases(player);
+          const ok = Boolean(player && scramble.trim() && canvases.length);
+          results.push({eventId:event.id,puzzle:event.puzzle,ok,scramble,canvasCount:canvases.length});
           console[ok ? 'log' : 'error'](`${ok ? '✓' : '✗'} ${event.id}`);
         }catch(error){
-          results.push({eventId:event.id,puzzle:event.puzzle,ok:false,scramble,error:String(error?.message || error)});
+          results.push({eventId:event.id,puzzle:event.puzzle,ok:false,scramble,canvasCount:0,error:String(error?.message || error)});
           console.error(`✗ ${event.id}`,error);
         }
       }
