@@ -17,7 +17,15 @@
   function loadSettings(){try{return{...defaults,...JSON.parse(localStorage.getItem(SETTINGS_KEY))};}catch{return{...defaults};}}
   let settings=loadSettings();
   function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}
-  function fontStack(font){if(font==='system')return 'system-ui,-apple-system,"Segoe UI",Arial,sans-serif';if(font==='Rubik')return 'Rubik,Arial,sans-serif';if(font==='Assistant')return 'Assistant,Arial,sans-serif';if(font==='Verdana')return 'Verdana,Arial,sans-serif';return 'Arial,sans-serif';}
+  function fontStack(font){
+    if(font==='system')return 'system-ui,-apple-system,"Segoe UI",Arial,sans-serif';
+    if(font==='Rubik')return '"SSC Rubik","Arial Hebrew",Arial,sans-serif';
+    if(font==='Assistant')return '"SSC Assistant","Arial Hebrew",Arial,sans-serif';
+    if(font==='Verdana')return 'Verdana,"Arial Hebrew",Arial,sans-serif';
+    if(font==='Georgia')return 'Georgia,"Times New Roman",serif';
+    if(font==='Courier')return '"Courier New",Courier,monospace';
+    return 'Arial,"Arial Hebrew",sans-serif';
+  }
   function validColor(value){return /^#[0-9a-f]{6}$/i.test(value)?value:defaults.primaryColor;}
   function applyAppearance(){
     const allowedThemes=['light','dark','oled'];const theme=allowedThemes.includes(settings.theme)?settings.theme:'light';
