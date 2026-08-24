@@ -6,6 +6,16 @@
   const FACE_CLASS={U:'face-u',L:'face-l',F:'face-f',R:'face-r',B:'face-b',D:'face-d'};
   let lastRender=null;
 
+  function ensureStyles(){
+    if(document.querySelector('link[data-ssc-cube-preview-style]'))return;
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='./code/css/cube-preview.css?v=20260824-1';
+    link.dataset.sscCubePreviewStyle='true';
+    document.head.appendChild(link);
+  }
+  ensureStyles();
+
   function validColor(value){return /^#[0-9a-f]{6}$/i.test(value||'')}
   function loadColors(){
     try{
