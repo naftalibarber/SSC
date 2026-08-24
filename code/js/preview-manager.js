@@ -2,6 +2,10 @@
   'use strict';
 
   const renderTokens = new WeakMap();
+  // Keep the real 2D renderer captured before the integration layer wraps
+  // window.SSCCubePreview.render(). This prevents 2D -> manager -> 2D recursion.
+  const preview2D = window.SSCCubePreview || null;
+
   const MODE_ALIASES = Object.freeze({
     '2d':'2d','2-d':'2d','flat':'2d','net':'2d',
     '3d':'3d','3-d':'3d','three':'3d','threejs':'3d',
@@ -31,7 +35,7 @@
 
   function supportsMode(mode,eventId){
     const normalized = normalizeMode(mode);
-    if(normalized === '2d') return Boolean(window.SSCCubePreview?.supportsEvent?.(eventId) ?? window.SSCCubePreview?.render);
+    if(normalized === '2d') return Boolean(preview2D?.supportsEvent?.(eventId) ?? preview2D?.render);
     if(normalized === '3d') return Boolean(window.SSCPuzzle3D?.supportsEvent?.(eventId));
     if(normalized === 'single-face') return false;
     return false;
@@ -39,7 +43,7 @@
 
   function getRenderer(mode){
     const normalized = normalizeMode(mode);
-    if(normalized === '2d') return window.SSCCubePreview || null;
+    if(normalized === '2d') return preview2D;
     if(normalized === '3d') return window.SSCPuzzle3D || null;
     return null;
   }
@@ -47,11 +51,11 @@
   function render2D(container,scramble,eventId){
     window.SSCPuzzle3D?.dispose?.(container);
     setModeClass(container,'2d');
-    if(!window.SSCCubePreview?.render){
+    if(!preview2D?.render){
       container.innerHTML = '<div class="wca-preview-unsupported" role="status">2D preview unavailable</div>';
       return null;
     }
-    return window.SSCCubePreview.render(container,scramble,eventId);
+    return preview2D.render(container,scramble,eventId);
   }
 
   async function render3D(container,scramble,eventId,token,fallbackTo2D){
@@ -89,7 +93,7 @@
     if(!(container instanceof Element)) return;
     nextToken(container);
     window.SSCPuzzle3D?.dispose?.(container);
-    if(window.SSCCubePreview?.clear) window.SSCCubePreview.clear(container);
+    if(preview2D?.clear) preview2D.clear(container);
     else container.replaceChildren();
     container.classList.remove('ssc-preview-mode-2d','ssc-preview-mode-3d','ssc-preview-mode-single-face');
     delete container.dataset.previewMode;
