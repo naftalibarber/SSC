@@ -1,0 +1,71 @@
+/* SSC — universal 2D WCA puzzle previews */
+.wca-preview-ready{
+  --wca-preview-pad:7px;
+}
+
+.wca-preview-ready .ssc-wca-scramble-display,
+.wca-preview-ready scramble-display.ssc-wca-scramble-display{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  margin:0!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  border:0!important;
+  border-radius:inherit!important;
+  contain:layout paint style;
+}
+
+/* Give non-cube WCA puzzles a little more breathing room inside the premium card. */
+.wca-family-clock .ssc-wca-scramble-display,
+.wca-family-minx .ssc-wca-scramble-display,
+.wca-family-pyram .ssc-wca-scramble-display,
+.wca-family-skewb .ssc-wca-scramble-display,
+.wca-family-sq1 .ssc-wca-scramble-display{
+  transform:scale(.94);
+  transform-origin:center;
+}
+
+.wca-event-minx .ssc-wca-scramble-display{transform:scale(.9)}
+.wca-event-clock .ssc-wca-scramble-display{transform:scale(.92)}
+
+.wca-preview-unsupported{
+  width:100%;
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:800;
+  line-height:1.2;
+  padding:6px;
+}
+
+/* The WCA badge reuses the existing cube-preview-card badge shell. */
+.wca-preview-ready::before{
+  max-width:48px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+@media(max-width:900px){
+  .wca-family-clock .ssc-wca-scramble-display,
+  .wca-family-minx .ssc-wca-scramble-display,
+  .wca-family-pyram .ssc-wca-scramble-display,
+  .wca-family-skewb .ssc-wca-scramble-display,
+  .wca-family-sq1 .ssc-wca-scramble-display{transform:scale(.9)}
+  .wca-event-minx .ssc-wca-scramble-display{transform:scale(.84)}
+}
+
+@media(max-width:560px){
+  .wca-preview-ready{--wca-preview-pad:4px}
+  .wca-family-clock .ssc-wca-scramble-display,
+  .wca-family-minx .ssc-wca-scramble-display,
+  .wca-family-pyram .ssc-wca-scramble-display,
+  .wca-family-skewb .ssc-wca-scramble-display,
+  .wca-family-sq1 .ssc-wca-scramble-display{transform:scale(.84)}
+  .wca-event-minx .ssc-wca-scramble-display{transform:scale(.78)}
+}
