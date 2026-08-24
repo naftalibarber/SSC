@@ -1,7 +1,16 @@
 /* Hebrew readability improvements */
 html[lang="he"] body,
 html[dir="rtl"] body {
-  font-family: Arial, "Segoe UI", Tahoma, sans-serif;
+  font-family: var(--app-font, Arial, "Segoe UI", Tahoma, sans-serif);
+}
+
+html[lang="he"] button,
+html[lang="he"] input,
+html[lang="he"] select,
+html[dir="rtl"] button,
+html[dir="rtl"] input,
+html[dir="rtl"] select {
+  font-family: inherit;
 }
 
 html[lang="he"] .scramble-title,
