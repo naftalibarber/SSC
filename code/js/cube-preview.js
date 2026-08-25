@@ -4,10 +4,31 @@
   const FACE_NORMALS={U:[0,1,0],D:[0,-1,0],F:[0,0,1],B:[0,0,-1],R:[1,0,0],L:[-1,0,0]};
   const FACE_ORDER=['U','L','F','R','B','D'];
   const FACE_CLASS={U:'face-u',L:'face-l',F:'face-f',R:'face-r',B:'face-b',D:'face-d'};
+  const SVG_NS='http://www.w3.org/2000/svg';
+  const PREMIUM_3X3_EVENTS=new Set(['3x3','333']);
+  const SVG_GEOMETRY=Object.freeze({
+    face:96,
+    faceGap:8,
+    outerMargin:3.5,
+    faceRadius:5.5,
+    facePadding:4,
+    sticker:28,
+    stickerGap:2,
+    stickerRadius:1.8,
+    cornerStickerRadius:2.2
+  });
+  const SVG_FACE_POSITIONS=Object.freeze({
+    U:[1,0],
+    L:[0,1],
+    F:[1,1],
+    R:[2,1],
+    B:[3,1],
+    D:[1,2]
+  });
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260824-5';
+    const cubeHref='./code/css/cube-preview.css?v=20260825-1';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -115,10 +136,88 @@
     return stateToFaces(stickers,n);
   }
 
-  function render(container,scramble,puzzle='3x3'){
-    if(!container)return;
-    const n=puzzle==='2x2'?2:3;
-    const faces=buildState(scramble,n);
+  function svgEl(name,attributes={}){
+    const node=document.createElementNS(SVG_NS,name);
+    for(const [key,value] of Object.entries(attributes)){
+      if(value!==undefined&&value!==null)node.setAttribute(key,String(value));
+    }
+    return node;
+  }
+
+  function appendStickerSurface(group,x,y,size,radius,color){
+    group.appendChild(svgEl('rect',{
+      class:'ssc-cube-svg-sticker',
+      x,y,width:size,height:size,rx:radius,ry:radius,
+      fill:color
+    }));
+    group.appendChild(svgEl('rect',{
+      class:'ssc-cube-svg-surface',
+      x,y,width:size,height:size,rx:radius,ry:radius,
+      fill:'url(#sscStickerSurface)'
+    }));
+  }
+
+  function render3x3Svg(container,faces){
+    const g=SVG_GEOMETRY;
+    const viewWidth=(g.outerMargin*2)+(g.face*4)+(g.faceGap*3);
+    const viewHeight=(g.outerMargin*2)+(g.face*3)+(g.faceGap*2);
+    const svg=svgEl('svg',{
+      class:'ssc-cube-preview-svg',
+      viewBox:`0 0 ${viewWidth} ${viewHeight}`,
+      preserveAspectRatio:'xMidYMid meet',
+      'aria-hidden':'true',
+      focusable:'false',
+      'shape-rendering':'geometricPrecision'
+    });
+
+    const defs=svgEl('defs');
+    const gradient=svgEl('linearGradient',{
+      id:'sscStickerSurface',
+      x1:'0%',y1:'0%',x2:'0%',y2:'100%'
+    });
+    gradient.appendChild(svgEl('stop',{offset:'0%','stop-color':'#ffffff','stop-opacity':'.14'}));
+    gradient.appendChild(svgEl('stop',{offset:'46%','stop-color':'#ffffff','stop-opacity':'.025'}));
+    gradient.appendChild(svgEl('stop',{offset:'100%','stop-color':'#000000','stop-opacity':'.065'}));
+    defs.appendChild(gradient);
+    svg.appendChild(defs);
+
+    for(const face of FACE_ORDER){
+      const [gridX,gridY]=SVG_FACE_POSITIONS[face];
+      const faceX=g.outerMargin+gridX*(g.face+g.faceGap);
+      const faceY=g.outerMargin+gridY*(g.face+g.faceGap);
+      const faceGroup=svgEl('g',{
+        class:'ssc-cube-svg-face',
+        'data-face':face
+      });
+      faceGroup.appendChild(svgEl('rect',{
+        class:'ssc-cube-svg-plastic',
+        x:faceX,
+        y:faceY,
+        width:g.face,
+        height:g.face,
+        rx:g.faceRadius,
+        ry:g.faceRadius
+      }));
+
+      for(let row=0;row<3;row++){
+        for(let col=0;col<3;col++){
+          const colorFace=faces[face][row][col]||face;
+          const color=colors[colorFace]||DEFAULT_COLORS[colorFace];
+          const x=faceX+g.facePadding+col*(g.sticker+g.stickerGap);
+          const y=faceY+g.facePadding+row*(g.sticker+g.stickerGap);
+          const isCorner=(row===0||row===2)&&(col===0||col===2);
+          appendStickerSurface(faceGroup,x,y,g.sticker,isCorner?g.cornerStickerRadius:g.stickerRadius,color);
+        }
+      }
+      svg.appendChild(faceGroup);
+    }
+
+    container.classList.add('ssc-preview-3x3-svg-card');
+    container.dataset.previewRenderer='svg-3x3';
+    container.replaceChildren(svg);
+  }
+
+  function renderLegacyGrid(container,faces,n){
     const net=document.createElement('div');
     net.className='cube-preview-net';
     net.setAttribute('aria-hidden','true');
@@ -136,10 +235,26 @@
       }
       net.appendChild(faceEl);
     }
+    container.classList.remove('ssc-preview-3x3-svg-card');
+    delete container.dataset.previewRenderer;
+    container.replaceChildren(net);
+  }
+
+  function isPremium3x3(puzzle){
+    return PREMIUM_3X3_EVENTS.has(String(puzzle||'3x3').toLowerCase());
+  }
+
+  function render(container,scramble,puzzle='3x3'){
+    if(!container)return;
+    const n=puzzle==='2x2'?2:3;
+    const faces=buildState(scramble,n);
+
+    if(n===3&&isPremium3x3(puzzle))render3x3Svg(container,faces);
+    else renderLegacyGrid(container,faces,n);
+
     container.dataset.puzzle=n===2?'2×2':'3×3';
     container.setAttribute('role','img');
     container.setAttribute('aria-label',document.documentElement.lang==='en'?`${n} by ${n} cube scramble preview`:`תצוגת ערבוב קובייה ${n} על ${n}`);
-    container.replaceChildren(net);
     lastRender={container,scramble:normalizeScramble(scramble),puzzle};
     window.SSCPreviewSizing?.scheduleFit?.(container);
   }
