@@ -5,8 +5,8 @@ html[dir="ltr"] .workspace.cstimer-layout {direction:ltr!important;grid-template
 .flat-panel,html[dir="rtl"] .flat-panel,html[dir="ltr"] .flat-panel {grid-column:1!important;direction:ltr!important;width:395px!important;min-width:0!important;border-right:1px solid var(--border)!important;border-left:0!important}
 .flat-timer,html[dir="rtl"] .flat-timer,html[dir="ltr"] .flat-timer {grid-column:2!important;direction:ltr!important;width:100%!important;min-width:0!important;overflow:hidden!important}
 
-/* Remove the black rule at the very top. */
-.compact-bar,.topbar.compact-bar{border-top:0!important}
+/* Remove the black rule at the very top and give the larger brand enough vertical room. */
+.compact-bar,.topbar.compact-bar{border-top:0!important;height:82px!important}
 
 /* Keep toolbar icons and labels on exactly the same visual baseline. */
 .toolbar-button{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;vertical-align:middle!important;line-height:1!important}
@@ -20,13 +20,13 @@ html[dir="ltr"] .workspace.cstimer-layout {direction:ltr!important;grid-template
 .modal-close{display:inline-flex!important;align-items:center!important;justify-content:center!important;align-self:center!important;width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;padding:0!important;margin:0!important;line-height:1!important;font-size:24px!important;position:static!important;transform:none!important}
 .modal-close svg{display:block!important;width:18px!important;height:18px!important;margin:0!important}
 
-/* Make the logo itself visibly larger inside the site while preserving the whole image. */
-.topbar-end{overflow:visible!important;min-width:260px!important}
-.brand-link{display:flex!important;align-items:center!important;justify-content:center!important;width:250px!important;height:68px!important;overflow:visible!important;padding:0!important}
-.small-logo,.site-logo.small-logo{display:block!important;width:230px!important;height:66px!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important;transform:none!important;margin:0!important}
+/* Larger logo so the small text inside the artwork remains readable. */
+.topbar-end{overflow:visible!important;min-width:330px!important}
+.brand-link{display:flex!important;align-items:center!important;justify-content:center!important;width:320px!important;height:80px!important;overflow:visible!important;padding:0!important}
+.small-logo,.site-logo.small-logo{display:block!important;width:300px!important;height:78px!important;max-width:none!important;max-height:none!important;object-fit:contain!important;object-position:center!important;transform:none!important;margin:0!important}
 
 .timer-wrap{width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important}
 .timer-wrap>div{width:min(100%,1050px)!important;min-width:0!important;text-align:center!important}
 #timer{width:100%!important;max-width:100%!important;font-size:clamp(82px,10vw,176px)!important;letter-spacing:-5px!important;white-space:nowrap!important;overflow:visible!important;text-align:center!important}
 #status{direction:rtl;text-align:center!important}.quick-stats{width:100%!important;max-width:430px!important;margin-inline:auto!important}.stats-section,.times-section,.history-settings,.history-settings-link{direction:ltr!important}
-@media(max-width:900px){.workspace.cstimer-layout,html[dir="rtl"] .workspace.cstimer-layout,html[dir="ltr"] .workspace.cstimer-layout{grid-template-columns:minmax(0,1fr)!important}.flat-timer,html[dir="rtl"] .flat-timer,html[dir="ltr"] .flat-timer{grid-column:1!important;grid-row:1!important;min-height:62vh!important}.flat-panel,html[dir="rtl"] .flat-panel,html[dir="ltr"] .flat-panel{grid-column:1!important;grid-row:2!important;width:100%!important;border-right:0!important;border-top:1px solid var(--border)!important}.topbar-end{min-width:190px!important}.brand-link{width:185px!important;height:60px!important}.small-logo,.site-logo.small-logo{width:170px!important;height:56px!important;max-width:none!important;max-height:none!important;transform:none!important}#timer{font-size:clamp(70px,20vw,145px)!important}.timer-wrap{padding:18px 12px!important}}
+@media(max-width:900px){.compact-bar,.topbar.compact-bar{height:auto!important;min-height:78px!important}.workspace.cstimer-layout,html[dir="rtl"] .workspace.cstimer-layout,html[dir="ltr"] .workspace.cstimer-layout{grid-template-columns:minmax(0,1fr)!important}.flat-timer,html[dir="rtl"] .flat-timer,html[dir="ltr"] .flat-timer{grid-column:1!important;grid-row:1!important;min-height:62vh!important}.flat-panel,html[dir="rtl"] .flat-panel,html[dir="ltr"] .flat-panel{grid-column:1!important;grid-row:2!important;width:100%!important;border-right:0!important;border-top:1px solid var(--border)!important}.topbar-end{min-width:230px!important}.brand-link{width:220px!important;height:70px!important}.small-logo,.site-logo.small-logo{width:210px!important;height:66px!important;max-width:none!important;max-height:none!important;transform:none!important}#timer{font-size:clamp(70px,20vw,145px)!important}.timer-wrap{padding:18px 12px!important}}
