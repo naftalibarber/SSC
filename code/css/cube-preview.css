@@ -128,21 +128,20 @@ html[data-theme="oled"] .cube-preview-card{
   .cube-preview-card{border-radius:3px!important}
 }
 
-/* Premium vector renderer — shared by the main 2×2 and 3×3 2D previews.
-   The proportional padding keeps the visible net at roughly 89–91% of the
-   card across the full 150%–500% sizing range. */
+/* Shared pixel-perfect flat net for both 2×2 and 3×3. The SVG owns all cube
+   geometry; the card only provides a responsive, proportional viewport. */
 .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
   --ssc-preview-padding:calc(var(--ssc-preview-card-width,174px) * .0344827586)!important;
-  --ssc-cube-plastic:#111317;
-  border-radius:10px!important;
+  --ssc-cube-grid:#171717;
+  border-radius:4px!important;
   border-color:#d9dde3!important;
-  background:#fbfbfc!important;
-  box-shadow:0 1px 2px rgba(15,23,42,.035)!important;
+  background:#fff!important;
+  box-shadow:none!important;
 }
 
 .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d):hover{
   border-color:#cbd0d7!important;
-  box-shadow:0 2px 7px rgba(15,23,42,.055)!important;
+  box-shadow:none!important;
 }
 
 .ssc-cube-preview-svg{
@@ -153,37 +152,37 @@ html[data-theme="oled"] .cube-preview-card{
   max-height:100%!important;
   overflow:hidden!important;
   direction:ltr!important;
-  shape-rendering:geometricPrecision;
+  shape-rendering:crispEdges;
 }
 
-.ssc-cube-svg-plastic{
-  fill:var(--ssc-cube-plastic,#111317);
+.ssc-cube-svg-sticker{
+  shape-rendering:crispEdges;
 }
 
-.ssc-cube-svg-sticker,
-.ssc-cube-svg-surface{
+.ssc-cube-svg-grid-lines,
+.ssc-cube-svg-face-outline{
+  fill:none;
+  stroke:var(--ssc-cube-grid,#171717);
   vector-effect:non-scaling-stroke;
-}
-
-.ssc-cube-svg-surface{
+  shape-rendering:crispEdges;
   pointer-events:none;
 }
 
 html[data-theme="dark"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-  --ssc-cube-plastic:#0d0f12;
-  background:#171a1f!important;
+  --ssc-cube-grid:#111!important;
+  background:#f8f8f8!important;
   border-color:#343a43!important;
-  box-shadow:0 1px 2px rgba(0,0,0,.2)!important;
+  box-shadow:none!important;
 }
 
 html[data-theme="dark"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d):hover{
   border-color:#474e59!important;
-  box-shadow:0 2px 8px rgba(0,0,0,.24)!important;
+  box-shadow:none!important;
 }
 
 html[data-theme="oled"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-  --ssc-cube-plastic:#15181d;
-  background:#030405!important;
+  --ssc-cube-grid:#111!important;
+  background:#f8f8f8!important;
   border-color:#262a31!important;
   box-shadow:none!important;
 }
@@ -195,6 +194,6 @@ html[data-theme="oled"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview
 
 @media(max-width:560px){
   .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-    border-radius:9px!important;
+    border-radius:3px!important;
   }
 }
