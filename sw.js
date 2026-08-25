@@ -1,4 +1,4 @@
-const CACHE_VERSION='ssc-shell-20260825-2';
+const CACHE_VERSION='ssc-shell-20260825-3';
 const CACHE_PREFIX='ssc-shell-';
 const PRECACHE=[
   './',
@@ -33,6 +33,7 @@ const PRECACHE=[
 ];
 
 self.addEventListener('install',event=>{
+  self.skipWaiting();
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE_VERSION);
     await Promise.allSettled(PRECACHE.map(async url=>{
@@ -45,8 +46,23 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil((async()=>{
     const names=await caches.keys();
-    await Promise.all(names.filter(name=>name.startsWith(CACHE_PREFIX)&&name!==CACHE_VERSION).map(name=>caches.delete(name)));
+    await Promise.all(
+      names
+        .filter(name=>name.startsWith(CACHE_PREFIX)&&name!==CACHE_VERSION)
+        .map(name=>caches.delete(name))
+    );
+
     await self.clients.claim();
+
+    const clients=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    await Promise.allSettled(clients.map(async client=>{
+      try{
+        const url=new URL(client.url);
+        if(url.origin===self.location.origin&&typeof client.navigate==='function'){
+          await client.navigate(client.url);
+        }
+      }catch{}
+    }));
   })());
 });
 
