@@ -104,7 +104,8 @@
       return;
     }
 
-    // Keep SSC's custom 2x2 / 3x3 renderer for the events already in production.
+    // Keep all native NxN previews on SSC's single shared renderer. The 4x4
+    // state engine accepts the same wide-move notation produced by cubing.js.
     // It preserves the user's configurable cube colors and current visual style.
     if(eventId==='222' && legacyRender){
       applyContainerMetadata(container,event);
@@ -116,6 +117,12 @@
       applyContainerMetadata(container,event);
       container.dataset.previewEngine='ssc-native';
       legacyRender(container,Array.isArray(scramble)?scramble:scrambleToText(scramble).split(/\s+/).filter(Boolean),'3x3');
+      return;
+    }
+    if(eventId==='444' && legacyRender){
+      applyContainerMetadata(container,event);
+      container.dataset.previewEngine='ssc-native';
+      legacyRender(container,Array.isArray(scramble)?scramble:scrambleToText(scramble).split(/\s+/).filter(Boolean),'4x4');
       return;
     }
 
