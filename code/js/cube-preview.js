@@ -5,6 +5,7 @@
   const FACE_ORDER=['U','L','F','R','B','D'];
   const FACE_CLASS={U:'face-u',L:'face-l',F:'face-f',R:'face-r',B:'face-b',D:'face-d'};
   const SVG_NS='http://www.w3.org/2000/svg';
+  const PREMIUM_2X2_EVENTS=new Set(['2x2','222']);
   const PREMIUM_3X3_EVENTS=new Set(['3x3','333']);
   const SVG_GEOMETRY=Object.freeze({
     face:96,
@@ -17,6 +18,19 @@
     stickerRadius:1.8,
     cornerStickerRadius:2.2
   });
+  const SVG_2X2_STICKER_GAP=3;
+  const SVG_2X2_STICKER=(SVG_GEOMETRY.face-(SVG_GEOMETRY.facePadding*2)-SVG_2X2_STICKER_GAP)/2;
+  const SVG_2X2_GEOMETRY=Object.freeze({
+    face:SVG_GEOMETRY.face,
+    faceGap:SVG_GEOMETRY.faceGap,
+    outerMargin:SVG_GEOMETRY.outerMargin,
+    faceRadius:SVG_GEOMETRY.faceRadius,
+    facePadding:SVG_GEOMETRY.facePadding,
+    sticker:SVG_2X2_STICKER,
+    stickerGap:SVG_2X2_STICKER_GAP,
+    stickerRadius:SVG_2X2_STICKER*(SVG_GEOMETRY.stickerRadius/SVG_GEOMETRY.sticker),
+    cornerStickerRadius:SVG_2X2_STICKER*(SVG_GEOMETRY.cornerStickerRadius/SVG_GEOMETRY.sticker)
+  });
   const SVG_FACE_POSITIONS=Object.freeze({
     U:[1,0],
     L:[0,1],
@@ -28,7 +42,7 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260825-1';
+    const cubeHref='./code/css/cube-preview.css?v=20260825-2';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -157,8 +171,25 @@
     }));
   }
 
-  function render3x3Svg(container,faces){
-    const g=SVG_GEOMETRY;
+  function appendStickerSurfaceDefs(svg){
+    const defs=svgEl('defs');
+    const gradient=svgEl('linearGradient',{
+      id:'sscStickerSurface',
+      x1:'0%',y1:'0%',x2:'0%',y2:'100%'
+    });
+    gradient.appendChild(svgEl('stop',{offset:'0%','stop-color':'#ffffff','stop-opacity':'.14'}));
+    gradient.appendChild(svgEl('stop',{offset:'46%','stop-color':'#ffffff','stop-opacity':'.025'}));
+    gradient.appendChild(svgEl('stop',{offset:'100%','stop-color':'#000000','stop-opacity':'.065'}));
+    defs.appendChild(gradient);
+    svg.appendChild(defs);
+  }
+
+  function getSvgGeometry(n){
+    return n===2?SVG_2X2_GEOMETRY:SVG_GEOMETRY;
+  }
+
+  function renderCubeSvg(container,faces,n){
+    const g=getSvgGeometry(n);
     const viewWidth=(g.outerMargin*2)+(g.face*4)+(g.faceGap*3);
     const viewHeight=(g.outerMargin*2)+(g.face*3)+(g.faceGap*2);
     const svg=svgEl('svg',{
@@ -170,16 +201,7 @@
       'shape-rendering':'geometricPrecision'
     });
 
-    const defs=svgEl('defs');
-    const gradient=svgEl('linearGradient',{
-      id:'sscStickerSurface',
-      x1:'0%',y1:'0%',x2:'0%',y2:'100%'
-    });
-    gradient.appendChild(svgEl('stop',{offset:'0%','stop-color':'#ffffff','stop-opacity':'.14'}));
-    gradient.appendChild(svgEl('stop',{offset:'46%','stop-color':'#ffffff','stop-opacity':'.025'}));
-    gradient.appendChild(svgEl('stop',{offset:'100%','stop-color':'#000000','stop-opacity':'.065'}));
-    defs.appendChild(gradient);
-    svg.appendChild(defs);
+    appendStickerSurfaceDefs(svg);
 
     for(const face of FACE_ORDER){
       const [gridX,gridY]=SVG_FACE_POSITIONS[face];
@@ -199,22 +221,31 @@
         ry:g.faceRadius
       }));
 
-      for(let row=0;row<3;row++){
-        for(let col=0;col<3;col++){
+      for(let row=0;row<n;row++){
+        for(let col=0;col<n;col++){
           const colorFace=faces[face][row][col]||face;
           const color=colors[colorFace]||DEFAULT_COLORS[colorFace];
           const x=faceX+g.facePadding+col*(g.sticker+g.stickerGap);
           const y=faceY+g.facePadding+row*(g.sticker+g.stickerGap);
-          const isCorner=(row===0||row===2)&&(col===0||col===2);
+          const isCorner=(row===0||row===n-1)&&(col===0||col===n-1);
           appendStickerSurface(faceGroup,x,y,g.sticker,isCorner?g.cornerStickerRadius:g.stickerRadius,color);
         }
       }
       svg.appendChild(faceGroup);
     }
 
-    container.classList.add('ssc-preview-3x3-svg-card');
-    container.dataset.previewRenderer='svg-3x3';
+    container.classList.remove('ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card');
+    container.classList.add('ssc-preview-svg-card',n===2?'ssc-preview-2x2-svg-card':'ssc-preview-3x3-svg-card');
+    container.dataset.previewRenderer=`svg-${n}x${n}`;
     container.replaceChildren(svg);
+  }
+
+  function render3x3Svg(container,faces){
+    renderCubeSvg(container,faces,3);
+  }
+
+  function render2x2Svg(container,faces){
+    renderCubeSvg(container,faces,2);
   }
 
   function renderLegacyGrid(container,faces,n){
@@ -235,21 +266,34 @@
       }
       net.appendChild(faceEl);
     }
-    container.classList.remove('ssc-preview-3x3-svg-card');
+    container.classList.remove('ssc-preview-svg-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card');
     delete container.dataset.previewRenderer;
     container.replaceChildren(net);
   }
 
+  function normalizePuzzleId(puzzle){
+    return String(puzzle||'3x3').trim().toLowerCase();
+  }
+
+  function puzzleSize(puzzle){
+    return PREMIUM_2X2_EVENTS.has(normalizePuzzleId(puzzle))?2:3;
+  }
+
+  function isPremium2x2(puzzle){
+    return PREMIUM_2X2_EVENTS.has(normalizePuzzleId(puzzle));
+  }
+
   function isPremium3x3(puzzle){
-    return PREMIUM_3X3_EVENTS.has(String(puzzle||'3x3').toLowerCase());
+    return PREMIUM_3X3_EVENTS.has(normalizePuzzleId(puzzle));
   }
 
   function render(container,scramble,puzzle='3x3'){
     if(!container)return;
-    const n=puzzle==='2x2'?2:3;
+    const n=puzzleSize(puzzle);
     const faces=buildState(scramble,n);
 
-    if(n===3&&isPremium3x3(puzzle))render3x3Svg(container,faces);
+    if(n===2&&isPremium2x2(puzzle))render2x2Svg(container,faces);
+    else if(n===3&&isPremium3x3(puzzle))render3x3Svg(container,faces);
     else renderLegacyGrid(container,faces,n);
 
     container.dataset.puzzle=n===2?'2×2':'3×3';
