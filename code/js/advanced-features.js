@@ -33,8 +33,8 @@
   });
   const effective=s=>{const n=normalizeSolve(s);return n.penalty==='DNF'?Infinity:n.rawTimeMs+(n.penalty==='+2'?2000:0);};
   const fmt=ms=>Number.isFinite(ms)?(ms/1000).toFixed(3):'DNF';
-  const currentHistory=()=>history().map(normalizeSolve).filter(s=>s.eventId===currentEvent()&&s.sessionId===currentSessionId());
-  const sessionHistory=(eventId,sessionId)=>history().map(normalizeSolve).filter(s=>s.eventId===eventId&&s.sessionId===sessionId);
+  const currentHistory=()=>history().map(normalizeSolve).filter(s=>s.eventId===currentEvent()&&s.sessionId===currentSessionId()&&!s.practice&&!s.training);
+  const sessionHistory=(eventId,sessionId)=>history().map(normalizeSolve).filter(s=>s.eventId===eventId&&s.sessionId===sessionId&&!s.practice&&!s.training);
   const notifyCore=()=>window.dispatchEvent(new StorageEvent('storage',{key:HISTORY_KEY,newValue:localStorage.getItem(HISTORY_KEY),storageArea:localStorage}));
 
   function setSolveMetadata(id,tags,note){

@@ -191,12 +191,12 @@
   }
   function currentSessionHistory(){
     const key=`${historyRevision}:${currentEvent}:${currentSessionId}`;if(sessionHistoryCache.key===key)return sessionHistoryCache.value;
-    const value=[];for(const raw of getRawHistory()){const solve=normalizeSolve(raw);if(solve.eventId===currentEvent&&solve.sessionId===currentSessionId)value.push(solve);}
+    const value=[];for(const raw of getRawHistory()){const solve=normalizeSolve(raw);if(solve.eventId===currentEvent&&solve.sessionId===currentSessionId&&!solve.practice&&!solve.training)value.push(solve);}
     sessionHistoryCache={key,value};return value;
   }
   function sessionHistory(eventId,sessionId){
     if(eventId===currentEvent&&sessionId===currentSessionId)return currentSessionHistory();
-    const result=[];for(const raw of getRawHistory()){const solve=normalizeSolve(raw);if(solve.eventId===eventId&&solve.sessionId===sessionId)result.push(solve);}return result;
+    const result=[];for(const raw of getRawHistory()){const solve=normalizeSolve(raw);if(solve.eventId===eventId&&solve.sessionId===sessionId&&!solve.practice&&!solve.training)result.push(solve);}return result;
   }
   function getSessionSnapshot(session,eventId=currentEvent){return{...session,event:eventId,solves:sessionHistory(eventId,session.id)};}
   function touchCurrentSession(){const session=sessions.find(item=>item.id===currentSessionId);if(session){session.updatedAt=new Date().toISOString();saveSessions();}}
@@ -251,8 +251,9 @@
 
   function addSolve(timeMs,scramble,penalty='OK'){
     const before=fixedStats(currentSessionHistory());const history=[...getRawHistory()];const event=eventFor(currentEvent);const createdAt=new Date().toISOString();const rawTimeMs=Math.round(timeMs);
-    const base={id:(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`),timeMs:rawTimeMs,rawTimeMs,rawTime:formatRawSeconds(rawTimeMs),penalty:normalizePenalty(penalty),scramble,puzzle:legacyPuzzleForEvent(currentEvent),eventId:currentEvent,event:currentEvent,puzzleId:event?.puzzle||currentEvent,sessionId:currentSessionId,session:currentSessionId,createdAt,date:createdAt};
-    history.unshift(withPenaltyFields(base,base.penalty));setHistory(history);touchCurrentSession();const after=fixedStats(currentSessionHistory());if(detectNewPb(before,after))showPbToast();return base.id;
+    const metadata=window.SSCTraining?.consumeAttemptMetadata?.({timeMs:rawTimeMs,penalty:normalizePenalty(penalty),scramble})||{};
+    const base={id:(crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`),timeMs:rawTimeMs,rawTimeMs,rawTime:formatRawSeconds(rawTimeMs),penalty:normalizePenalty(penalty),scramble,puzzle:legacyPuzzleForEvent(currentEvent),eventId:currentEvent,event:currentEvent,puzzleId:event?.puzzle||currentEvent,sessionId:currentSessionId,session:currentSessionId,createdAt,date:createdAt,...metadata};
+    const saved=withPenaltyFields(base,base.penalty);history.unshift(saved);setHistory(history);if(!base.practice&&!base.training)touchCurrentSession();const after=fixedStats(currentSessionHistory());if(!base.practice&&!base.training&&detectNewPb(before,after))showPbToast();window.dispatchEvent(new CustomEvent('ssc-solve-added',{detail:{solve:saved}}));return base.id;
   }
   function applyPenalty(id,penalty){
     const before=fixedStats(currentSessionHistory());const history=[...getRawHistory()];const index=history.findIndex(solve=>solve?.id===id);if(index<0)return false;
@@ -340,7 +341,7 @@
   }
   function closeSolveDetails(){const modal=document.getElementById('solveDetailsModal');if(modal)modal.hidden=true;solveDetailsId=null;}
   async function copySolveScramble(){const solve=currentSessionHistory().find(item=>item.id===solveDetailsId);if(!solve)return;try{await navigator.clipboard.writeText(solve.scramble);}catch{const area=document.createElement('textarea');area.value=solve.scramble;document.body.appendChild(area);area.select();document.execCommand('copy');area.remove();}const button=document.querySelector('[data-copy-scramble]');if(button){const original=t('copyScramble');button.textContent=t('copied');setTimeout(()=>{button.textContent=original;},1200);}}
-  function repeatSolveScramble(){const solve=currentSessionHistory().find(item=>item.id===solveDetailsId);if(!solve)return;if(loadScramble(solve.scramble,solve.eventId))closeSolveDetails();}
+  function repeatSolveScramble(){const solve=currentSessionHistory().find(item=>item.id===solveDetailsId);if(!solve)return;if(window.SSCTraining?.startPractice){window.SSCTraining.startPractice(solve);closeSolveDetails();return;}if(loadScramble(solve.scramble,solve.eventId))closeSolveDetails();}
 
   function setFocusMode(enabled){document.documentElement.dataset.focusMode=enabled?'on':'off';const button=document.getElementById('focusModeButton');if(button)button.setAttribute('aria-pressed',enabled?'true':'false');}
   function isFocusMode(){return document.documentElement.dataset.focusMode==='on';}
@@ -359,7 +360,7 @@
     setState(state){this.state=state;this.onStateChange?.(state);}isBusy(){return this.state!=='idle';}clearHold(){clearTimeout(this.holdTimeout);this.holdTimeout=null;}
     beginHold(fromInspection=false){const holdingState=fromInspection?'inspection-holding':'holding';const readyState=fromInspection?'inspection-ready':'ready';this.setState(holdingState);this.clearHold();this.holdTimeout=setTimeout(()=>{if(this.state===holdingState)this.setState(readyState);},this.holdMs);}
     press(){if(this.state==='running'){this.stop();return;}if(this.state==='idle'){this.beginHold(false);return;}if(this.state==='inspection'){this.beginHold(true);}}
-    release(){if(this.state==='ready'){if(competitionSettings.mode&&competitionSettings.inspection)this.startInspection();else this.start();return;}if(this.state==='holding'){this.cancelHold(false);return;}if(this.state==='inspection-ready'){this.start();return;}if(this.state==='inspection-holding')this.cancelHold(true);}
+    release(){if(this.state==='ready'){if((competitionSettings.mode&&competitionSettings.inspection)||window.SSCTraining?.shouldInspect?.())this.startInspection();else this.start();return;}if(this.state==='holding'){this.cancelHold(false);return;}if(this.state==='inspection-ready'){this.start();return;}if(this.state==='inspection-holding')this.cancelHold(true);}
     cancelHold(fromInspection){this.clearHold();if(this.state===(fromInspection?'inspection-holding':'holding'))this.setState(fromInspection?'inspection':'idle');}
     cancelArming(){
       this.clearHold();
@@ -394,7 +395,7 @@
 
   async function createNewScramble(){
     if(timer.isBusy())return null;const requestId=++scrambleRequestId;const requestedEvent=currentEvent;currentScramble='';els.scramble.dataset.scrambleTransient='true';els.scramble.dataset.eventId=requestedEvent;els.scramble.setAttribute('aria-busy','true');els.scramble.textContent=t('generatingScramble');
-    try{let scramble;let previewScramble;if(requestedEvent==='333mbf'){const scrambles=await window.SSCScrambles.generateMultiBlind(DEFAULT_MBLD_CUBES);scramble=scrambles.map((value,index)=>`${index+1}) ${value}`).join(' | ');previewScramble=scrambles[0]||'';}else{scramble=await window.SSCScrambles.generate(requestedEvent);previewScramble=scramble;}if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;currentScramble=String(scramble);showScramble(scramble,requestedEvent,previewScramble);return currentScramble;}catch(error){if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;els.scramble.dataset.scrambleTransient='true';els.scramble.textContent=`${t('scrambleError')}: ${requestedEvent}`;console.error(`[SSC] Unable to generate scramble for: ${requestedEvent}`,error);return null;}finally{if(requestId===scrambleRequestId)els.scramble.removeAttribute('aria-busy');}
+    try{let scramble;let previewScramble;const trainingScramble=await window.SSCTraining?.nextScramble?.();if(trainingScramble){scramble=trainingScramble;previewScramble=scramble;}else if(requestedEvent==='333mbf'){const scrambles=await window.SSCScrambles.generateMultiBlind(DEFAULT_MBLD_CUBES);scramble=scrambles.map((value,index)=>`${index+1}) ${value}`).join(' | ');previewScramble=scrambles[0]||'';}else{scramble=await window.SSCScrambles.generate(requestedEvent);previewScramble=scramble;}if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;currentScramble=String(scramble);showScramble(scramble,requestedEvent,previewScramble);return currentScramble;}catch(error){if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;els.scramble.dataset.scrambleTransient='true';els.scramble.textContent=`${t('scrambleError')}: ${requestedEvent}`;console.error(`[SSC] Unable to generate scramble for: ${requestedEvent}`,error);return null;}finally{if(requestId===scrambleRequestId)els.scramble.removeAttribute('aria-busy');}
   }
   async function setEvent(value){const eventId=normalizeEventId(value);if(!eventId||timer.isBusy()||eventId===currentEvent)return false;scrambleRequestId+=1;currentEvent=eventId;currentPuzzle=legacyPuzzleForEvent(eventId);currentScramble='';localStorage.setItem(EVENT_KEY,eventId);if(eventId==='222'||eventId==='333')localStorage.setItem(PUZZLE_KEY,currentPuzzle);ensureCurrentSession();renderSessionSelect();renderSessionMenu();updateEventUI();renderHistory();window.dispatchEvent(new CustomEvent('ssc-event-change',{detail:{eventId}}));await createNewScramble();return true;}
 
