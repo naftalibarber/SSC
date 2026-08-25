@@ -60,6 +60,7 @@
   };
 
   let currentLanguage=localStorage.getItem(LANGUAGE_KEY)==='en'?'en':'he';
+  let timePrecision=readTimePrecision();
   let rawHistoryCache=null;
   let historyRevision=0;
   let sessionHistoryCache={key:'',value:[]};
@@ -74,7 +75,7 @@
   function eventFor(value){return window.SSCScrambles?.getEvent?.(value)||null;}
   function legacyPuzzleForEvent(eventId){return eventId==='222'?'2x2':eventId==='333'?'3x3':eventId;}
   function eventIdForLegacyPuzzle(puzzle){return normalizeEventId(puzzle)||'333';}
-  function formatTime(ms){return Number.isFinite(ms)?(ms/1000).toFixed(3):'DNF';}
+  function formatTime(ms){return Number.isFinite(ms)?(ms/1000).toFixed(timePrecision):'DNF';}
   function formatRawSeconds(ms){return Number.isFinite(ms)?Number((ms/1000).toFixed(3)):null;}
   function normalizePenalty(value){return VALID_PENALTIES.has(value)?value:'OK';}
   function getInspectionPenalty(elapsedMs){if(elapsedMs>INSPECTION_DNF_MS)return'DNF';if(elapsedMs>INSPECTION_NORMAL_MS)return'+2';return'OK';}
@@ -89,6 +90,10 @@
   function readGeneralSettings(){
     try{const parsed=JSON.parse(localStorage.getItem(GENERAL_SETTINGS_KEY));return{mode:Boolean(parsed?.competitionMode),inspection:parsed?.competitionInspection!==false};}
     catch{return{mode:false,inspection:true};}
+  }
+  function readTimePrecision(){
+    try{return Number(JSON.parse(localStorage.getItem(GENERAL_SETTINGS_KEY))?.timePrecision)===2?2:3;}
+    catch{return 3;}
   }
   let competitionSettings=readGeneralSettings();
 
@@ -356,6 +361,12 @@
     press(){if(this.state==='running'){this.stop();return;}if(this.state==='idle'){this.beginHold(false);return;}if(this.state==='inspection'){this.beginHold(true);}}
     release(){if(this.state==='ready'){if(competitionSettings.mode&&competitionSettings.inspection)this.startInspection();else this.start();return;}if(this.state==='holding'){this.cancelHold(false);return;}if(this.state==='inspection-ready'){this.start();return;}if(this.state==='inspection-holding')this.cancelHold(true);}
     cancelHold(fromInspection){this.clearHold();if(this.state===(fromInspection?'inspection-holding':'holding'))this.setState(fromInspection?'inspection':'idle');}
+    cancelArming(){
+      this.clearHold();
+      if(this.state==='holding'||this.state==='ready'){this.setState('idle');return true;}
+      if(this.state==='inspection-holding'||this.state==='inspection-ready'){this.setState('inspection');return true;}
+      return false;
+    }
     startInspection(){this.clearHold();this.cancelRunFrame();this.cancelInspectionFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.inspectionStartTime=performance.now();this.cue8Sent=false;this.cue12Sent=false;this.setState('inspection');this.tickInspection();}
     tickInspection=()=>{if(!isInspectionState(this.state))return;const elapsed=performance.now()-this.inspectionStartTime;const nextPenalty=getInspectionPenalty(elapsed);if(nextPenalty!==this.lastInspectionPenalty){if(nextPenalty==='+2'||nextPenalty==='DNF')window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:nextPenalty,elapsedMs:elapsed}}));this.lastInspectionPenalty=nextPenalty;}this.pendingPenalty=nextPenalty;if(!this.cue8Sent&&elapsed>=INSPECTION_CUE_8_MS){this.cue8Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'8s',elapsedMs:elapsed}}));}if(!this.cue12Sent&&elapsed>=INSPECTION_CUE_12_MS){this.cue12Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'12s',elapsedMs:elapsed}}));}this.onInspectionTick?.(elapsed,this.pendingPenalty,{cue8:this.cue8Sent,cue12:this.cue12Sent});this.inspectionFrame=requestAnimationFrame(this.tickInspection);};
     cancelInspectionFrame(){if(this.inspectionFrame!==null)cancelAnimationFrame(this.inspectionFrame);this.inspectionFrame=null;}cancelRunFrame(){if(this.animationFrame!==null)cancelAnimationFrame(this.animationFrame);this.animationFrame=null;}
@@ -387,11 +398,14 @@
   }
   async function setEvent(value){const eventId=normalizeEventId(value);if(!eventId||timer.isBusy()||eventId===currentEvent)return false;scrambleRequestId+=1;currentEvent=eventId;currentPuzzle=legacyPuzzleForEvent(eventId);currentScramble='';localStorage.setItem(EVENT_KEY,eventId);if(eventId==='222'||eventId==='333')localStorage.setItem(PUZZLE_KEY,currentPuzzle);ensureCurrentSession();renderSessionSelect();renderSessionMenu();updateEventUI();renderHistory();window.dispatchEvent(new CustomEvent('ssc-event-change',{detail:{eventId}}));await createNewScramble();return true;}
 
-  const timer=new TimerEngine({holdMs:500,onTick:ms=>{els.timer.textContent=formatTime(ms);},onInspectionTick:(elapsed,penalty)=>renderInspection(elapsed,penalty),onStateChange:state=>{setTimerState(state);if(state==='running')els.timer.textContent='0.000';},onStop:(elapsed,penalty)=>{const effective=penalty==='DNF'?Infinity:elapsed+(penalty==='+2'?2000:0);els.timer.textContent=formatTime(effective);els.status.textContent=t('saved');addSolve(elapsed,currentScramble,penalty);renderHistory();createNewScramble();}});
+  const timer=new TimerEngine({holdMs:500,onTick:ms=>{els.timer.textContent=formatTime(ms);},onInspectionTick:(elapsed,penalty)=>renderInspection(elapsed,penalty),onStateChange:state=>{setTimerState(state);if(state==='running')els.timer.textContent=(0).toFixed(timePrecision);},onStop:(elapsed,penalty)=>{const effective=penalty==='DNF'?Infinity:elapsed+(penalty==='+2'?2000:0);els.timer.textContent=formatTime(effective);els.status.textContent=t('saved');addSolve(elapsed,currentScramble,penalty);renderHistory();createNewScramble();}});
 
   window.addEventListener('ssc-general-settings-change',event=>{const detail=event.detail||{};const previousMode=competitionSettings.mode;competitionSettings={mode:Boolean(detail.competitionMode),inspection:detail.competitionInspection!==false};if(previousMode&&!competitionSettings.mode&&isInspectionState(timer.state))timer.reset();applyCompetitionUiState();});
-  window.addEventListener('storage',event=>{if(event.key===GENERAL_SETTINGS_KEY){competitionSettings=readGeneralSettings();if(!competitionSettings.mode&&isInspectionState(timer.state))timer.reset();applyCompetitionUiState();}if(event.key===STORAGE_KEY){rawHistoryCache=null;historyRevision+=1;sessionHistoryCache={key:'',value:[]};statsCache.clear();renderHistory();}});
+  window.addEventListener('storage',event=>{if(event.key===GENERAL_SETTINGS_KEY){competitionSettings=readGeneralSettings();timePrecision=readTimePrecision();if(!competitionSettings.mode&&isInspectionState(timer.state))timer.reset();applyCompetitionUiState();}if(event.key===STORAGE_KEY){rawHistoryCache=null;historyRevision+=1;sessionHistoryCache={key:'',value:[]};statsCache.clear();renderHistory();}});
   window.addEventListener('ssc-scramble-history-select',event=>{const eventId=normalizeEventId(event.detail?.eventId||currentEvent);const scramble=String(event.detail?.scramble||'').trim();if(!scramble||eventId!==currentEvent||timer.isBusy())return;scrambleRequestId+=1;currentScramble=scramble;els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=currentEvent;els.scramble.removeAttribute('aria-busy');window.SSCCubePreview?.render(els.cubePreview2D,multiBlindPreviewScramble(scramble),currentEvent);});
+  window.addEventListener('ssc-time-precision-change',()=>{const next=readTimePrecision();if(next===timePrecision)return;timePrecision=next;renderHistory();if(timer.state==='idle'){const displayed=Number(els.timer.textContent);if(Number.isFinite(displayed))els.timer.textContent=displayed.toFixed(timePrecision);}});
+  window.addEventListener('blur',()=>timer.cancelArming());
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)timer.cancelArming();});
   document.addEventListener('fullscreenchange',updateFullscreenButton);
 
   document.addEventListener('keydown',event=>{
@@ -408,7 +422,9 @@
   });
   document.addEventListener('keyup',event=>{if(event.code!=='Space'||isEditableTarget(event.target))return;event.preventDefault();timer.release();});
 
-  els.touchTimer.addEventListener('pointerdown',event=>{event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&!currentScramble)return;els.touchTimer.setPointerCapture?.(event.pointerId);timer.press();});['pointerup','pointercancel'].forEach(type=>els.touchTimer.addEventListener(type,event=>{event.preventDefault();timer.release();}));
+  els.touchTimer.addEventListener('pointerdown',event=>{event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&!currentScramble)return;els.touchTimer.setPointerCapture?.(event.pointerId);timer.press();});
+  els.touchTimer.addEventListener('pointerup',event=>{event.preventDefault();timer.release();});
+  els.touchTimer.addEventListener('pointercancel',event=>{event.preventDefault();timer.cancelArming();});
   document.getElementById('newScramble').addEventListener('click',createNewScramble);document.querySelectorAll('.puzzle-btn').forEach(btn=>btn.addEventListener('click',()=>setEvent(btn.dataset.puzzle)));els.eventSelect?.addEventListener('change',()=>setEvent(els.eventSelect.value));
   document.getElementById('clearHistory').addEventListener('click',()=>{const selected=currentSessionHistory();if(!selected.length)return;if(confirm(t('clearHistoryConfirm'))){setHistory(getRawHistory().filter(raw=>{const solve=normalizeSolve(raw);return!(solve.eventId===currentEvent&&solve.sessionId===currentSessionId);}));touchCurrentSession();renderHistory();}});
   els.sessionSelect.addEventListener('change',()=>switchSession(els.sessionSelect.value));els.addSession.addEventListener('click',()=>{const name=prompt(t('addSessionPrompt'));if(name!==null)createSession(name);});els.deleteSession.addEventListener('click',deleteCurrentSession);
