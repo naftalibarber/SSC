@@ -88,3 +88,19 @@ html[data-focus-mode="on"] .cube-preview-card{margin-inline-start:auto}
   .ssc-toast{width:calc(100vw - 24px);justify-content:space-between}
   .pb-toast{width:auto}
 }
+
+/* Training system — cube preview internals deliberately remain untouched. */
+.training-dialog{width:min(960px,calc(100vw - 24px));max-height:90vh;overflow:auto}
+.training-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.training-quick button,.trainer-toolbar button,.trainer-toolbar select,.case-actions button,.review-actions button,.training-grid button,.picker>button,.goal-form button,.goal-form input,.goal-form select,.case-card select{border:1px solid var(--border);background:var(--soft);color:var(--text);border-radius:11px;padding:10px;font:inherit;font-weight:800;cursor:pointer}
+.training-quick button{min-height:64px;background:color-mix(in srgb,var(--accent) 9%,var(--soft))}
+.training-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.training-grid article,.case-card,.picker,.goal-form{border:1px solid var(--border);background:var(--card-solid);border-radius:16px;padding:16px}
+.training-grid h3,.case-card h3,.picker h3,.goal-form h3{margin:0 0 12px}
+.training-grid p{display:flex;justify-content:space-between;gap:12px;margin:7px 0;color:var(--text)}
+.training-grid p span,.training-grid small{color:var(--muted)}
+.trainer-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.case-card{text-align:center}.case-kicker{color:var(--accent);font-size:.75em;font-weight:900;letter-spacing:.14em}.case-card h3{font-size:clamp(1.7rem,5vw,3rem);margin:12px 0}.case-alg{direction:ltr;padding:12px;border-radius:10px;background:var(--soft);font-family:monospace;overflow-wrap:anywhere}.case-alg[hidden]{display:none}.case-actions,.review-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}.case-actions button.active{color:#f5b301}.review-actions button:first-child{background:color-mix(in srgb,var(--ready) 18%,var(--soft))}.case-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:15px}.case-stats span{background:var(--soft);border-radius:9px;padding:8px;font-size:.78em}.practice-scramble{direction:ltr;font-family:monospace}.practice-attempts{display:grid;grid-template-columns:1fr auto;gap:8px;text-align:start;margin:16px auto;max-width:340px}.improvement{color:var(--ready);font-weight:900;margin:10px}.case-picker-list{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-height:55vh;overflow:auto;margin-bottom:12px}.case-picker-list label{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:7px;padding:8px;border:1px solid var(--border);border-radius:9px}.case-picker-list button{border:0;background:none;color:#f5b301;font-size:1.2em}.goal-row{display:grid;grid-template-columns:1fr auto;gap:5px;align-items:center;margin:8px 0}.goal-row>div{display:flex;justify-content:space-between;gap:8px}.goal-row progress{grid-column:1;width:100%;accent-color:var(--accent)}.goal-row>button{grid-column:2;grid-row:1/3;padding:5px 8px}.goal-form{display:grid;gap:10px;max-width:520px;margin:auto}.goal-form label{display:grid;gap:5px}
+html[data-focus-mode="on"][data-training-mode="on"] .case-card{display:block}
+@media(max-width:700px){.training-quick,.training-grid{grid-template-columns:1fr 1fr}.case-picker-list{grid-template-columns:1fr 1fr}.case-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:470px){.training-quick,.training-grid,.case-picker-list{grid-template-columns:1fr}.training-dialog{width:calc(100vw - 12px)}.review-actions button{flex:1 1 45%}}
