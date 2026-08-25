@@ -72,10 +72,29 @@
       .cube-preview-card.ssc-preview-thumbnail-3d::after{
         background:radial-gradient(circle at 50% 48%,rgba(255,255,255,.62),transparent 68%)!important;
       }
-      html[data-theme="dark"] .cube-preview-card.ssc-preview-mode-3d,
+      html[data-theme="dark"] .cube-preview-card.ssc-preview-mode-3d{
+        background:#171a1f!important;
+        border-color:#343a43!important;
+        box-shadow:0 2px 9px rgba(0,0,0,.2)!important;
+      }
+      html[data-theme="dark"] .cube-preview-card.ssc-preview-mode-3d:hover{
+        border-color:#474e59!important;
+        box-shadow:0 4px 14px rgba(0,0,0,.26)!important;
+      }
+      html[data-theme="dark"] .cube-preview-card.ssc-preview-thumbnail-3d::after{
+        background:radial-gradient(circle at 50% 48%,rgba(255,255,255,.08),transparent 68%)!important;
+      }
       html[data-theme="oled"] .cube-preview-card.ssc-preview-mode-3d{
-        background:#f5f6f8!important;
-        border-color:#656b73!important;
+        background:#030405!important;
+        border-color:#262a31!important;
+        box-shadow:none!important;
+      }
+      html[data-theme="oled"] .cube-preview-card.ssc-preview-mode-3d:hover{
+        border-color:#373c45!important;
+        box-shadow:none!important;
+      }
+      html[data-theme="oled"] .cube-preview-card.ssc-preview-thumbnail-3d::after{
+        background:radial-gradient(circle at 50% 48%,rgba(255,255,255,.055),transparent 68%)!important;
       }
 
       .ssc-preview-3d-modal[hidden]{display:none!important}
