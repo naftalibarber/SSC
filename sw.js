@@ -1,4 +1,4 @@
-const CACHE_VERSION='ssc-shell-20260825-1';
+const CACHE_VERSION='ssc-shell-20260825-2';
 const CACHE_PREFIX='ssc-shell-';
 const PRECACHE=[
   './',
@@ -26,7 +26,8 @@ const PRECACHE=[
   './code/css/cube-preview.css',
   './code/css/wca-previews.css',
   './code/css/event-selector.css',
-  './code/css/competition-mode.css'
+  './code/css/competition-mode.css',
+  './code/css/layout-fix.css'
 ];
 
 self.addEventListener('install',event=>{
@@ -60,7 +61,7 @@ self.addEventListener('fetch',event=>{
   if(request.mode==='navigate'){
     event.respondWith((async()=>{
       try{
-        const fresh=await fetch(request);
+        const fresh=await fetch(request,{cache:'no-store'});
         const cache=await caches.open(CACHE_VERSION);
         if(fresh.ok)cache.put('./index.html',fresh.clone());
         return fresh;
@@ -74,7 +75,7 @@ self.addEventListener('fetch',event=>{
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE_VERSION);
     try{
-      const fresh=await fetch(request);
+      const fresh=await fetch(request,{cache:'no-store'});
       if(fresh.ok)cache.put(request,fresh.clone());
       return fresh;
     }catch{
