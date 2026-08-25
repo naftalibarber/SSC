@@ -1,8 +1,7 @@
 const CACHE_PREFIX='ssc-shell-';
 
-// Development mode: keep the registered service worker harmless.
-// It deliberately has no fetch handler, so every request goes directly
-// to the network/browser HTTP cache instead of SSC's PWA cache.
+// SSC development mode.
+// Offline/PWA caching is intentionally disabled while the app changes rapidly.
 self.addEventListener('install',()=>{
   self.skipWaiting();
 });
@@ -23,4 +22,14 @@ self.addEventListener('message',event=>{
   if(event.data?.type==='SKIP_WAITING')self.skipWaiting();
 });
 
-// Intentionally no fetch event listener while SSC is under active development.
+// Network-only: never serve or write SSC assets from Cache Storage.
+// cache:'no-store' also bypasses the browser HTTP cache for same-origin app assets.
+self.addEventListener('fetch',event=>{
+  const request=event.request;
+  if(request.method!=='GET')return;
+
+  const url=new URL(request.url);
+  if(url.origin!==self.location.origin)return;
+
+  event.respondWith(fetch(request,{cache:'no-store'}));
+});
