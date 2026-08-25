@@ -1,0 +1,19 @@
+{
+  "name": "SSC — Super Speed Cube",
+  "short_name": "SSC",
+  "description": "Fast, local-first speedcubing timer with sessions, statistics and analytics.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "./ssc-logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
