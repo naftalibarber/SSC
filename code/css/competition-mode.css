@@ -1,0 +1,72 @@
+/* SSC — Competition Mode
+   Feature-specific visual states only. Timer logic stays in the existing TimerEngine. */
+
+/* Settings toggles */
+.competition-toggle-wrap{display:flex;align-items:center;justify-content:flex-start;min-width:0}
+.ssc-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-weight:800}
+.ssc-switch input{position:absolute;opacity:0;pointer-events:none}
+.ssc-switch-track{position:relative;width:46px;height:26px;border-radius:999px;background:var(--soft2);border:1px solid var(--border);transition:background .16s,border-color .16s}
+.ssc-switch-thumb{position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;border-radius:50%;background:var(--card-solid);box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .16s}
+.ssc-switch input:checked+.ssc-switch-track{background:color-mix(in srgb,var(--accent) 78%,var(--card-solid));border-color:var(--accent)}
+.ssc-switch input:checked+.ssc-switch-track .ssc-switch-thumb{transform:translateX(20px)}
+html[dir="rtl"] .ssc-switch input:checked+.ssc-switch-track .ssc-switch-thumb{transform:translateX(-20px)}
+.ssc-switch input:focus-visible+.ssc-switch-track{outline:2px solid var(--accent);outline-offset:2px}
+.ssc-switch input:disabled+.ssc-switch-track{opacity:.45}
+.competition-inspection-row.is-disabled{opacity:.58}
+#competitionModeValue,#competitionInspectionValue{min-width:30px;color:var(--muted);font-size:.78em;letter-spacing:.06em}
+
+/* Inspection states */
+#timer.inspection{color:var(--text);letter-spacing:-.04em!important}
+#timer.inspection.warning{color:var(--warning)}
+#timer.inspection.warning-strong{color:var(--warning)}
+#timer.inspection.penalty{color:var(--warning)}
+#timer.inspection.dnf{color:var(--danger)}
+#timer.inspection.holding{color:var(--warning)}
+#timer.inspection.ready{color:var(--ready)!important}
+html[data-competition-mode="on"] #status{transition:color .16s,opacity .16s}
+html[data-competition-mode="on"][data-timer-state^="inspection"] #status{font-weight:800!important}
+
+/* Competition focus: keep the scramble, preview and timer dominant without deleting UI. */
+.flat-panel,.topbar,.quick-stats{transition:opacity .18s ease,filter .18s ease}
+html[data-competition-mode="on"][data-timer-state="running"] .flat-panel,
+html[data-competition-mode="on"][data-timer-state="inspection"] .flat-panel,
+html[data-competition-mode="on"][data-timer-state="inspection-holding"] .flat-panel,
+html[data-competition-mode="on"][data-timer-state="inspection-ready"] .flat-panel{opacity:.34;filter:saturate(.7)}
+html[data-competition-mode="on"][data-timer-state="running"] .quick-stats,
+html[data-competition-mode="on"][data-timer-state="inspection"] .quick-stats,
+html[data-competition-mode="on"][data-timer-state="inspection-holding"] .quick-stats,
+html[data-competition-mode="on"][data-timer-state="inspection-ready"] .quick-stats{opacity:.36}
+html[data-competition-mode="on"][data-timer-state="running"] .topbar,
+html[data-competition-mode="on"][data-timer-state="inspection"] .topbar,
+html[data-competition-mode="on"][data-timer-state="inspection-holding"] .topbar,
+html[data-competition-mode="on"][data-timer-state="inspection-ready"] .topbar{opacity:.62}
+
+/* Penalty-aware history */
+.competition-solve-row{grid-template-columns:36px minmax(0,1fr)!important;align-items:start!important;padding-block:8px!important}
+.competition-solve-row .solve-main{min-width:0}
+.solve-time .solve-penalty-label{font-size:.68em;color:var(--warning);font-weight:850;letter-spacing:0}
+.solve-time .solve-result-dnf{color:var(--danger)}
+.solve-time .solve-raw{font-size:.66em;color:var(--muted);font-weight:700;letter-spacing:0}
+.penalty-plus2 .solve-time{color:var(--warning)}
+.penalty-dnf .solve-time{color:var(--danger)}
+.penalty-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:6px;direction:ltr}
+.penalty-actions button{min-width:0;min-height:29px;padding:4px 5px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);font-size:.68em;font-weight:850;cursor:pointer;white-space:nowrap;transition:background .14s,border-color .14s,color .14s}
+.penalty-actions button:hover,.penalty-actions button:focus-visible{background:var(--soft);color:var(--text);border-color:color-mix(in srgb,var(--accent) 45%,var(--border));outline:none}
+.penalty-actions button[data-penalty="OK"].active{color:var(--ready);border-color:color-mix(in srgb,var(--ready) 55%,var(--border));background:color-mix(in srgb,var(--ready) 8%,transparent)}
+.penalty-actions button[data-penalty="+2"].active{color:var(--warning);border-color:color-mix(in srgb,var(--warning) 58%,var(--border));background:color-mix(in srgb,var(--warning) 9%,transparent)}
+.penalty-actions button[data-penalty="DNF"].active{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 58%,var(--border));background:color-mix(in srgb,var(--danger) 9%,transparent)}
+.penalty-actions .penalty-delete{color:var(--danger)}
+
+@media(max-width:900px){
+  html[data-competition-mode="on"][data-timer-state="running"] .flat-panel,
+  html[data-competition-mode="on"][data-timer-state="inspection"] .flat-panel,
+  html[data-competition-mode="on"][data-timer-state="inspection-holding"] .flat-panel,
+  html[data-competition-mode="on"][data-timer-state="inspection-ready"] .flat-panel{opacity:.62;filter:none}
+  .penalty-actions button{min-height:36px;font-size:.74em}
+}
+
+@media(max-width:560px){
+  #timer.inspection{font-size:clamp(74px,24vw,138px)!important}
+  .penalty-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .penalty-actions button{min-height:40px;font-size:.78em}
+}

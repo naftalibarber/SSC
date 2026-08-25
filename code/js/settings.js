@@ -8,7 +8,7 @@
   const PREVIEW_MAX=500;
   const PREVIEW_STEP=5;
   const PREVIEW_DEFAULT=150;
-  const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb'};
+  const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb',competitionMode:false,competitionInspection:true};
 
   const modal=document.getElementById('generalSettingsModal');
   const openButton=document.getElementById('generalSettingsButton');
@@ -26,6 +26,8 @@
   const themeButtons=[...document.querySelectorAll('[data-theme-choice]')];
   const cubeColorInputs=[...document.querySelectorAll('[data-cube-face]')];
   const resetCubeColors=document.getElementById('resetCubeColors');
+  let competitionModeToggle=null;
+  let competitionInspectionToggle=null;
 
   const FONT_OPTIONS=[['Rubik','Rubik'],['Assistant','Assistant'],['Heebo','Heebo'],['Alef','Alef'],['NotoHebrew','Noto Sans Hebrew']];
   const TIMER_FONT_OPTIONS=[['Orbitron','Orbitron'],['Audiowide','Audiowide'],['ShareTechMono','Share Tech Mono'],['Oxanium','Oxanium'],['ChakraPetch','Chakra Petch'],['system','System']];
@@ -43,7 +45,7 @@
         .general-settings-grid{width:100%!important;min-width:0!important;gap:12px!important;}
         .general-setting-row{grid-template-columns:1fr!important;gap:7px!important;width:100%!important;min-width:0!important;padding:4px 0!important;}
         .general-setting-row>span{font-size:1em!important;font-weight:700!important;}
-        .general-setting-row select,.range-control,.color-control,.theme-options,.cube-colors-control{width:100%!important;min-width:0!important;max-width:100%!important;}
+        .general-setting-row select,.range-control,.color-control,.theme-options,.cube-colors-control,.competition-toggle-wrap{width:100%!important;min-width:0!important;max-width:100%!important;}
         .range-control{grid-template-columns:minmax(0,1fr) 54px!important;}
         .range-control input{min-width:0!important;width:100%!important;}
         .color-control{grid-template-columns:52px minmax(0,1fr) auto!important;gap:8px!important;}
@@ -111,6 +113,26 @@
     applyPreviewSize();
   }
 
+  function initCompetitionControls(){
+    if(document.getElementById('competitionModeToggle')){
+      competitionModeToggle=document.getElementById('competitionModeToggle');
+      competitionInspectionToggle=document.getElementById('competitionInspectionToggle');
+      return;
+    }
+    const anchor=timePrecisionSelect?.closest('.general-setting-row');
+    if(!anchor?.parentElement)return;
+    const modeRow=document.createElement('div');
+    modeRow.className='general-setting-row competition-setting-row';
+    modeRow.innerHTML=`<span id="competitionModeSettingLabel">מצב תחרות</span><div class="competition-toggle-wrap"><label class="ssc-switch"><input id="competitionModeToggle" type="checkbox"><span class="ssc-switch-track" aria-hidden="true"><span class="ssc-switch-thumb"></span></span><span id="competitionModeValue">OFF</span></label></div>`;
+    const inspectionRow=document.createElement('div');
+    inspectionRow.className='general-setting-row competition-setting-row competition-inspection-row';
+    inspectionRow.innerHTML=`<span id="competitionInspectionSettingLabel">בדיקת תחרות</span><div class="competition-toggle-wrap"><label class="ssc-switch"><input id="competitionInspectionToggle" type="checkbox"><span class="ssc-switch-track" aria-hidden="true"><span class="ssc-switch-thumb"></span></span><span id="competitionInspectionValue">ON</span></label></div>`;
+    anchor.insertAdjacentElement('afterend',modeRow);
+    modeRow.insertAdjacentElement('afterend',inspectionRow);
+    competitionModeToggle=modeRow.querySelector('#competitionModeToggle');
+    competitionInspectionToggle=inspectionRow.querySelector('#competitionInspectionToggle');
+  }
+
   function fillSelect(select,options,current){
     if(!select)return;
     select.innerHTML='';
@@ -136,12 +158,15 @@
       if(!FONT_OPTIONS.some(([value])=>value===merged.font))merged.font=defaults.font;
       if(!TIMER_FONT_OPTIONS.some(([value])=>value===merged.timerFont))merged.timerFont=defaults.timerFont;
       if(![2,3].includes(Number(merged.timePrecision)))merged.timePrecision=3;
+      merged.competitionMode=Boolean(merged.competitionMode);
+      merged.competitionInspection=merged.competitionInspection!==false;
       return merged;
     }catch{return{...defaults}}
   }
 
   let settings=loadSettings();
   function saveSettings(){localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}
+  function notifySettingsChange(){window.dispatchEvent(new CustomEvent('ssc-general-settings-change',{detail:{...settings}}));}
 
   function fontStack(font){
     if(font==='Assistant')return'"Assistant",sans-serif';
@@ -168,6 +193,16 @@
     cubeColorInputs.forEach(input=>{input.value=colors[input.dataset.cubeFace]||'#000000';});
   }
 
+  function syncCompetitionControls(){
+    if(competitionModeToggle)competitionModeToggle.checked=Boolean(settings.competitionMode);
+    if(competitionInspectionToggle){competitionInspectionToggle.checked=settings.competitionInspection!==false;competitionInspectionToggle.disabled=!settings.competitionMode;}
+    const modeValue=document.getElementById('competitionModeValue');
+    const inspectionValue=document.getElementById('competitionInspectionValue');
+    if(modeValue)modeValue.textContent=settings.competitionMode?'ON':'OFF';
+    if(inspectionValue)inspectionValue.textContent=settings.competitionInspection!==false?'ON':'OFF';
+    document.querySelector('.competition-inspection-row')?.classList.toggle('is-disabled',!settings.competitionMode);
+  }
+
   function applyAppearance(){
     const theme=['light','dark','oled'].includes(settings.theme)?settings.theme:'light';
     settings.primaryColor=validColor(settings.primaryColor);
@@ -184,6 +219,7 @@
     if(timePrecisionSelect)timePrecisionSelect.value=String(settings.timePrecision);
     if(primaryColorInput)primaryColorInput.value=settings.primaryColor;
     if(primaryColorValue)primaryColorValue.textContent=settings.primaryColor.toUpperCase();
+    syncCompetitionControls();
     syncCubeColors();
     applyPreviewSize();
   }
@@ -199,6 +235,8 @@
     set('fontSettingLabel','Text font','גופן הטקסט');
     set('timerFontSettingLabel','Timer font','גופן הטיימר');
     set('timePrecisionSettingLabel','Time precision','דיוק הזמן');
+    set('competitionModeSettingLabel','Competition Mode','מצב תחרות');
+    set('competitionInspectionSettingLabel','Competition inspection','בדיקת תחרות');
     set('primaryColorSettingLabel','Primary color','צבע ראשי');
     set('cubePreviewSizeSettingLabel','Preview size','גודל התצוגה');
     set('cubeColorsSettingLabel','Cube colors','צבעי הקובייה');
@@ -219,6 +257,7 @@
       openButton.setAttribute('aria-label',openButton.title);
     }
     if(languageSelect)languageSelect.value=en?'en':'he';
+    syncCompetitionControls();
   }
 
   function openModal(){
@@ -238,6 +277,7 @@
 
   injectMobileSettingsFix();
   initPreviewSizeControl();
+  initCompetitionControls();
   repairSelectors();
 
   openButton?.addEventListener('click',openModal);
@@ -254,6 +294,8 @@
   fontSelect?.addEventListener('change',()=>{settings.font=fontSelect.value;saveSettings();applyAppearance();});
   timerFontSelect?.addEventListener('change',()=>{settings.timerFont=timerFontSelect.value;saveSettings();applyAppearance();});
   timePrecisionSelect?.addEventListener('change',()=>{settings.timePrecision=Number(timePrecisionSelect.value);saveSettings();applyAppearance();window.dispatchEvent(new Event('ssc-time-precision-change'));});
+  competitionModeToggle?.addEventListener('change',()=>{settings.competitionMode=competitionModeToggle.checked;saveSettings();syncCompetitionControls();notifySettingsChange();});
+  competitionInspectionToggle?.addEventListener('change',()=>{settings.competitionInspection=competitionInspectionToggle.checked;saveSettings();syncCompetitionControls();notifySettingsChange();});
   primaryColorInput?.addEventListener('input',()=>{settings.primaryColor=primaryColorInput.value;saveSettings();applyAppearance();});
   resetPrimaryColor?.addEventListener('click',()=>{settings.primaryColor=defaults.primaryColor;saveSettings();applyAppearance();});
   themeButtons.forEach(button=>button.addEventListener('click',()=>{settings.theme=button.dataset.themeChoice;saveSettings();applyAppearance();}));
@@ -267,4 +309,5 @@
 
   applyAppearance();
   updateLabels();
+  notifySettingsChange();
 })();
