@@ -3,6 +3,10 @@
 
   const PREVIEW_ID='cubePreview2D';
   const VERIFY_FRAMES=90;
+  const watchedCards=new WeakSet();
+  const verificationTokens=new WeakMap();
+  let verificationSequence=0;
+  let viewportListenersBound=false;
 
   function nextFrame(){return new Promise(resolve=>requestAnimationFrame(resolve));}
 
@@ -37,14 +41,19 @@
     return false;
   }
 
-  async function verify3D(container,player,scramble,eventId){
-    if(!(container instanceof HTMLElement))return;
+  function isCurrentVerification(container,token){
+    return verificationTokens.get(container)===token;
+  }
+
+  async function verify3D(container,player,scramble,eventId,token){
+    if(!(container instanceof HTMLElement)||!isCurrentVerification(container,token))return;
     forceVisible(container);
     if(container.dataset.previewMode!=='3d')return;
 
     for(let frame=0;frame<VERIFY_FRAMES;frame++){
-      if(container.dataset.previewMode!=='3d')return;
+      if(!isCurrentVerification(container,token)||container.dataset.previewMode!=='3d')return;
       if(await hasRenderedCanvas(player)){
+        if(!isCurrentVerification(container,token))return;
         container.classList.remove('ssc-preview-render-failed');
         forceVisible(container);
         window.SSCPreviewSizing?.scheduleFit?.(container);
@@ -53,6 +62,7 @@
       await nextFrame();
     }
 
+    if(!isCurrentVerification(container,token)||container.dataset.previewMode!=='3d')return;
     console.warn('[SSC preview] 3D thumbnail did not produce a visible canvas; using safe 2D fallback for this thumbnail.');
     container.classList.add('ssc-preview-render-failed');
     try{
@@ -64,8 +74,10 @@
         fallbackTo2D:true
       });
     }catch(error){
-      console.error('[SSC preview] Fallback render failed',error);
+      if(isCurrentVerification(container,token))console.error('[SSC preview] Fallback render failed',error);
+      return;
     }
+    if(!isCurrentVerification(container,token))return;
     forceVisible(container);
     window.SSCPreviewSizing?.scheduleFit?.(container);
   }
@@ -78,23 +90,35 @@
       ...api,
       __sscVisibilityGuard:true,
       async render(container,scramble,eventId){
+        const token=++verificationSequence;
+        if(container instanceof Element)verificationTokens.set(container,token);
         forceVisible(container);
         const player=await guardedRender(container,scramble,eventId);
+        if(!isCurrentVerification(container,token))return player;
         forceVisible(container);
-        if(container?.dataset?.previewMode==='3d')void verify3D(container,player,scramble,eventId);
+        if(container?.dataset?.previewMode==='3d')void verify3D(container,player,scramble,eventId,token);
         return player;
       }
     };
+  }
+
+  function bindViewportListeners(){
+    if(viewportListenersBound)return;
+    viewportListenersBound=true;
+    const refresh=()=>forceVisible(document.getElementById(PREVIEW_ID));
+    window.addEventListener('resize',refresh,{passive:true});
+    window.visualViewport?.addEventListener('resize',refresh,{passive:true});
   }
 
   function watchCard(){
     const card=document.getElementById(PREVIEW_ID);
     if(!(card instanceof HTMLElement))return;
     forceVisible(card);
+    if(watchedCards.has(card))return;
+    watchedCards.add(card);
     const observer=new MutationObserver(()=>forceVisible(card));
     observer.observe(card,{attributes:true,childList:true,subtree:false});
-    window.addEventListener('resize',()=>forceVisible(card),{passive:true});
-    window.visualViewport?.addEventListener('resize',()=>forceVisible(card),{passive:true});
+    bindViewportListeners();
   }
 
   installRenderGuard();
