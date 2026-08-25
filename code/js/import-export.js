@@ -21,8 +21,8 @@
 
   const isHebrew=()=>document.documentElement.lang==='he';
   const setStatus=(msg,ok=true)=>{if(status){status.textContent=msg;status.style.color=ok?'var(--ready)':'var(--danger)';}};
-  const open=()=>{modal.hidden=false;setStatus('');};
-  const close=()=>{modal.hidden=true;};
+  const open=()=>{modal.hidden=false;setStatus('');requestAnimationFrame(()=>closeBtn?.focus());};
+  const close=()=>{modal.hidden=true;openBtn.focus();};
 
   function collectStorage(){
     const storage={};
@@ -56,6 +56,11 @@
   openBtn.addEventListener('click',open);
   closeBtn?.addEventListener('click',close);
   modal.querySelector('[data-close-import-export]')?.addEventListener('click',close);
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape')return;
+    if(!modal.hidden){close();return;}
+    if(event.defaultPrevented&&modal.contains(document.activeElement))openBtn.focus();
+  });
 
   exportBtn.addEventListener('click',()=>{
     try{
