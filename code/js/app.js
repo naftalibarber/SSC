@@ -308,7 +308,7 @@
   class TimerEngine{
     constructor({holdMs=500,onTick,onInspectionTick,onStateChange,onStop}){
       this.holdMs=holdMs;this.onTick=onTick;this.onInspectionTick=onInspectionTick;this.onStateChange=onStateChange;this.onStop=onStop;
-      this.state='idle';this.holdTimeout=null;this.startTime=0;this.animationFrame=null;this.inspectionStartTime=0;this.inspectionFrame=null;this.pendingPenalty='OK';this.cue8Sent=false;this.cue12Sent=false;
+      this.state='idle';this.holdTimeout=null;this.startTime=0;this.animationFrame=null;this.inspectionStartTime=0;this.inspectionFrame=null;this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.cue8Sent=false;this.cue12Sent=false;
     }
     setState(state){this.state=state;this.onStateChange?.(state);}
     isBusy(){return this.state!=='idle';}
@@ -333,11 +333,16 @@
     }
     cancelHold(fromInspection){this.clearHold();if(this.state===(fromInspection?'inspection-holding':'holding'))this.setState(fromInspection?'inspection':'idle');}
     startInspection(){
-      this.clearHold();this.cancelRunFrame();this.cancelInspectionFrame();this.pendingPenalty='OK';this.inspectionStartTime=performance.now();this.cue8Sent=false;this.cue12Sent=false;this.setState('inspection');this.tickInspection();
+      this.clearHold();this.cancelRunFrame();this.cancelInspectionFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.inspectionStartTime=performance.now();this.cue8Sent=false;this.cue12Sent=false;this.setState('inspection');this.tickInspection();
     }
     tickInspection=()=>{
       if(!isInspectionState(this.state))return;
-      const elapsed=performance.now()-this.inspectionStartTime;this.pendingPenalty=getInspectionPenalty(elapsed);
+      const elapsed=performance.now()-this.inspectionStartTime;const nextPenalty=getInspectionPenalty(elapsed);
+      if(nextPenalty!==this.lastInspectionPenalty){
+        if(nextPenalty==='+2'||nextPenalty==='DNF')window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:nextPenalty,elapsedMs:elapsed}}));
+        this.lastInspectionPenalty=nextPenalty;
+      }
+      this.pendingPenalty=nextPenalty;
       if(!this.cue8Sent&&elapsed>=INSPECTION_CUE_8_MS){this.cue8Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'8s',elapsedMs:elapsed}}));}
       if(!this.cue12Sent&&elapsed>=INSPECTION_CUE_12_MS){this.cue12Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'12s',elapsedMs:elapsed}}));}
       this.onInspectionTick?.(elapsed,this.pendingPenalty,{cue8:this.cue8Sent,cue12:this.cue12Sent});
@@ -357,7 +362,7 @@
       if(this.state!=='running')return;
       const elapsed=performance.now()-this.startTime;const penalty=this.pendingPenalty;this.cancelRunFrame();this.setState('idle');this.onStop?.(elapsed,penalty);this.pendingPenalty='OK';
     }
-    reset(){this.clearHold();this.cancelInspectionFrame();this.cancelRunFrame();this.pendingPenalty='OK';this.setState('idle');}
+    reset(){this.clearHold();this.cancelInspectionFrame();this.cancelRunFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.setState('idle');}
   }
 
   function statusKeyForState(state){if(state==='inspection-holding')return'inspectionHolding';if(state==='inspection-ready')return'inspectionReady';return state;}
