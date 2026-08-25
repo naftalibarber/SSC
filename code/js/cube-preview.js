@@ -5,8 +5,11 @@
   const FACE_ORDER=['U','L','F','R','B','D'];
   const FACE_CLASS={U:'face-u',L:'face-l',F:'face-f',R:'face-r',B:'face-b',D:'face-d'};
   const SVG_NS='http://www.w3.org/2000/svg';
-  const PREMIUM_2X2_EVENTS=new Set(['2x2','222']);
-  const PREMIUM_3X3_EVENTS=new Set(['3x3','333']);
+  const NATIVE_CUBE_ORDERS=new Map([
+    ['2x2',2],['222',2],
+    ['3x3',3],['333',3],
+    ['4x4',4],['444',4]
+  ]);
   const SVG_GEOMETRY_BASE=Object.freeze({
     stickerSize:32,
     stickerGap:0,
@@ -34,7 +37,8 @@
 
   const SVG_GEOMETRY_BY_SIZE=Object.freeze({
     2:createSvgGeometry(2),
-    3:createSvgGeometry(3)
+    3:createSvgGeometry(3),
+    4:createSvgGeometry(4)
   });
   const SVG_FACE_POSITIONS=Object.freeze({
     U:[1,0],
@@ -47,7 +51,7 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260825-flat-net-1';
+    const cubeHref='./code/css/cube-preview.css?v=20260825-flat-net-2';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -73,7 +77,7 @@
   }
   let colors=loadColors();
 
-  function coordsForSize(n){return n===2?[-1,1]:[-1,0,1]}
+  function coordsForSize(n){return Array.from({length:n},(_,index)=>(index*2)-(n-1))}
   function makeSticker(face,row,col,n,coords,m){
     let position;
     if(face==='U')position=[coords[col],m,coords[row]];
@@ -85,7 +89,7 @@
     return{position,normal:[...FACE_NORMALS[face]],colorFace:face};
   }
   function solvedStickers(n){
-    const coords=coordsForSize(n),m=1,stickers=[];
+    const coords=coordsForSize(n),m=n-1,stickers=[];
     for(const face of FACE_ORDER){
       for(let row=0;row<n;row++)for(let col=0;col<n;col++)stickers.push(makeSticker(face,row,col,n,coords,m));
     }
@@ -102,23 +106,35 @@
       Math.round(v[2]*c+axv[2]*s+axis[2]*d*(1-c))
     ];
   }
-  function applyQuarterTurn(stickers,face,direction){
+  function applyQuarterTurn(stickers,face,direction,wide=false,n=3){
     const axis=FACE_NORMALS[face];
+    const outer=n-1;
+    const inner=outer-2;
     for(const sticker of stickers){
-      if(dot(sticker.position,axis)!==1)continue;
+      const layer=dot(sticker.position,axis);
+      if(layer!==outer&&!(wide&&n>=4&&layer===inner))continue;
       sticker.position=rotateVector(sticker.position,axis,direction);
       sticker.normal=rotateVector(sticker.normal,axis,direction);
     }
   }
-  function applyMove(stickers,move){
+  function parseMove(move,n){
     if(typeof move!=='string'||!move)return;
-    const face=move[0];
+    const token=move.trim();
+    const rawFace=token[0];
+    const lower=rawFace>='a'&&rawFace<='z';
+    const face=rawFace.toUpperCase();
     if(!FACE_NORMALS[face])return;
-    const half=move.endsWith('2');
-    const prime=move.endsWith("'");
+    const wide=lower||/^\d*[URFDLB]w/i.test(token);
+    if(wide&&n<4)return;
+    return{face,wide,half:token.endsWith('2'),prime:token.endsWith("'")};
+  }
+  function applyMove(stickers,move,n){
+    const parsed=parseMove(move,n);
+    if(!parsed)return;
+    const {face,wide,half,prime}=parsed;
     const turns=half?2:1;
     const direction=prime?1:-1;
-    for(let i=0;i<turns;i++)applyQuarterTurn(stickers,face,direction);
+    for(let i=0;i<turns;i++)applyQuarterTurn(stickers,face,direction,wide,n);
   }
   function normalizeScramble(scramble){
     if(Array.isArray(scramble))return scramble.filter(Boolean);
@@ -151,8 +167,23 @@
   }
   function buildState(scramble,n){
     const stickers=solvedStickers(n);
-    for(const move of normalizeScramble(scramble))applyMove(stickers,move);
+    for(const move of normalizeScramble(scramble))applyMove(stickers,move,n);
     return stateToFaces(stickers,n);
+  }
+
+  function validateCubeState(faces,n,{puzzle,scramble}={}){
+    const expected=n*n;
+    for(const face of FACE_ORDER){
+      const rows=Array.isArray(faces?.[face])?faces[face]:[];
+      const received=rows.reduce((count,row)=>count+(Array.isArray(row)?row.length:0),0);
+      const rectangular=rows.length===n&&rows.every(row=>Array.isArray(row)&&row.length===n);
+      if(received!==expected||!rectangular){
+        const active=normalizeScramble(scramble).join(' ')||'(solved)';
+        const message=`[SSC cube preview] Invalid ${face} face: received ${received} stickers, expected ${expected}; puzzle=${puzzle||`${n}x${n}`}; scramble=${active}`;
+        console.error(message,{face,received,expected,puzzle,scramble,rows});
+        throw new Error(message);
+      }
+    }
   }
 
   function svgEl(name,attributes={}){
@@ -244,23 +275,15 @@
       svg.appendChild(faceGroup);
     }
 
-    container.classList.remove('ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card');
-    container.classList.add('ssc-preview-svg-card',n===2?'ssc-preview-2x2-svg-card':'ssc-preview-3x3-svg-card');
+    container.classList.remove('ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
+    container.classList.add('ssc-preview-svg-card',`ssc-preview-${n}x${n}-svg-card`);
     container.dataset.previewRenderer=`svg-${n}x${n}`;
     container.replaceChildren(svg);
   }
 
-  function render3x3Svg(container,faces){
+  function renderNativeSvg(container,faces,n){
     renderCubeSvg({
-      container,cubeOrder:3,cubeState:faces,palette:colors,
-      displayScale:Number(document.documentElement.style.getPropertyValue('--ssc-preview-actual-scale'))||1,
-      theme:document.documentElement.dataset.theme||'light'
-    });
-  }
-
-  function render2x2Svg(container,faces){
-    renderCubeSvg({
-      container,cubeOrder:2,cubeState:faces,palette:colors,
+      container,cubeOrder:n,cubeState:faces,palette:colors,
       displayScale:Number(document.documentElement.style.getPropertyValue('--ssc-preview-actual-scale'))||1,
       theme:document.documentElement.dataset.theme||'light'
     });
@@ -284,7 +307,7 @@
       }
       net.appendChild(faceEl);
     }
-    container.classList.remove('ssc-preview-svg-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card');
+    container.classList.remove('ssc-preview-svg-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
     delete container.dataset.previewRenderer;
     container.replaceChildren(net);
   }
@@ -294,27 +317,19 @@
   }
 
   function puzzleSize(puzzle){
-    return PREMIUM_2X2_EVENTS.has(normalizePuzzleId(puzzle))?2:3;
-  }
-
-  function isPremium2x2(puzzle){
-    return PREMIUM_2X2_EVENTS.has(normalizePuzzleId(puzzle));
-  }
-
-  function isPremium3x3(puzzle){
-    return PREMIUM_3X3_EVENTS.has(normalizePuzzleId(puzzle));
+    return NATIVE_CUBE_ORDERS.get(normalizePuzzleId(puzzle))||3;
   }
 
   function render(container,scramble,puzzle='3x3'){
     if(!container)return;
     const n=puzzleSize(puzzle);
     const faces=buildState(scramble,n);
+    validateCubeState(faces,n,{puzzle,scramble});
 
-    if(n===2&&isPremium2x2(puzzle))render2x2Svg(container,faces);
-    else if(n===3&&isPremium3x3(puzzle))render3x3Svg(container,faces);
+    if(NATIVE_CUBE_ORDERS.has(normalizePuzzleId(puzzle)))renderNativeSvg(container,faces,n);
     else renderLegacyGrid(container,faces,n);
 
-    container.dataset.puzzle=n===2?'2×2':'3×3';
+    container.dataset.puzzle=`${n}×${n}`;
     container.setAttribute('role','img');
     container.setAttribute('aria-label',document.documentElement.lang==='en'?`${n} by ${n} cube scramble preview`:`תצוגת ערבוב קובייה ${n} על ${n}`);
     lastRender={container,scramble:normalizeScramble(scramble),puzzle};
