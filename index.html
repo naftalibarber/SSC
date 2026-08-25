@@ -25,6 +25,7 @@
   <style>
     #timer{font-family:var(--timer-font,var(--app-font))!important}
     #importExportButton svg,#deleteSession svg,#addSession svg{display:block!important;width:18px;height:18px;flex:0 0 auto;stroke:currentColor!important}
+    #focusModeButton::before{content:"";display:block;width:19px;height:19px;flex:0 0 auto;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 9V5a1 1 0 0 1 1-1h4v2H6v3H4zm11-5h4a1 1 0 0 1 1 1v4h-2V6h-3V4zM4 15h2v3h3v2H5a1 1 0 0 1-1-1v-4zm14 0h2v4a1 1 0 0 1-1 1h-4v-2h3v-3z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 9V5a1 1 0 0 1 1-1h4v2H6v3H4zm11-5h4a1 1 0 0 1 1 1v4h-2V6h-3V4zM4 15h2v3h3v2H5a1 1 0 0 1-1-1v-4zm14 0h2v4a1 1 0 0 1-1 1h-4v-2h3v-3z'/%3E%3C/svg%3E") center/contain no-repeat}
     #addSession,#deleteSession{display:none!important}
     .cube-colors-control{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
     .cube-color-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px;border:1px solid var(--border);border-radius:8px}
