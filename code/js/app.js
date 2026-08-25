@@ -330,7 +330,31 @@
   }
 
   function multiBlindPreviewScramble(scramble){if(currentEvent!=='333mbf')return scramble;const text=String(scramble||'');const match=text.match(/^1\)\s*(.*?)(?:\s+\|\s+2\)|$)/);return match?.[1]?.trim()||text;}
-  function showScramble(scramble,eventId=currentEvent,previewScramble=scramble){const text=Array.isArray(scramble)?scramble.join(' ').trim():String(scramble||'').trim();els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=eventId;els.scramble.textContent=text;window.SSCCubePreview?.render(els.cubePreview2D,previewScramble,eventId);}
+  let scrambleFitFrame=0;
+  function scrambleOverflows(){
+    return els.scramble.scrollWidth>els.scramble.clientWidth+1||els.scramble.scrollHeight>els.scramble.clientHeight+1;
+  }
+  function fitScrambleText(){
+    cancelAnimationFrame(scrambleFitFrame);
+    scrambleFitFrame=requestAnimationFrame(()=>{
+      const bar=els.scramble.closest('.scramble-bar');
+      if(!bar)return;
+      bar.classList.remove('scramble-expanded');
+      els.scramble.style.removeProperty('font-size');
+      if(!scrambleOverflows())return;
+      bar.classList.add('scramble-expanded');
+      if(!scrambleOverflows())return;
+      const natural=parseFloat(getComputedStyle(els.scramble).fontSize)||27;
+      let low=8,high=natural,best=low;
+      for(let i=0;i<10;i+=1){
+        const size=(low+high)/2;
+        els.scramble.style.fontSize=`${size}px`;
+        if(scrambleOverflows())high=size;else{best=size;low=size;}
+      }
+      els.scramble.style.fontSize=`${best}px`;
+    });
+  }
+  function showScramble(scramble,eventId=currentEvent,previewScramble=scramble){const text=Array.isArray(scramble)?scramble.join(' ').trim():String(scramble||'').trim();els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=eventId;els.scramble.textContent=text;fitScrambleText();window.SSCCubePreview?.render(els.cubePreview2D,previewScramble,eventId);}
   function loadScramble(scramble,eventId=currentEvent){const text=String(scramble||'').trim();if(!text||eventId!==currentEvent||timer.isBusy())return false;scrambleRequestId+=1;currentScramble=text;els.scramble.removeAttribute('aria-busy');showScramble(text,currentEvent,multiBlindPreviewScramble(text));return true;}
 
   function renderEventSelect(){if(!els.eventSelect)return;const events=window.SSCScrambles?.getEvents?.()||[];els.eventSelect.innerHTML='';events.forEach(event=>{const option=document.createElement('option');option.value=event.id;option.textContent=event.label||event.id.toUpperCase();option.title=event.name||event.id;els.eventSelect.appendChild(option);});els.eventSelect.value=currentEvent;els.eventSelect.setAttribute('aria-label',t('eventSelector'));}
@@ -439,5 +463,7 @@
 
   window.SSCTimerEvents=Object.freeze({getCurrent:()=>currentEvent,getCurrentEvent:()=>eventFor(currentEvent),setCurrent:setEvent,newScramble:createNewScramble,getTimerState:()=>timer.state,getCompetitionSettings:()=>({...competitionSettings}),getEffectiveTime,getCurrentSession:()=>getSessionSnapshot(sessions.find(item=>item.id===currentSessionId),currentEvent),getSessions:()=>sessions.map(session=>getSessionSnapshot(session,currentEvent)),setPenalty:applyPenalty,deleteSolve,undoDelete,setFocusMode,isFocusMode,repeatScramble:loadScramble});
 
+  new ResizeObserver(fitScrambleText).observe(document.querySelector('.scramble-center'));
+  if(document.fonts?.ready)document.fonts.ready.then(fitScrambleText);
   localStorage.setItem(EVENT_KEY,currentEvent);renderEventSelect();renderSessionSelect();renderSessionMenu();applyCompetitionUiState();applyLanguage();createNewScramble();
 })();
