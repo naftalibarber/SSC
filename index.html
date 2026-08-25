@@ -4,8 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SSC (Super Speed Cube)</title>
+  <meta name="theme-color" content="#111827">
   <link rel="icon" type="image/png" href="./ssc-logo.png">
   <link rel="apple-touch-icon" href="./ssc-logo.png">
+  <link rel="manifest" href="./manifest.webmanifest?v=20260825-2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alef:wght@400;700&family=Assistant:wght@300;400;500;600;700;800&family=Heebo:wght@300;400;500;600;700;800&family=Noto+Sans+Hebrew:wght@300;400;500;600;700;800&family=Rubik:wght@300;400;500;600;700;800&family=Audiowide&family=Chakra+Petch:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800&family=Oxanium:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -20,6 +22,7 @@
   <link rel="stylesheet" href="./code/css/event-selector.css?v=20260824-1">
   <link rel="stylesheet" href="./code/css/competition-mode.css?v=20260825-1">
   <link id="sscTrainingStyles" rel="stylesheet" href="./code/css/training-upgrades.css?v=20260825-1">
+  <link id="sscAdvancedFeaturesStyle" rel="stylesheet" href="./code/css/advanced-features.css?v=20260825-2">
   <script src="https://cdn.cubing.net/v0/js/scramble-display" type="module"></script>
   <script src="https://cdn.cubing.net/v0/js/cubing/twisty" type="module"></script>
   <style>
@@ -109,6 +112,20 @@
   <script src="./code/js/scramble-history.js?v=20260825-quality-1"></script>
   <script src="./code/js/settings.js?v=20260825-quality-1"></script>
   <script src="./code/js/import-export.js?v=20260825-quality-1"></script>
+  <script src="./code/js/advanced-features.js?v=20260825-2"></script>
   <script src="./code/js/hebrew-i18n-fixes.js?v=20260825-quality-1"></script>
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',async()=>{
+        try{
+          const registration=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+          if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});
+          registration.update().catch(()=>{});
+        }catch(error){
+          console.warn('SSC service worker registration failed',error);
+        }
+      });
+    }
+  </script>
 </body>
 </html>
