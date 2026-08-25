@@ -7,29 +7,37 @@
   const SVG_NS='http://www.w3.org/2000/svg';
   const PREMIUM_2X2_EVENTS=new Set(['2x2','222']);
   const PREMIUM_3X3_EVENTS=new Set(['3x3','333']);
-  const SVG_GEOMETRY=Object.freeze({
+  const SVG_GEOMETRY_BASE=Object.freeze({
     face:96,
     faceGap:8,
-    outerMargin:3.5,
+    outerMargin:4,
     faceRadius:5.5,
-    facePadding:4,
-    sticker:28,
-    stickerGap:2,
-    stickerRadius:1.8,
-    cornerStickerRadius:2.2
+    facePadding:4
   });
-  const SVG_2X2_STICKER_GAP=3;
-  const SVG_2X2_STICKER=(SVG_GEOMETRY.face-(SVG_GEOMETRY.facePadding*2)-SVG_2X2_STICKER_GAP)/2;
-  const SVG_2X2_GEOMETRY=Object.freeze({
-    face:SVG_GEOMETRY.face,
-    faceGap:SVG_GEOMETRY.faceGap,
-    outerMargin:SVG_GEOMETRY.outerMargin,
-    faceRadius:SVG_GEOMETRY.faceRadius,
-    facePadding:SVG_GEOMETRY.facePadding,
-    sticker:SVG_2X2_STICKER,
-    stickerGap:SVG_2X2_STICKER_GAP,
-    stickerRadius:SVG_2X2_STICKER*(SVG_GEOMETRY.stickerRadius/SVG_GEOMETRY.sticker),
-    cornerStickerRadius:SVG_2X2_STICKER*(SVG_GEOMETRY.cornerStickerRadius/SVG_GEOMETRY.sticker)
+  const SVG_PUZZLE_GEOMETRY=Object.freeze({
+    2:Object.freeze({stickerGap:2,stickerRadius:2.7642857143,cornerStickerRadius:3.3785714286}),
+    3:Object.freeze({stickerGap:2,stickerRadius:1.8,cornerStickerRadius:2.2})
+  });
+
+  function createSvgGeometry(n){
+    const puzzle=SVG_PUZZLE_GEOMETRY[n]||SVG_PUZZLE_GEOMETRY[3];
+    const sticker=(SVG_GEOMETRY_BASE.face-(2*SVG_GEOMETRY_BASE.facePadding)-((n-1)*puzzle.stickerGap))/n;
+    const geometry=Object.freeze({...SVG_GEOMETRY_BASE,...puzzle,sticker});
+    validateSvgGeometry(n,geometry);
+    return geometry;
+  }
+
+  function validateSvgGeometry(n,geometry){
+    const occupied=(2*geometry.facePadding)+(n*geometry.sticker)+((n-1)*geometry.stickerGap);
+    console.assert(Number.isInteger(geometry.sticker),'Sticker geometry should use integer SVG units');
+    console.assert(geometry.sticker>0&&geometry.sticker===Math.trunc(geometry.sticker),'Sticker size must be a positive integer');
+    console.assert(geometry.sticker*geometry.sticker===geometry.sticker**2,'Sticker must be square');
+    console.assert(occupied===geometry.face,'Sticker rows and columns must exactly fill the face');
+  }
+
+  const SVG_GEOMETRY_BY_SIZE=Object.freeze({
+    2:createSvgGeometry(2),
+    3:createSvgGeometry(3)
   });
   const SVG_FACE_POSITIONS=Object.freeze({
     U:[1,0],
@@ -42,7 +50,7 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260825-2';
+    const cubeHref='./code/css/cube-preview.css?v=20260825-3';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -185,7 +193,17 @@
   }
 
   function getSvgGeometry(n){
-    return n===2?SVG_2X2_GEOMETRY:SVG_GEOMETRY;
+    return SVG_GEOMETRY_BY_SIZE[n]||SVG_GEOMETRY_BY_SIZE[3];
+  }
+
+  function getStickerRect(faceX,faceY,row,col,n,geometry){
+    const step=geometry.sticker+geometry.stickerGap;
+    return Object.freeze({
+      x:faceX+geometry.facePadding+col*step,
+      y:faceY+geometry.facePadding+row*step,
+      width:geometry.sticker,
+      height:geometry.sticker
+    });
   }
 
   function renderCubeSvg(container,faces,n){
@@ -225,10 +243,9 @@
         for(let col=0;col<n;col++){
           const colorFace=faces[face][row][col]||face;
           const color=colors[colorFace]||DEFAULT_COLORS[colorFace];
-          const x=faceX+g.facePadding+col*(g.sticker+g.stickerGap);
-          const y=faceY+g.facePadding+row*(g.sticker+g.stickerGap);
+          const rect=getStickerRect(faceX,faceY,row,col,n,g);
           const isCorner=(row===0||row===n-1)&&(col===0||col===n-1);
-          appendStickerSurface(faceGroup,x,y,g.sticker,isCorner?g.cornerStickerRadius:g.stickerRadius,color);
+          appendStickerSurface(faceGroup,rect.x,rect.y,rect.width,isCorner?g.cornerStickerRadius:g.stickerRadius,color);
         }
       }
       svg.appendChild(faceGroup);
