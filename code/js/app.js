@@ -445,21 +445,23 @@
     const primaryModifier=event.ctrlKey||event.metaKey;
     if(primaryModifier&&!event.altKey){
       const key=event.key.toLowerCase();
-      const eventShortcuts={1:'sq1',2:'222',3:'333',4:'444',5:'555',6:'666',7:'777',p:'pyram',b:'333bf',s:'skewb',c:'clock',f:'fto'};
-      if(key==='?'||(event.code==='Slash'&&event.shiftKey)){event.preventDefault();openShortcuts();return;}
-      if(key==='z'){event.preventDefault();undoDelete();return;}
-      if(key==='m'){event.preventDefault();shortcutKeysDown.add('m');pendingMegaminxShortcut=true;return;}
-      if(key==='b'&&shortcutKeysDown.has('m')){event.preventDefault();pendingMegaminxShortcut=false;setEvent('333mbf');return;}
-      if(key==='d'||key==='+'||event.code==='NumpadAdd'||key==='n'){
+      const code=event.code;
+      const eventShortcuts={Digit1:'sq1',Numpad1:'sq1',Digit2:'222',Numpad2:'222',Digit3:'333',Numpad3:'333',Digit4:'444',Numpad4:'444',Digit5:'555',Numpad5:'555',Digit6:'666',Numpad6:'666',Digit7:'777',Numpad7:'777',KeyP:'pyram',KeyB:'333bf',KeyS:'skewb',KeyC:'clock',KeyF:'fto'};
+      if(code==='Slash'&&event.shiftKey){event.preventDefault();openShortcuts();return;}
+      if(code==='KeyZ'){event.preventDefault();undoDelete();return;}
+      if(code==='KeyM'){event.preventDefault();shortcutKeysDown.add('KeyM');pendingMegaminxShortcut=true;return;}
+      if(code==='KeyB'&&shortcutKeysDown.has('KeyM')){event.preventDefault();pendingMegaminxShortcut=false;setEvent('333mbf');return;}
+      const plusShortcut=code==='NumpadAdd'||(code==='Equal'&&event.shiftKey)||key==='+';
+      if(code==='KeyD'||plusShortcut||code==='KeyN'){
         event.preventDefault();const latest=currentSessionHistory()[0];if(!latest)return;
-        if(key==='d'){if(applyPenalty(latest.id,'DNF'))renderHistory();return;}
-        if(key==='+'||event.code==='NumpadAdd'){if(applyPenalty(latest.id,'+2'))renderHistory();return;}
+        if(code==='KeyD'){if(applyPenalty(latest.id,'DNF'))renderHistory();return;}
+        if(plusShortcut){if(applyPenalty(latest.id,'+2'))renderHistory();return;}
         if(deleteSolve(latest.id))renderHistory();return;
       }
-      if(eventShortcuts[key]){event.preventDefault();setEvent(eventShortcuts[key]);return;}
+      if(eventShortcuts[code]){event.preventDefault();setEvent(eventShortcuts[code]);return;}
     }
   });
-  document.addEventListener('keyup',event=>{const key=event.key.toLowerCase();if(key==='m'&&shortcutKeysDown.has('m')){shortcutKeysDown.delete('m');const openMegaminx=pendingMegaminxShortcut;pendingMegaminxShortcut=false;if(openMegaminx&&!isEditableTarget(event.target)){event.preventDefault();setEvent('minx');}}if(event.code!=='Space'||isEditableTarget(event.target))return;event.preventDefault();timer.release();});
+  document.addEventListener('keyup',event=>{if(event.code==='KeyM'&&shortcutKeysDown.has('KeyM')){shortcutKeysDown.delete('KeyM');const openMegaminx=pendingMegaminxShortcut;pendingMegaminxShortcut=false;if(openMegaminx&&!isEditableTarget(event.target)){event.preventDefault();setEvent('minx');}}if(event.code!=='Space'||isEditableTarget(event.target))return;event.preventDefault();timer.release();});
 
   els.touchTimer.addEventListener('pointerdown',event=>{event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&!currentScramble)return;els.touchTimer.setPointerCapture?.(event.pointerId);timer.press();});
   els.touchTimer.addEventListener('pointerup',event=>{event.preventDefault();timer.release();});
