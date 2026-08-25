@@ -3,8 +3,7 @@
 
   const scrambleEl=document.getElementById('scramble');
   const prevButton=document.getElementById('prevScramble');
-  const newButton=document.getElementById('newScramble');
-  if(!scrambleEl||!prevButton||!newButton)return;
+  if(!scrambleEl||!prevButton)return;
 
   const backStacks=new Map();
   const currentByEvent=new Map();
@@ -56,10 +55,6 @@
     const eventId=normalizeEventId(event.detail?.eventId||currentEvent());
     scrambleEl.dataset.eventId=eventId;
     updateButton(eventId);
-  });
-
-  newButton.addEventListener('click',()=>{
-    // app.js owns async generation; the observer records only completed scrambles.
   });
 
   updateButton();
