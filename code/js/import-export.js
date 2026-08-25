@@ -14,7 +14,7 @@
     'rubiksCubeTimerHistoryV1','rubiksCubeTimerPuzzleV1','rubiksCubeTimerEventV2','sscHistoryMetricsV1','sscLanguageV1',
     'sscGeneralSettingsV1','sscCubeColorsV1','sscCubePreviewSizeV1','sscPreviewModeV1','sscPreviewInteractiveV1','sscCustomTagsV1',
     'sscSessionsV1','sscActiveSessionV1','sscSessionsByPuzzleV2','sscActiveSessionByPuzzleV2','sscSessionsByEventV3','sscActiveSessionByEventV3',
-    'sscThemeV1','sscTextSizeV1','sscFontV1','sscPrimaryColorV1'
+    'sscThemeV1','sscTextSizeV1','sscFontV1','sscPrimaryColorV1','sscTrainingStateV1','sscTrainingGoalsV1'
   ];
 
   const modal=document.getElementById('importExportModal');
@@ -36,7 +36,7 @@
   function collectStorage(){const storage={};KEYS.forEach(key=>{const value=localStorage.getItem(key);if(value!==null)storage[key]=value;});return storage;}
   function currentBackup(){
     const storage=collectStorage();
-    return{app:APP,version:1,backupVersion:BACKUP_VERSION,exportedAt:new Date().toISOString(),sessions:safeJson(storage[SESSIONS_KEY],{}),solves:safeJson(storage[HISTORY_KEY],[]),settings:safeJson(storage[GENERAL_SETTINGS_KEY],{}),customTags:safeJson(storage[CUSTOM_TAGS_KEY],[]),activeSessions:safeJson(storage[ACTIVE_KEY],{}),currentEvent:storage[EVENT_KEY]||'333',storage};
+    return{app:APP,version:1,backupVersion:BACKUP_VERSION,exportedAt:new Date().toISOString(),sessions:safeJson(storage[SESSIONS_KEY],{}),solves:safeJson(storage[HISTORY_KEY],[]),settings:safeJson(storage[GENERAL_SETTINGS_KEY],{}),customTags:safeJson(storage[CUSTOM_TAGS_KEY],[]),training:safeJson(storage.sscTrainingStateV1,{}),goals:safeJson(storage.sscTrainingGoalsV1,[]),activeSessions:safeJson(storage[ACTIVE_KEY],{}),currentEvent:storage[EVENT_KEY]||'333',storage};
   }
 
   function validDate(value){return typeof value==='string'&&!Number.isNaN(new Date(value).getTime());}

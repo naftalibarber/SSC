@@ -8,6 +8,8 @@ const PRECACHE=[
   './code/js/app.js',
   './code/js/import-export.js',
   './code/js/advanced-features.js',
+  './code/js/training-data.js',
+  './code/js/training.js',
   './code/js/scramble-generators.js',
   './code/js/cube2x2.js',
   './code/js/scramble2x2.js',
