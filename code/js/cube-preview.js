@@ -8,27 +8,24 @@
   const PREMIUM_2X2_EVENTS=new Set(['2x2','222']);
   const PREMIUM_3X3_EVENTS=new Set(['3x3','333']);
   const SVG_GEOMETRY_BASE=Object.freeze({
-    face:96,
+    stickerSize:32,
+    stickerGap:0,
     faceGap:8,
-    outerMargin:4,
-    faceRadius:5.5,
-    facePadding:4
-  });
-  const SVG_PUZZLE_GEOMETRY=Object.freeze({
-    2:Object.freeze({stickerGap:2,stickerRadius:2.7642857143,cornerStickerRadius:3.3785714286}),
-    3:Object.freeze({stickerGap:2,stickerRadius:1.8,cornerStickerRadius:2.2})
+    outerMargin:1,
+    gridLine:1
   });
 
   function createSvgGeometry(n){
-    const puzzle=SVG_PUZZLE_GEOMETRY[n]||SVG_PUZZLE_GEOMETRY[3];
-    const sticker=(SVG_GEOMETRY_BASE.face-(2*SVG_GEOMETRY_BASE.facePadding)-((n-1)*puzzle.stickerGap))/n;
-    const geometry=Object.freeze({...SVG_GEOMETRY_BASE,...puzzle,sticker});
+    const sticker=SVG_GEOMETRY_BASE.stickerSize;
+    const stickerGap=SVG_GEOMETRY_BASE.stickerGap;
+    const face=(n*sticker)+((n-1)*stickerGap);
+    const geometry=Object.freeze({...SVG_GEOMETRY_BASE,face,sticker});
     validateSvgGeometry(n,geometry);
     return geometry;
   }
 
   function validateSvgGeometry(n,geometry){
-    const occupied=(2*geometry.facePadding)+(n*geometry.sticker)+((n-1)*geometry.stickerGap);
+    const occupied=(n*geometry.sticker)+((n-1)*geometry.stickerGap);
     console.assert(Number.isInteger(geometry.sticker),'Sticker geometry should use integer SVG units');
     console.assert(geometry.sticker>0&&geometry.sticker===Math.trunc(geometry.sticker),'Sticker size must be a positive integer');
     console.assert(geometry.sticker*geometry.sticker===geometry.sticker**2,'Sticker must be square');
@@ -50,7 +47,7 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260825-3';
+    const cubeHref='./code/css/cube-preview.css?v=20260825-flat-net-1';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -166,30 +163,34 @@
     return node;
   }
 
-  function appendStickerSurface(group,x,y,size,radius,color){
+  function appendSticker(group,x,y,size,color,face,row,col){
     group.appendChild(svgEl('rect',{
       class:'ssc-cube-svg-sticker',
-      x,y,width:size,height:size,rx:radius,ry:radius,
-      fill:color
-    }));
-    group.appendChild(svgEl('rect',{
-      class:'ssc-cube-svg-surface',
-      x,y,width:size,height:size,rx:radius,ry:radius,
-      fill:'url(#sscStickerSurface)'
+      x,y,width:size,height:size,
+      fill:color,
+      'data-face':face,
+      'data-row':row,
+      'data-col':col
     }));
   }
 
-  function appendStickerSurfaceDefs(svg){
-    const defs=svgEl('defs');
-    const gradient=svgEl('linearGradient',{
-      id:'sscStickerSurface',
-      x1:'0%',y1:'0%',x2:'0%',y2:'100%'
-    });
-    gradient.appendChild(svgEl('stop',{offset:'0%','stop-color':'#ffffff','stop-opacity':'.14'}));
-    gradient.appendChild(svgEl('stop',{offset:'46%','stop-color':'#ffffff','stop-opacity':'.025'}));
-    gradient.appendChild(svgEl('stop',{offset:'100%','stop-color':'#000000','stop-opacity':'.065'}));
-    defs.appendChild(gradient);
-    svg.appendChild(defs);
+  function appendFaceGrid(group,faceX,faceY,n,geometry){
+    const path=[];
+    for(let index=1;index<n;index++){
+      const offset=index*(geometry.sticker+geometry.stickerGap)-(geometry.stickerGap/2);
+      path.push(`M ${faceX+offset} ${faceY} V ${faceY+geometry.face}`);
+      path.push(`M ${faceX} ${faceY+offset} H ${faceX+geometry.face}`);
+    }
+    if(path.length)group.appendChild(svgEl('path',{
+      class:'ssc-cube-svg-grid-lines',
+      d:path.join(' '),
+      'stroke-width':geometry.gridLine
+    }));
+    group.appendChild(svgEl('rect',{
+      class:'ssc-cube-svg-face-outline',
+      x:faceX,y:faceY,width:geometry.face,height:geometry.face,
+      'stroke-width':geometry.gridLine
+    }));
   }
 
   function getSvgGeometry(n){
@@ -199,14 +200,16 @@
   function getStickerRect(faceX,faceY,row,col,n,geometry){
     const step=geometry.sticker+geometry.stickerGap;
     return Object.freeze({
-      x:faceX+geometry.facePadding+col*step,
-      y:faceY+geometry.facePadding+row*step,
+      x:faceX+col*step,
+      y:faceY+row*step,
       width:geometry.sticker,
       height:geometry.sticker
     });
   }
 
-  function renderCubeSvg(container,faces,n){
+  function renderCubeSvg({container,cubeOrder,cubeState,palette=colors,displayScale=1,theme='light'}){
+    const n=cubeOrder;
+    const faces=cubeState;
     const g=getSvgGeometry(n);
     const viewWidth=(g.outerMargin*2)+(g.face*4)+(g.faceGap*3);
     const viewHeight=(g.outerMargin*2)+(g.face*3)+(g.faceGap*2);
@@ -216,10 +219,10 @@
       preserveAspectRatio:'xMidYMid meet',
       'aria-hidden':'true',
       focusable:'false',
-      'shape-rendering':'geometricPrecision'
+      'shape-rendering':'crispEdges',
+      'data-display-scale':displayScale,
+      'data-theme':theme
     });
-
-    appendStickerSurfaceDefs(svg);
 
     for(const face of FACE_ORDER){
       const [gridX,gridY]=SVG_FACE_POSITIONS[face];
@@ -229,25 +232,15 @@
         class:'ssc-cube-svg-face',
         'data-face':face
       });
-      faceGroup.appendChild(svgEl('rect',{
-        class:'ssc-cube-svg-plastic',
-        x:faceX,
-        y:faceY,
-        width:g.face,
-        height:g.face,
-        rx:g.faceRadius,
-        ry:g.faceRadius
-      }));
-
       for(let row=0;row<n;row++){
         for(let col=0;col<n;col++){
           const colorFace=faces[face][row][col]||face;
-          const color=colors[colorFace]||DEFAULT_COLORS[colorFace];
+          const color=palette[colorFace]||DEFAULT_COLORS[colorFace];
           const rect=getStickerRect(faceX,faceY,row,col,n,g);
-          const isCorner=(row===0||row===n-1)&&(col===0||col===n-1);
-          appendStickerSurface(faceGroup,rect.x,rect.y,rect.width,isCorner?g.cornerStickerRadius:g.stickerRadius,color);
+          appendSticker(faceGroup,rect.x,rect.y,rect.width,color,face,row,col);
         }
       }
+      appendFaceGrid(faceGroup,faceX,faceY,n,g);
       svg.appendChild(faceGroup);
     }
 
@@ -258,11 +251,19 @@
   }
 
   function render3x3Svg(container,faces){
-    renderCubeSvg(container,faces,3);
+    renderCubeSvg({
+      container,cubeOrder:3,cubeState:faces,palette:colors,
+      displayScale:Number(document.documentElement.style.getPropertyValue('--ssc-preview-actual-scale'))||1,
+      theme:document.documentElement.dataset.theme||'light'
+    });
   }
 
   function render2x2Svg(container,faces){
-    renderCubeSvg(container,faces,2);
+    renderCubeSvg({
+      container,cubeOrder:2,cubeState:faces,palette:colors,
+      displayScale:Number(document.documentElement.style.getPropertyValue('--ssc-preview-actual-scale'))||1,
+      theme:document.documentElement.dataset.theme||'light'
+    });
   }
 
   function renderLegacyGrid(container,faces,n){
