@@ -5,7 +5,7 @@
     // Core timer data and current event selection.
     'rubiksCubeTimerHistoryV1','rubiksCubeTimerPuzzleV1','rubiksCubeTimerEventV2','sscHistoryMetricsV1','sscLanguageV1',
     // Current settings and preview state.
-    'sscGeneralSettingsV1','sscCubeColorsV1','sscCubePreviewSizeV1','sscPreviewModeV1','sscPreviewInteractiveV1','ssc-ui-version',
+    'sscGeneralSettingsV1','sscCubeColorsV1','sscCubePreviewSizeV1','sscPreviewModeV1','sscPreviewInteractiveV1',
     // Session migrations: keep both current and legacy keys in backups.
     'sscSessionsV1','sscActiveSessionV1','sscSessionsByPuzzleV2','sscActiveSessionByPuzzleV2','sscSessionsByEventV3','sscActiveSessionByEventV3',
     // Older appearance keys retained for backwards-compatible imports/exports.
@@ -18,6 +18,8 @@
   const importInput=document.getElementById('importData');
   const status=document.getElementById('importExportStatus');
   if(!modal||!openBtn||!exportBtn||!importInput)return;
+
+  try{localStorage.removeItem('ssc-ui-version');}catch{}
 
   const isHebrew=()=>document.documentElement.lang==='he';
   const setStatus=(msg,ok=true)=>{if(status){status.textContent=msg;status.style.color=ok?'var(--ready)':'var(--danger)';}};
