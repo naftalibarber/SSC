@@ -283,7 +283,11 @@
   openButton?.addEventListener('click',openModal);
   closeButton?.addEventListener('click',closeModal);
   modal?.querySelector('[data-close-settings]')?.addEventListener('click',closeModal);
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&modal&&!modal.hidden)closeModal();});
+  document.addEventListener('keydown',event=>{
+    if(event.key!=='Escape'||!modal)return;
+    if(!modal.hidden){closeModal();return;}
+    if(event.defaultPrevented&&modal.contains(document.activeElement))openButton?.focus();
+  });
 
   languageSelect?.addEventListener('change',()=>{
     if(languageSelect.value!==currentLanguage())hiddenLanguageToggle?.click();
