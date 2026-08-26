@@ -47,6 +47,10 @@ html[dir="rtl"] .session-menu-row.active{box-shadow:inset -3px 0 0 var(--accent)
 html[dir="rtl"] .solve-detail-row strong{text-align:end}
 .solve-details-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .shortcuts-grid{display:grid;gap:5px}
+.shortcuts-modal .settings-dialog{display:flex;flex-direction:column;max-height:calc(100dvh - 36px);overflow:hidden}
+.shortcuts-modal .settings-dialog-head{flex:0 0 auto}
+.shortcuts-modal .shortcuts-grid{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-inline-end:4px}
+@supports not (height:100dvh){.shortcuts-modal .settings-dialog{max-height:calc(100vh - 36px)}}
 .shortcuts-grid>div{display:grid;grid-template-columns:130px 1fr;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
 .shortcuts-grid kbd{justify-self:start;direction:ltr;border:1px solid var(--border);background:var(--soft);border-radius:7px;padding:4px 7px;font:700 .78em/1.1 var(--app-font);box-shadow:0 1px 0 var(--border)}
 .shortcuts-grid span{font-size:.86em}
@@ -80,6 +84,7 @@ html[data-focus-mode="on"] .cube-preview-card{margin-inline-start:auto}
   html[data-focus-mode="on"] #timer{font-size:clamp(82px,23vw,150px)}
   .solve-detail-row{grid-template-columns:95px minmax(0,1fr)}
   .shortcuts-grid>div{grid-template-columns:105px 1fr}
+  .shortcuts-modal .settings-dialog{max-height:calc(100dvh - 20px)}
 }
 @media(max-width:560px){
   .session-menu-actions{grid-template-columns:1fr}
