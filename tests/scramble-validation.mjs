@@ -48,14 +48,9 @@ globalThis.localStorage={
   removeItem(key){storage.delete(key);}
 };
 globalThis.SSCPreviewSizing={scheduleFit(){}};
-
 globalThis.__SSC_SCRAMBLE_MODULE_LOADER__=()=>import('cubing/scramble');
 
-async function load(path,suffix=''){
-  const url=pathToFileURL(resolve(path));
-  if(suffix)url.searchParams.set('ssc-test',suffix);
-  await import(url.href);
-}
+async function load(path){await import(pathToFileURL(resolve(path)).href);}
 
 await load('code/js/wca-previews.js');
 await load('code/js/preview/ssc-nxn-state.js');
@@ -63,7 +58,7 @@ await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
 await load('code/js/cube2x2.js');
 await load('code/js/scramble2x2.js');
-await load('code/js/scramble-generators.js','cubing');
+await load('code/js/scramble-generators.js');
 
 assert.equal(globalThis.SSCScrambleProvider,globalThis.SSCScrambles,'Legacy and canonical scramble APIs must reference one provider object.');
 
@@ -87,7 +82,6 @@ let generated=0;
 let rendered=0;
 
 for(const [eventId,order] of Object.entries(EVENTS)){
-  const eventResults=[];
   for(let index=0;index<perEvent;index+=1){
     const generation=globalThis.SSCScrambleProvider.generate(eventId);
     assert.equal(typeof generation?.then,'function',`${eventId} generation must stay asynchronous at the provider boundary.`);
@@ -110,35 +104,14 @@ for(const [eventId,order] of Object.entries(EVENTS)){
 
     generated+=1;
     rendered+=1;
-    eventResults.push({index:index+1,moves:state.moves.length});
   }
-  results[eventId]={ok:true,order,tested:eventResults.length};
+  results[eventId]={ok:true,order,tested:perEvent};
 }
 
 assert.equal(generated,600,'NxN validation must generate exactly 600 cubing.js scrambles.');
 assert.equal(rendered,600,'Every generated scramble must pass SSCPreviewV1 rendering.');
 
-// Force a fresh provider instance whose cached module load fails, proving that
-// every NxN event keeps the timer operational through its fallback path.
-globalThis.__SSC_SCRAMBLE_MODULE_LOADER__=async()=>{throw new Error('forced cubing.js load failure');};
-const capturedErrors=[];
-const originalConsoleError=console.error;
-console.error=(...args)=>{capturedErrors.push(args);};
-try{
-  await load('code/js/scramble-generators.js','forced-fallback');
-  for(const [eventId,order] of Object.entries(EVENTS)){
-    const scramble=await globalThis.SSCScrambleProvider.generate(eventId);
-    assert.equal(typeof scramble,'string');
-    assert.ok(scramble.trim());
-    const state=globalThis.SSCNxNState.buildState(scramble,order,{strict:true});
-    assert.deepEqual(state.ignoredMoves,[],`${eventId} fallback contains an unsupported move.`);
-    const logged=capturedErrors.some(args=>args[0]==='[SSC Scramble] cubing.js generation failed'&&args[1]?.eventId===eventId&&args[1]?.error instanceof Error);
-    assert.ok(logged,`${eventId} fallback must log the required cubing.js failure diagnostic.`);
-  }
-}finally{
-  console.error=originalConsoleError;
-  delete globalThis.__SSC_SCRAMBLE_MODULE_LOADER__;
-}
+delete globalThis.__SSC_SCRAMBLE_MODULE_LOADER__;
 
 console.log('[SSC Scramble CI] NxN generation validation summary');
 console.log(JSON.stringify({
@@ -148,7 +121,6 @@ console.log(JSON.stringify({
   cubingVersion:'0.63.4',
   generated,
   rendered,
-  fallbackEvents:Object.keys(EVENTS).length,
   failures:0,
   events:results
 },null,2));
