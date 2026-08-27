@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SSC Preview Lab</title>
-  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260827-2">
+  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260827-3">
   <style>
     :root{font-family:Arial,sans-serif;color:#111827;background:#f3f4f6}
     *{box-sizing:border-box}
@@ -22,7 +22,7 @@
     #previewFrame{width:300px;height:300px;display:grid;place-items:center;overflow:hidden;border:1px dashed #cbd5e1;border-radius:12px}
     #preview{width:100%;height:100%;min-width:0;min-height:0}
     #status{margin-top:12px;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left;color:#475569}
-    .validation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+    .validation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
     .validation-card{border:1px solid #e2e8f0;border-radius:12px;padding:13px}
     .validation-card strong{display:flex;justify-content:space-between;gap:10px}
     .validation-card [data-result]{font-weight:800}
@@ -30,7 +30,8 @@
     .validation-summary{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font:14px/1.4 monospace;direction:ltr}
     #validationFailure{margin-top:12px;padding:12px;border-radius:10px;background:#fff7ed;color:#9a3412;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left}
     #validationFailure[hidden]{display:none}
-    @media(max-width:820px){.controls{grid-template-columns:1fr 1fr}.controls input{grid-column:1/-1}.validation-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.validation-grid{grid-template-columns:1fr}}
+    @media(max-width:820px){.controls{grid-template-columns:1fr 1fr}.controls input{grid-column:1/-1}}
   </style>
 </head>
 <body>
@@ -63,10 +64,11 @@
 
     <section class="panel">
       <h2>Automated Validation</h2>
-      <p>Reference: cubing.js KPuzzle state + PuzzleGeometry sticker mapping. 100 random WCA scrambles per event, plus deterministic regression cases.</p>
+      <p>Reference: cubing.js KPuzzle state + PuzzleGeometry sticker mapping. 100 random WCA scrambles per event, plus deterministic regression cases and explicit 4×4 wide-move tests.</p>
       <div class="validation-grid">
         <div class="validation-card"><strong><span>2×2</span><span id="validation222" data-result>NOT RUN</span></strong><div id="validation222Meta"></div></div>
         <div class="validation-card"><strong><span>3×3</span><span id="validation333" data-result>NOT RUN</span></strong><div id="validation333Meta"></div></div>
+        <div class="validation-card"><strong><span>4×4</span><span id="validation444" data-result>NOT RUN</span></strong><div id="validation444Meta"></div></div>
       </div>
       <div class="validation-summary">
         <span>Tested: <strong id="validationTested">0</strong></span>
@@ -82,10 +84,10 @@
     </section>
   </main>
 
-  <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-2"></script>
-  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260827-2"></script>
-  <script src="./code/js/preview/ssc-preview-validation.js?v=20260827-2"></script>
-  <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-2"></script>
+  <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-3"></script>
+  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260827-3"></script>
+  <script src="./code/js/preview/ssc-preview-validation.js?v=20260827-3"></script>
+  <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-3"></script>
   <script>
     (()=>{
       const event=document.getElementById('event');
@@ -95,6 +97,7 @@
       const previewSize=document.getElementById('previewSize');
       const status=document.getElementById('status');
       const validateButton=document.getElementById('validate');
+      const validationEvents=['222','333','444'];
 
       function draw(){
         try{
@@ -130,14 +133,13 @@
 
       async function runValidation(){
         validateButton.disabled=true;
-        setValidationState('validation222','RUNNING','is-running');
-        setValidationState('validation333','RUNNING','is-running');
-        status.textContent='VALIDATION · running 222 + 333 against cubing.js…';
+        validationEvents.forEach(eventId=>setValidationState(`validation${eventId}`,'RUNNING','is-running'));
+        status.textContent='VALIDATION · running 222 + 333 + 444 against cubing.js…';
         const failureBox=document.getElementById('validationFailure');
         failureBox.hidden=true;
         try{
           const report=await window.SSCPreviewV1.validateAll({count:100});
-          for(const eventId of ['222','333']){
+          for(const eventId of validationEvents){
             const result=report.results[eventId];
             setValidationState(`validation${eventId}`,result.ok?'PASS':'FAIL',result.ok?'is-pass':'is-fail');
             document.getElementById(`validation${eventId}Meta`).textContent=`Random: ${result.tested} · Deterministic: ${result.deterministicTested} · Failed: ${result.failed}`;
@@ -155,8 +157,7 @@
           }
           return report;
         }catch(error){
-          setValidationState('validation222','ERROR','is-fail');
-          setValidationState('validation333','ERROR','is-fail');
+          validationEvents.forEach(eventId=>setValidationState(`validation${eventId}`,'ERROR','is-fail'));
           failureBox.hidden=false;
           failureBox.textContent=`VALIDATION ERROR · ${error.message}`;
           status.textContent=`VALIDATION ERROR · ${error.message}`;
