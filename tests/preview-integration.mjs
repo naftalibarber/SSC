@@ -50,6 +50,7 @@ globalThis.SSCPreviewV1={
     if(raw==='4x4'||raw==='4×4')return'444';
     if(raw==='5x5'||raw==='5×5')return'555';
     if(raw==='6x6'||raw==='6×6')return'666';
+    if(raw==='7x7'||raw==='7×7')return'777';
     return raw;
   },
   render(container,scramble,eventId){
@@ -72,7 +73,8 @@ assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('3x3'),true);
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('4×4'),true);
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('5x5'),true);
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('6×6'),true);
-assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('777'),false);
+assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('7x7'),true);
+assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('minx'),false);
 
 const twoContainer=new FakeElement();
 const twoResult=await globalThis.SSCCubePreview.render(twoContainer,"R U R'",'222');
@@ -93,23 +95,27 @@ assert.equal(fiveResult.engine,'v1');
 const sixContainer=new FakeElement();
 const sixResult=await globalThis.SSCCubePreview.render(sixContainer,"3Rw U2 Fw' 3Lw D2",'666');
 assert.equal(sixResult.engine,'v1');
-assert.equal(v1Calls,5);
-assert.equal(legacyCalls,0);
-assert.equal(sixContainer.dataset.previewMode,'2d');
 
 const sevenContainer=new FakeElement();
-const sevenResult=await globalThis.SSCCubePreview.render(sevenContainer,'3Rw U2 Fw','777');
-assert.equal(sevenResult.engine,'legacy');
+const sevenResult=await globalThis.SSCCubePreview.render(sevenContainer,"3Rw U2 Fw' 3Lw D2",'777');
+assert.equal(sevenResult.engine,'v1');
+assert.equal(v1Calls,6);
+assert.equal(legacyCalls,0);
+assert.equal(sevenContainer.dataset.previewMode,'2d');
+
+const legacyContainer=new FakeElement();
+const legacyResult=await globalThis.SSCCubePreview.render(legacyContainer,'R++ D--','minx');
+assert.equal(legacyResult.engine,'legacy');
 assert.equal(legacyCalls,1);
-assert.equal(v1Calls,5);
+assert.equal(v1Calls,6);
 
 v1Mode='throw';
 legacyMode='ok';
 const fallbackContainer=new FakeElement();
-const fallbackResult=await globalThis.SSCCubePreview.render(fallbackContainer,'3Rw U2 Fw','666');
+const fallbackResult=await globalThis.SSCCubePreview.render(fallbackContainer,'3Rw U2 Fw','777');
 assert.equal(fallbackResult.engine,'legacy');
 assert.equal(fallbackContainer.childElementCount,1);
-assert.equal(v1Calls,6);
+assert.equal(v1Calls,7);
 assert.equal(legacyCalls,2);
 
 legacyMode='throw';
@@ -119,16 +125,16 @@ assert.equal(emergencyResult.engine,'manager');
 assert.equal(emergencyResult.mode,'2d');
 assert.equal(emergencyContainer.childElementCount,1);
 assert.equal(managerCalls,1);
-assert.equal(v1Calls,7);
+assert.equal(v1Calls,8);
 assert.equal(legacyCalls,3);
 
 v1Mode='ok';
 legacyMode='ok';
 globalThis.SSC_FEATURES.previewV1=false;
 const disabledContainer=new FakeElement();
-const disabledResult=await globalThis.SSCCubePreview.render(disabledContainer,'3Rw U','666');
+const disabledResult=await globalThis.SSCCubePreview.render(disabledContainer,'3Rw U','777');
 assert.equal(disabledResult.engine,'legacy');
-assert.equal(v1Calls,7);
+assert.equal(v1Calls,8);
 assert.equal(legacyCalls,4);
 globalThis.SSC_FEATURES.previewV1=true;
 
@@ -139,7 +145,7 @@ assert.equal(legacySetColors,1);
 const reset=globalThis.SSCCubePreview.resetColors();
 assert.equal(reset.U,'#ffffff');
 assert.equal(legacyResetColors,1);
-assert.ok(fitCalls>=5);
+assert.ok(fitCalls>=6);
 
 const index=fs.readFileSync('index.html','utf8');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
@@ -165,8 +171,8 @@ assert.ok(positions.legacy<positions.bridge&&positions.bridge<positions.app);
 console.log('[SSC Preview CI] Integration summary');
 console.log(JSON.stringify({
   ok:true,
-  routedEvents:['222','333','444','555','666'],
-  legacyEventPreserved:'777',
+  routedEvents:['222','333','444','555','666','777'],
+  legacyEventPreserved:'minx',
   featureFlagSingle:true,
   fallbackToLegacy:true,
   emergencyLegacy2D:true,
