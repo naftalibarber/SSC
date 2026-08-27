@@ -6,7 +6,8 @@
     '222':Object.freeze({order:2,puzzleExport:'cube2x2x2'}),
     '333':Object.freeze({order:3,puzzleExport:'cube3x3x3'}),
     '444':Object.freeze({order:4,puzzleExport:'cube4x4x4'}),
-    '555':Object.freeze({order:5,puzzleExport:'cube5x5x5'})
+    '555':Object.freeze({order:5,puzzleExport:'cube5x5x5'}),
+    '666':Object.freeze({order:6,puzzleExport:'cube6x6x6'})
   });
   const BASIC_MOVES=Object.freeze(
     ['R','U','F','L','D','B'].flatMap(face=>[face,`${face}'`,`${face}2`])
@@ -28,6 +29,14 @@
     "Rw U2 Rw' U2",
     "Rw U Rw' F2 Uw' F Uw"
   ]);
+  const DEEP_WIDE_DETERMINISTIC_SCRAMBLES=Object.freeze([
+    ...['3Rw','3Uw','3Fw','3Lw','3Dw','3Bw'].flatMap(move=>[move,`${move}'`,`${move}2`]),
+    "3Rw 3Rw'","3Uw 3Uw'","3Fw 3Fw'","3Lw 3Lw'","3Dw 3Dw'","3Bw 3Bw'",
+    '3Rw 3Rw 3Rw 3Rw','3Uw 3Uw 3Uw 3Uw','3Fw 3Fw 3Fw 3Fw','3Lw 3Lw 3Lw 3Lw','3Dw 3Dw 3Dw 3Dw','3Bw 3Bw 3Bw 3Bw',
+    "3Rw U 3Rw' U'",
+    "3Rw U2 3Rw' U2",
+    "3Rw U 3Rw' F2 3Uw' F 3Uw"
+  ]);
 
   let cubingModulesPromise=null;
   const referenceContexts=new Map();
@@ -38,21 +47,22 @@
     if(raw==='3x3'||raw==='3×3')return'333';
     if(raw==='4x4'||raw==='4×4')return'444';
     if(raw==='5x5'||raw==='5×5')return'555';
+    if(raw==='6x6'||raw==='6×6')return'666';
     return raw;
   }
 
   function configFor(eventId){
     const normalized=normalizeEventId(eventId);
     const config=EVENT_CONFIG[normalized];
-    if(!config)throw new Error(`SSC Preview validation supports only 222, 333, 444 and 555; received ${String(eventId)}.`);
+    if(!config)throw new Error(`SSC Preview validation supports only 222, 333, 444, 555 and 666; received ${String(eventId)}.`);
     return{eventId:normalized,...config};
   }
 
   function deterministicScramblesFor(eventId){
     const {order}=configFor(eventId);
-    return order>=4
-      ?Object.freeze([...DETERMINISTIC_SCRAMBLES,...WIDE_DETERMINISTIC_SCRAMBLES])
-      :DETERMINISTIC_SCRAMBLES;
+    if(order>=6)return Object.freeze([...DETERMINISTIC_SCRAMBLES,...WIDE_DETERMINISTIC_SCRAMBLES,...DEEP_WIDE_DETERMINISTIC_SCRAMBLES]);
+    if(order>=4)return Object.freeze([...DETERMINISTIC_SCRAMBLES,...WIDE_DETERMINISTIC_SCRAMBLES]);
+    return DETERMINISTIC_SCRAMBLES;
   }
 
   function assertFaceArray(value,face,order){
@@ -268,7 +278,17 @@
   function firstMismatchLog(mismatch){
     if(!mismatch)return;
     console.error(
-`[SSC Preview Validation FAILED]\n\nevent: ${mismatch.eventId}\nscramble: ${mismatch.scramble||'(solved)'}\n\nface: ${mismatch.face}\nrow: ${mismatch.row}\ncol: ${mismatch.col}\n\nSSC: ${mismatch.sscValue}\nReference: ${mismatch.referenceValue}`
+`[SSC Preview Validation FAILED]
+
+event: ${mismatch.eventId}
+scramble: ${mismatch.scramble||'(solved)'}
+
+face: ${mismatch.face}
+row: ${mismatch.row}
+col: ${mismatch.col}
+
+SSC: ${mismatch.sscValue}
+Reference: ${mismatch.referenceValue}`
     );
   }
 
@@ -336,19 +356,20 @@
   }
 
   async function validateAll({count=100}={}){
-    const [two,three,four,five]=await Promise.all([
+    const [two,three,four,five,six]=await Promise.all([
       validate({eventId:'222',count}),
       validate({eventId:'333',count}),
       validate({eventId:'444',count}),
-      validate({eventId:'555',count})
+      validate({eventId:'555',count}),
+      validate({eventId:'666',count})
     ]);
     return Object.freeze({
-      ok:two.ok&&three.ok&&four.ok&&five.ok,
-      tested:two.tested+three.tested+four.tested+five.tested,
-      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested+five.deterministicTested,
-      totalTested:two.totalTested+three.totalTested+four.totalTested+five.totalTested,
-      failed:two.failed+three.failed+four.failed+five.failed,
-      results:Object.freeze({'222':two,'333':three,'444':four,'555':five})
+      ok:two.ok&&three.ok&&four.ok&&five.ok&&six.ok,
+      tested:two.tested+three.tested+four.tested+five.tested+six.tested,
+      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested+five.deterministicTested+six.deterministicTested,
+      totalTested:two.totalTested+three.totalTested+four.totalTested+five.totalTested+six.totalTested,
+      failed:two.failed+three.failed+four.failed+five.failed+six.failed,
+      results:Object.freeze({'222':two,'333':three,'444':four,'555':five,'666':six})
     });
   }
 
