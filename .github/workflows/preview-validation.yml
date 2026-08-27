@@ -1,0 +1,30 @@
+name: SSC Preview Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'code/js/preview/**'
+      - 'tests/preview-validation.mjs'
+      - '.github/workflows/preview-validation.yml'
+  pull_request:
+    paths:
+      - 'code/js/preview/**'
+      - 'tests/preview-validation.mjs'
+      - '.github/workflows/preview-validation.yml'
+
+jobs:
+  validate-preview-state:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install cubing.js reference engine
+        run: npm install --no-save --no-package-lock cubing@0.63.4
+      - name: Validate SSC state against cubing.js
+        run: node tests/preview-validation.mjs
