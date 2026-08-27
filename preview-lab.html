@@ -4,29 +4,40 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SSC Preview Lab</title>
-  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260827-1">
+  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260827-2">
   <style>
     :root{font-family:Arial,sans-serif;color:#111827;background:#f3f4f6}
     *{box-sizing:border-box}
     body{margin:0;padding:24px}
     main{width:min(1100px,100%);margin:auto;display:grid;gap:18px}
     .panel{background:#fff;border:1px solid #dbe1e8;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
-    h1{margin:0 0 6px;font-size:24px}
+    h1,h2{margin:0 0 6px}
+    h1{font-size:24px} h2{font-size:18px}
     p{margin:0;color:#64748b}
-    .controls{display:grid;grid-template-columns:160px 1fr auto auto;gap:10px;margin-top:16px}
+    .controls{display:grid;grid-template-columns:140px minmax(260px,1fr) 110px auto auto auto;gap:10px;margin-top:16px}
     select,input,button{font:inherit;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#111827}
     button{cursor:pointer;font-weight:700}
-    .preview-shell{height:min(68vh,620px);min-height:320px;display:grid;place-items:center;overflow:hidden}
+    button:disabled{opacity:.55;cursor:wait}
+    .preview-shell{min-height:440px;display:grid;place-items:center;overflow:auto}
+    #previewFrame{width:300px;height:300px;display:grid;place-items:center;overflow:hidden;border:1px dashed #cbd5e1;border-radius:12px}
     #preview{width:100%;height:100%;min-width:0;min-height:0}
     #status{margin-top:12px;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left;color:#475569}
-    @media(max-width:760px){.controls{grid-template-columns:1fr}.preview-shell{height:55vh}}
+    .validation-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+    .validation-card{border:1px solid #e2e8f0;border-radius:12px;padding:13px}
+    .validation-card strong{display:flex;justify-content:space-between;gap:10px}
+    .validation-card [data-result]{font-weight:800}
+    .is-pass{color:#15803d}.is-fail{color:#b91c1c}.is-running{color:#b45309}
+    .validation-summary{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font:14px/1.4 monospace;direction:ltr}
+    #validationFailure{margin-top:12px;padding:12px;border-radius:10px;background:#fff7ed;color:#9a3412;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left}
+    #validationFailure[hidden]{display:none}
+    @media(max-width:820px){.controls{grid-template-columns:1fr 1fr}.controls input{grid-column:1/-1}.validation-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
   <main>
     <section class="panel">
       <h1>SSC Preview Lab — Native V1</h1>
-      <p>סביבת פיתוח מבודדת ל־State Engine ול־SVG Renderer החדשים.</p>
+      <p>סביבת פיתוח מבודדת ל־State Engine, SVG Renderer ו־cubing.js validation.</p>
       <div class="controls">
         <select id="event">
           <option value="222">2×2</option>
@@ -37,34 +48,122 @@
           <option value="777">7×7</option>
         </select>
         <input id="scramble" value="R U R' U' F2 D L2 B R2 U2" aria-label="Scramble">
+        <select id="previewSize" aria-label="Preview size">
+          <option value="150">150px</option>
+          <option value="200">200px</option>
+          <option value="300" selected>300px</option>
+          <option value="400">400px</option>
+        </select>
         <button id="render" type="button">Render</button>
         <button id="test" type="button">Self Test</button>
+        <button id="validate" type="button">Run Validation</button>
       </div>
       <div id="status">Ready.</div>
     </section>
 
+    <section class="panel">
+      <h2>Automated Validation</h2>
+      <p>Reference: cubing.js KPuzzle state + PuzzleGeometry sticker mapping. 100 random WCA scrambles per event, plus deterministic regression cases.</p>
+      <div class="validation-grid">
+        <div class="validation-card"><strong><span>2×2</span><span id="validation222" data-result>NOT RUN</span></strong><div id="validation222Meta"></div></div>
+        <div class="validation-card"><strong><span>3×3</span><span id="validation333" data-result>NOT RUN</span></strong><div id="validation333Meta"></div></div>
+      </div>
+      <div class="validation-summary">
+        <span>Tested: <strong id="validationTested">0</strong></span>
+        <span>Deterministic: <strong id="validationDeterministic">0</strong></span>
+        <span>Total: <strong id="validationTotal">0</strong></span>
+        <span>Failed: <strong id="validationFailed">0</strong></span>
+      </div>
+      <div id="validationFailure" hidden></div>
+    </section>
+
     <section class="panel preview-shell">
-      <div id="preview"></div>
+      <div id="previewFrame"><div id="preview"></div></div>
     </section>
   </main>
 
-  <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-1"></script>
-  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260827-1"></script>
-  <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-1"></script>
+  <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-2"></script>
+  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260827-2"></script>
+  <script src="./code/js/preview/ssc-preview-validation.js?v=20260827-2"></script>
+  <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-2"></script>
   <script>
     (()=>{
       const event=document.getElementById('event');
       const scramble=document.getElementById('scramble');
       const preview=document.getElementById('preview');
+      const previewFrame=document.getElementById('previewFrame');
+      const previewSize=document.getElementById('previewSize');
       const status=document.getElementById('status');
+      const validateButton=document.getElementById('validate');
 
       function draw(){
         try{
           const result=window.SSCPreviewV1.render(preview,scramble.value,event.value,{strict:true});
-          status.textContent=`OK · ${result.order}x${result.order} · ${result.state.moves.length} moves · ${Object.keys(result.state.mapping).length} stickers`;
+          status.textContent=`OK · ${result.order}x${result.order} · ${result.state.moves.length} moves · ${Object.keys(result.state.mapping).length} stickers · ${previewSize.value}px`;
         }catch(error){
           status.textContent=`ERROR · ${error.message}`;
           console.error(error);
+        }
+      }
+
+      function setPreviewSize(){
+        const size=Number(previewSize.value)||300;
+        previewFrame.style.width=`${size}px`;
+        previewFrame.style.height=`${size}px`;
+        draw();
+      }
+
+      function setValidationState(id,text,className=''){
+        const element=document.getElementById(id);
+        element.textContent=text;
+        element.className=className;
+      }
+
+      function firstFailure(report){
+        for(const result of Object.values(report.results||{})){
+          const test=result.results?.find(item=>!item.ok);
+          const mismatch=test?.mismatches?.[0];
+          if(mismatch)return mismatch;
+        }
+        return null;
+      }
+
+      async function runValidation(){
+        validateButton.disabled=true;
+        setValidationState('validation222','RUNNING','is-running');
+        setValidationState('validation333','RUNNING','is-running');
+        status.textContent='VALIDATION · running 222 + 333 against cubing.js…';
+        const failureBox=document.getElementById('validationFailure');
+        failureBox.hidden=true;
+        try{
+          const report=await window.SSCPreviewV1.validateAll({count:100});
+          for(const eventId of ['222','333']){
+            const result=report.results[eventId];
+            setValidationState(`validation${eventId}`,result.ok?'PASS':'FAIL',result.ok?'is-pass':'is-fail');
+            document.getElementById(`validation${eventId}Meta`).textContent=`Random: ${result.tested} · Deterministic: ${result.deterministicTested} · Failed: ${result.failed}`;
+          }
+          document.getElementById('validationTested').textContent=report.tested;
+          document.getElementById('validationDeterministic').textContent=report.deterministicTested;
+          document.getElementById('validationTotal').textContent=report.totalTested;
+          document.getElementById('validationFailed').textContent=report.failed;
+          status.textContent=`VALIDATION · ${report.ok?'PASS':'FAIL'} · random ${report.tested} · total ${report.totalTested} · failed ${report.failed}`;
+
+          const mismatch=firstFailure(report);
+          if(mismatch){
+            failureBox.hidden=false;
+            failureBox.textContent=`[SSC Preview Validation FAILED]\nevent: ${mismatch.eventId}\nscramble: ${mismatch.scramble||'(solved)'}\nface: ${mismatch.face}\nrow: ${mismatch.row}\ncol: ${mismatch.col}\nSSC: ${mismatch.sscValue}\nReference: ${mismatch.referenceValue}${mismatch.error?`\nerror: ${mismatch.error}`:''}`;
+          }
+          return report;
+        }catch(error){
+          setValidationState('validation222','ERROR','is-fail');
+          setValidationState('validation333','ERROR','is-fail');
+          failureBox.hidden=false;
+          failureBox.textContent=`VALIDATION ERROR · ${error.message}`;
+          status.textContent=`VALIDATION ERROR · ${error.message}`;
+          console.error(error);
+          return null;
+        }finally{
+          validateButton.disabled=false;
         }
       }
 
@@ -78,9 +177,11 @@
           console.error(error);
         }
       });
+      validateButton.addEventListener('click',runValidation);
       event.addEventListener('change',draw);
+      previewSize.addEventListener('change',setPreviewSize);
       scramble.addEventListener('keydown',e=>{if(e.key==='Enter')draw();});
-      draw();
+      setPreviewSize();
     })();
   </script>
 </body>
