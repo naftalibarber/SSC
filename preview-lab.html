@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>SSC Preview Lab</title>
+  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260827-1">
+  <style>
+    :root{font-family:Arial,sans-serif;color:#111827;background:#f3f4f6}
+    *{box-sizing:border-box}
+    body{margin:0;padding:24px}
+    main{width:min(1100px,100%);margin:auto;display:grid;gap:18px}
+    .panel{background:#fff;border:1px solid #dbe1e8;border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.05)}
+    h1{margin:0 0 6px;font-size:24px}
+    p{margin:0;color:#64748b}
+    .controls{display:grid;grid-template-columns:160px 1fr auto auto;gap:10px;margin-top:16px}
+    select,input,button{font:inherit;border:1px solid #cbd5e1;border-radius:10px;padding:10px 12px;background:#fff;color:#111827}
+    button{cursor:pointer;font-weight:700}
+    .preview-shell{height:min(68vh,620px);min-height:320px;display:grid;place-items:center;overflow:hidden}
+    #preview{width:100%;height:100%;min-width:0;min-height:0}
+    #status{margin-top:12px;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left;color:#475569}
+    @media(max-width:760px){.controls{grid-template-columns:1fr}.preview-shell{height:55vh}}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>SSC Preview Lab — Native V1</h1>
+      <p>סביבת פיתוח מבודדת ל־State Engine ול־SVG Renderer החדשים.</p>
+      <div class="controls">
+        <select id="event">
+          <option value="222">2×2</option>
+          <option value="333" selected>3×3</option>
+          <option value="444">4×4</option>
+          <option value="555">5×5</option>
+          <option value="666">6×6</option>
+          <option value="777">7×7</option>
+        </select>
+        <input id="scramble" value="R U R' U' F2 D L2 B R2 U2" aria-label="Scramble">
+        <button id="render" type="button">Render</button>
+        <button id="test" type="button">Self Test</button>
+      </div>
+      <div id="status">Ready.</div>
+    </section>
+
+    <section class="panel preview-shell">
+      <div id="preview"></div>
+    </section>
+  </main>
+
+  <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-1"></script>
+  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260827-1"></script>
+  <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-1"></script>
+  <script>
+    (()=>{
+      const event=document.getElementById('event');
+      const scramble=document.getElementById('scramble');
+      const preview=document.getElementById('preview');
+      const status=document.getElementById('status');
+
+      function draw(){
+        try{
+          const result=window.SSCPreviewV1.render(preview,scramble.value,event.value,{strict:true});
+          status.textContent=`OK · ${result.order}x${result.order} · ${result.state.moves.length} moves · ${Object.keys(result.state.mapping).length} stickers`;
+        }catch(error){
+          status.textContent=`ERROR · ${error.message}`;
+          console.error(error);
+        }
+      }
+
+      document.getElementById('render').addEventListener('click',draw);
+      document.getElementById('test').addEventListener('click',()=>{
+        try{
+          const report=window.SSCPreviewV1.selfTest();
+          status.textContent=`SELF TEST · ${report.ok?'PASS':'FAIL'}\n`+report.state.results.map(item=>`${item.order}x${item.order}: ${item.ok?'PASS':'FAIL'}`).join('\n');
+        }catch(error){
+          status.textContent=`SELF TEST ERROR · ${error.message}`;
+          console.error(error);
+        }
+      });
+      event.addEventListener('change',draw);
+      scramble.addEventListener('keydown',e=>{if(e.key==='Enter')draw();});
+      draw();
+    })();
+  </script>
+</body>
+</html>
