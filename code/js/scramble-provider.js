@@ -1,10 +1,8 @@
 (() => {
   'use strict';
 
-  // PHASE 2/3 ONLY:
-  // This provider is intentionally not loaded by index.html yet.
-  // Production callers continue using the existing legacy scramble path
-  // until a later integration phase is explicitly requested.
+  // NxN scramble provider for SSC. Production integration is controlled by
+  // the existing SSC_FEATURES.scrambleProviderV1 flag and is limited to 222–777.
 
   const CUBING_SCRAMBLE_URL='https://cdn.cubing.net/v0/js/cubing/scramble';
 
@@ -92,7 +90,7 @@
       url:CUBING_SCRAMBLE_URL,
       lazy:true,
       cached:true,
-      productionIntegrated:false,
+      productionIntegrated:Boolean(window.SSC_FEATURES?.scrambleProviderV1),
       fallbackAdapter:'SSCLegacyScrambleFallback',
       fallbackAvailable:typeof window.SSCLegacyScrambleFallback?.generate==='function',
       raceProtection:'integration-layer'
