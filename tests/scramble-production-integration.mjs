@@ -125,26 +125,31 @@ assert.equal(providerCalls.length,providerBeforeLegacy,'Megaminx must not use th
 assert.equal(legacyCalls.at(-1),'minx','Megaminx must remain on SSCScrambles.');
 assertCommitted('minx','R++ D-- U','legacy minx');
 
-// Test 2 + Test 9 — A/B/C race and fast clicks: only request C may commit.
+// Test 2 + Test 9 — A/B/C are all already in Provider; only request C may commit.
 await events.setCurrent('333');
 primaryGenerateImpl=async id=>standard[id];await events.newScramble();
 const deferred=[];
 primaryGenerateImpl=eventId=>new Promise((resolve,reject)=>deferred.push({eventId,resolve,reject}));
-const raceA=events.newScramble();const raceB=events.newScramble();const raceC=events.newScramble();
-await waitFor(()=>deferred.length===3,'three concurrent scramble requests');
+const raceA=events.newScramble();
+await waitFor(()=>deferred.length===1,'request A entering Provider');
+const raceB=events.newScramble();
+await waitFor(()=>deferred.length===2,'request B entering Provider');
+const raceC=events.newScramble();
+await waitFor(()=>deferred.length===3,'request C entering Provider');
 const C='F2 U R2 D';const A='R U F2';const B='L2 U2 B2';
 deferred[2].resolve(C);await sleep(0);deferred[0].resolve(A);deferred[1].resolve(B);
 await Promise.all([raceA,raceB,raceC]);
 assertCommitted('333',C,'A/B/C race');
 assert.equal(events.isGeneratingScramble(),false,'Race completion must clear generating state.');
 
-// Test 3 — Event race: late 333 response cannot overwrite newer 777.
+// Test 3 — Event race: 333 is already in Provider before switching to 777.
 primaryGenerateImpl=async id=>standard[id];await events.newScramble();
 const eventDeferred=[];
 primaryGenerateImpl=eventId=>new Promise((resolve,reject)=>eventDeferred.push({eventId,resolve,reject}));
 const old333=events.newScramble();
+await waitFor(()=>eventDeferred.length===1,'333 request entering Provider');
 const switch777=events.setCurrent('777');
-await waitFor(()=>eventDeferred.length===2,'333 + 777 event-race requests');
+await waitFor(()=>eventDeferred.length===2,'777 request entering Provider');
 assert.equal(eventDeferred[0].eventId,'333');assert.equal(eventDeferred[1].eventId,'777');
 const sevenRace="3Rw F2 U 3Lw'";
 eventDeferred[1].resolve(sevenRace);await sleep(0);eventDeferred[0].resolve("R U R'");
