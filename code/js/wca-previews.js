@@ -8,7 +8,7 @@
     '555':   { id:'555',   label:'5×5',  name:'5x5x5 Cube',              family:'cube',  puzzle:'5x5x5' },
     '666':   { id:'666',   label:'6×6',  name:'6x6x6 Cube',              family:'cube',  puzzle:'6x6x6' },
     '777':   { id:'777',   label:'7×7',  name:'7x7x7 Cube',              family:'cube',  puzzle:'7x7x7' },
-    '333bf': { id:'333bf', label:'3BLD', name:'3x3x3 Blindfolded',       family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
+    '333bf': { id:'333bf', label:'3BLD', name:'3x3x3 Blindfolded',       family:'cube',  puzzle:'3x3x3', baseEvent:'333', native:true },
     '333fm': { id:'333fm', label:'FMC',  name:'3x3x3 Fewest Moves',      family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
     '333oh': { id:'333oh', label:'OH',   name:'3x3x3 One-Handed',        family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
     'clock': { id:'clock', label:'CLOCK',name:'Clock',                    family:'clock', puzzle:'clock' },
@@ -17,9 +17,9 @@
     'skewb': { id:'skewb', label:'SKEWB',name:'Skewb',                   family:'skewb', puzzle:'skewb' },
     'sq1':   { id:'sq1',   label:'SQ-1', name:'Square-1',                family:'sq1',   puzzle:'square1' },
     'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', scrambleDisplayEvent:'333ft', officialFrom:'2027-01-02' },
-    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444' },
+    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444', native:true },
     '555bf': { id:'555bf', label:'5BLD', name:'5x5x5 Blindfolded',        family:'cube',  puzzle:'5x5x5', baseEvent:'555' },
-    '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',        family:'cube',  puzzle:'3x3x3', baseEvent:'333' }
+    '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',        family:'cube',  puzzle:'3x3x3', baseEvent:'333', native:true }
   });
 
   const EVENT_ALIASES = Object.freeze({
@@ -46,7 +46,10 @@
   const NATIVE_NXN_EVENTS=Object.freeze({
     '222':'2x2',
     '333':'3x3',
-    '444':'4x4'
+    '333bf':'3x3',
+    '333mbf':'3x3',
+    '444':'4x4',
+    '444bf':'4x4'
   });
 
   function normalizeEventId(value){
