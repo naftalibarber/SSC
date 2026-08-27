@@ -1,0 +1,53 @@
+name: SSC Scramble Production Integration
+
+on:
+  push:
+    branches:
+      - phase4-scramble-production-integration
+    paths:
+      - 'index.html'
+      - 'code/js/app.js'
+      - 'code/js/scramble-provider.js'
+      - 'code/js/scramble-production-bridge.js'
+      - 'code/js/scramble-generators.js'
+      - 'code/js/training.js'
+      - 'code/js/scramble-history.js'
+      - 'code/js/preview/**'
+      - 'tests/scramble-provider-validation.mjs'
+      - 'tests/scramble-provider-fallback-validation.mjs'
+      - 'tests/scramble-production-integration.mjs'
+      - '.github/workflows/scramble-production-integration.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'code/js/app.js'
+      - 'code/js/scramble-provider.js'
+      - 'code/js/scramble-production-bridge.js'
+      - 'code/js/scramble-generators.js'
+      - 'code/js/training.js'
+      - 'code/js/scramble-history.js'
+      - 'code/js/preview/**'
+      - 'tests/scramble-provider-validation.mjs'
+      - 'tests/scramble-provider-fallback-validation.mjs'
+      - 'tests/scramble-production-integration.mjs'
+      - '.github/workflows/scramble-production-integration.yml'
+
+jobs:
+  validate-production-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install validation dependencies
+        run: npm install --no-save --no-package-lock cubing@0.63.4 jsdom@26.1.0
+      - name: Revalidate 600 NxN Provider scrambles
+        run: node tests/scramble-provider-validation.mjs
+      - name: Revalidate forced Provider fallback
+        run: node tests/scramble-provider-fallback-validation.mjs
+      - name: Validate Phase 4 production integration
+        run: node tests/scramble-production-integration.mjs
