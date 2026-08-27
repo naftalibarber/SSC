@@ -3,9 +3,7 @@
 
   const CUBING_SCRAMBLE_URL='https://cdn.cubing.net/v0/js/cubing/scramble';
   const MAX_BATCH=200;
-  const PREFETCH_SIZE=2;
-  const queues=new Map();
-  const refillPromises=new Map();
+  const MULTI_BLIND_EVENT='333mbf';
   let scrambleModulePromise=null;
 
   function registry(){
@@ -54,7 +52,6 @@
   async function generateDirect(eventId){
     const id=normalizeEventId(eventId);
     if(!id)throw new Error(`Unsupported scramble event: ${String(eventId)}`);
-    if(id==='333mbf')throw new Error('333mbf is a multi-scramble event. Use SSCScrambles.generateMultiBlind(cubeCount).');
 
     try{
       const {randomScrambleForEvent}=await loadScrambleModule();
@@ -68,80 +65,62 @@
     }
   }
 
-  function getQueue(eventId){
-    if(!queues.has(eventId))queues.set(eventId,[]);
-    return queues.get(eventId);
-  }
-
-  function scheduleRefill(eventId){
-    if(eventId==='333mbf'||refillPromises.has(eventId))return;
-    const queue=getQueue(eventId);
-    if(queue.length>=PREFETCH_SIZE)return;
-    const refill=(async()=>{
-      while(queue.length<PREFETCH_SIZE){
-        try{queue.push(await generateDirect(eventId));}
-        catch(error){console.warn(`[SSC Scrambles] Prefetch stopped for ${eventId}.`,error);break;}
-      }
-    })().finally(()=>refillPromises.delete(eventId));
-    refillPromises.set(eventId,refill);
-  }
-
   async function generate(eventId){
     const id=normalizeEventId(eventId);
     if(!id)throw new Error(`Unsupported scramble event: ${String(eventId)}`);
-    if(id==='333mbf')throw new Error('333mbf is a multi-scramble event. Use SSCScrambles.generateMultiBlind(cubeCount).');
-
-    const queue=getQueue(id);
-    if(queue.length){
-      const scramble=queue.shift();
-      scheduleRefill(id);
-      return scramble;
-    }
-
-    const scramble=await generateDirect(id);
-    scheduleRefill(id);
-    return scramble;
+    if(id===MULTI_BLIND_EVENT)throw new Error('333mbf is a multi-scramble event. Use SSCScrambles.generateMultiBlind(cubeCount).');
+    return generateDirect(id);
   }
 
   async function generateMany(eventId,amount){
     assertAmount(amount);
     const id=normalizeEventId(eventId);
     if(!id)throw new Error(`Unsupported scramble event: ${String(eventId)}`);
-    if(id==='333mbf')throw new Error('Use SSCScrambles.generateMultiBlind(cubeCount) for 333mbf.');
+    if(id===MULTI_BLIND_EVENT)throw new Error('Use SSCScrambles.generateMultiBlind(cubeCount) for 333mbf.');
+
     const scrambles=[];
-    for(let i=0;i<amount;i+=1)scrambles.push(await generate(id));
+    for(let i=0;i<amount;i+=1)scrambles.push(await generateDirect(id));
     return scrambles;
   }
 
   async function generateMultiBlind(cubeCount){
     assertAmount(cubeCount,'cubeCount');
     const scrambles=[];
-    for(let i=0;i<cubeCount;i+=1)scrambles.push(await generateDirect('333'));
+    for(let i=0;i<cubeCount;i+=1)scrambles.push(await generateDirect(MULTI_BLIND_EVENT));
     return scrambles;
   }
 
   async function testAll(){
     const results={};
     for(const event of getEvents()){
-      if(event.id==='333mbf')continue;
       try{
-        const scramble=await generateDirect(event.id);
-        results[event.id]={ok:true,scramble};
-        console.info(`✓ ${event.id}`);
+        if(event.id===MULTI_BLIND_EVENT){
+          const scrambles=await generateMultiBlind(3);
+          results[event.id]={ok:true,scrambles};
+          console.info(`✓ ${event.id} × 3 cubes`);
+        }else{
+          const scramble=await generateDirect(event.id);
+          results[event.id]={ok:true,scramble};
+          console.info(`✓ ${event.id}`);
+        }
       }catch(error){
         results[event.id]={ok:false,error:error.message};
         console.error(`✗ ${event.id}`,error);
       }
     }
-    try{
-      const scrambles=await generateMultiBlind(3);
-      results['333mbf']={ok:true,scrambles};
-      console.info('✓ 333mbf × 3 cubes');
-    }catch(error){
-      results['333mbf']={ok:false,error:error.message};
-      console.error('✗ 333mbf × 3 cubes',error);
-    }
     return results;
+  }
+
+  function getSourceInfo(){
+    return Object.freeze({
+      library:'cubing.js',
+      module:'cubing/scramble',
+      api:'randomScrambleForEvent',
+      wcaNotation:true,
+      intendedForTimerApps:true,
+      officialWcaCompetitionProgram:false,
+      officialWcaCompetitionProgramName:'TNoodle-WCA'
+    });
   }
 
   window.SSCScrambles=Object.freeze({
@@ -152,6 +131,7 @@
     supportsEvent,
     getEvent,
     getEvents,
+    getSourceInfo,
     testAll
   });
 })();
