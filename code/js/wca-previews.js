@@ -2,13 +2,13 @@
   'use strict';
 
   const EVENT_REGISTRY = Object.freeze({
-    '222':   { id:'222',   label:'2×2',  name:'2x2x2 Cube',              family:'cube',  puzzle:'2x2x2', native:true },
-    '333':   { id:'333',   label:'3×3',  name:'3x3x3 Cube',              family:'cube',  puzzle:'3x3x3', native:true },
-    '444':   { id:'444',   label:'4×4',  name:'4x4x4 Cube',              family:'cube',  puzzle:'4x4x4', native:true },
+    '222':   { id:'222',   label:'2×2',  name:'2x2x2 Cube',              family:'cube',  puzzle:'2x2x2' },
+    '333':   { id:'333',   label:'3×3',  name:'3x3x3 Cube',              family:'cube',  puzzle:'3x3x3' },
+    '444':   { id:'444',   label:'4×4',  name:'4x4x4 Cube',              family:'cube',  puzzle:'4x4x4' },
     '555':   { id:'555',   label:'5×5',  name:'5x5x5 Cube',              family:'cube',  puzzle:'5x5x5' },
     '666':   { id:'666',   label:'6×6',  name:'6x6x6 Cube',              family:'cube',  puzzle:'6x6x6' },
     '777':   { id:'777',   label:'7×7',  name:'7x7x7 Cube',              family:'cube',  puzzle:'7x7x7' },
-    '333bf': { id:'333bf', label:'3BLD', name:'3x3x3 Blindfolded',       family:'cube',  puzzle:'3x3x3', baseEvent:'333', native:true },
+    '333bf': { id:'333bf', label:'3BLD', name:'3x3x3 Blindfolded',       family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
     '333fm': { id:'333fm', label:'FMC',  name:'3x3x3 Fewest Moves',      family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
     '333oh': { id:'333oh', label:'OH',   name:'3x3x3 One-Handed',        family:'cube',  puzzle:'3x3x3', baseEvent:'333' },
     'clock': { id:'clock', label:'CLOCK',name:'Clock',                    family:'clock', puzzle:'clock' },
@@ -17,9 +17,9 @@
     'skewb': { id:'skewb', label:'SKEWB',name:'Skewb',                   family:'skewb', puzzle:'skewb' },
     'sq1':   { id:'sq1',   label:'SQ-1', name:'Square-1',                family:'sq1',   puzzle:'square1' },
     'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', scrambleDisplayEvent:'333ft', officialFrom:'2027-01-02' },
-    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444', native:true },
+    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444' },
     '555bf': { id:'555bf', label:'5BLD', name:'5x5x5 Blindfolded',        family:'cube',  puzzle:'5x5x5', baseEvent:'555' },
-    '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',        family:'cube',  puzzle:'3x3x3', baseEvent:'333', native:true }
+    '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',        family:'cube',  puzzle:'3x3x3', baseEvent:'333' }
   });
 
   const EVENT_ALIASES = Object.freeze({
@@ -41,15 +41,6 @@
     '4bld':'444bf','444bf':'444bf','4x4bf':'444bf',
     '5bld':'555bf','555bf':'555bf','5x5bf':'555bf',
     'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
-  });
-
-  const NATIVE_NXN_EVENTS=Object.freeze({
-    '222':'2x2',
-    '333':'3x3',
-    '333bf':'3x3',
-    '333mbf':'3x3',
-    '444':'4x4',
-    '444bf':'4x4'
   });
 
   function normalizeEventId(value){
@@ -92,20 +83,8 @@
     display.setAttribute('scramble',scrambleToText(scramble));
     display.setAttribute('aria-hidden','true');
     container.appendChild(display);
+
     window.SSCPreviewSizing?.scheduleFit?.(container);
-  }
-
-  const legacy=window.SSCCubePreview || null;
-  const legacyRender=legacy?.render?.bind(legacy);
-
-  function renderNativeNxN(container,scramble,event,eventId){
-    const puzzle=NATIVE_NXN_EVENTS[eventId];
-    if(!puzzle||!legacyRender)return false;
-    applyContainerMetadata(container,event);
-    container.dataset.previewEngine='ssc-native';
-    const moves=Array.isArray(scramble)?scramble:scrambleToText(scramble).split(/\s+/).filter(Boolean);
-    legacyRender(container,moves,puzzle);
-    return true;
   }
 
   function render(container,scramble,eventValue='333'){
@@ -123,19 +102,18 @@
       return;
     }
 
-    if(renderNativeNxN(container,scramble,event,eventId))return;
     renderWithScrambleDisplay(container,scramble,event);
   }
 
-  const api={
-    ...(legacy || {}),
+  const api=Object.freeze({
     render,
     normalizeEventId,
     supportsEvent(eventId){return Boolean(EVENT_REGISTRY[normalizeEventId(eventId)])},
     getEvent(eventId){const event=EVENT_REGISTRY[normalizeEventId(eventId)];return event?{...event}:null},
     getEvents(){return Object.values(EVENT_REGISTRY).map(event=>({...event}))},
-    eventRegistry:EVENT_REGISTRY
-  };
+    eventRegistry:EVENT_REGISTRY,
+    previewEngine:'scramble-display'
+  });
 
   window.SSCCubePreview=api;
   window.SSCWCAEvents=EVENT_REGISTRY;
