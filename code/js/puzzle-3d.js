@@ -3,6 +3,7 @@
 
   const TWISTY_MODULE_URL='https://cdn.cubing.net/v0/js/cubing/twisty';
   const TWISTY_LOAD_TIMEOUT_MS=12000;
+  const RENDER_READY_TIMEOUT_MS=6000;
   const states=new WeakMap();
   const activeContainers=new Set();
   let interactiveEnabled=true;
@@ -62,24 +63,22 @@
   });
 
   function registry(){return window.SSCWCAEvents||FALLBACK_EVENTS;}
-
   function normalizeEventId(value){
     if(window.SSCCubePreview?.normalizeEventId)return window.SSCCubePreview.normalizeEventId(value);
     const raw=String(value??'333').trim().toLowerCase();
     return EVENT_ALIASES[raw]||raw;
   }
-
   function getEvent(eventValue){
     const eventId=normalizeEventId(eventValue);
     const event=registry()[eventId]||FALLBACK_EVENTS[eventId];
     return event?{...event}:null;
   }
-
   function supportsEvent(eventValue){return Boolean(getEvent(eventValue));}
   function scrambleToText(scramble){return Array.isArray(scramble)?scramble.join(' ').trim():String(scramble??'').trim();}
   function presetFor(event){return CAMERA_PRESETS[event?.family]||CAMERA_PRESETS.cube;}
   function isRTL(){return document.documentElement.dir==='rtl';}
   function nextAnimationFrame(){return new Promise(resolve=>requestAnimationFrame(resolve));}
+  function delay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 
   async function loadTwistyModule(){
     if(!twistyModulePromise){
@@ -170,6 +169,8 @@
     player.setAttribute('aria-label',isRTL()?`פאזל ${event.name} בתלת־ממד`:`${event.name} 3D puzzle`);
     player.style.width='100%';
     player.style.height='100%';
+    player.style.minWidth='0';
+    player.style.minHeight='0';
     player.style.display='block';
     player.style.background='transparent';
     player.style.maxWidth='100%';
@@ -209,13 +210,31 @@
     state.doubleClickHandler=handler;
   }
 
+  async function canvasReady(player){
+    if(typeof player?.experimentalCurrentCanvases!=='function')return true;
+    try{
+      const canvases=await player.experimentalCurrentCanvases();
+      return Boolean(canvases?.some(canvas=>canvas instanceof HTMLCanvasElement&&canvas.width>0&&canvas.height>0));
+    }catch{return false;}
+  }
+
+  async function waitForPlayerReady(player,state){
+    const started=performance.now();
+    while(performance.now()-started<RENDER_READY_TIMEOUT_MS){
+      if(state.disposed)return false;
+      const rect=player.getBoundingClientRect();
+      if(rect.width>0&&rect.height>0&&await canvasReady(player))return true;
+      await Promise.race([nextAnimationFrame(),delay(50)]);
+    }
+    return false;
+  }
+
   async function render(container,scramble,eventValue='333'){
     if(!(container instanceof Element))throw new TypeError('SSCPuzzle3D.render() requires a DOM container');
 
     const token=++renderSequence;
     cleanupState(container);
     const event=getEvent(eventValue);
-
     if(!event){
       renderFallback(container,null,isRTL()?'הפאזל אינו נתמך בתלת־ממד':'3D preview unavailable for this puzzle');
       console.warn(`[SSC 3D] Unsupported event: ${eventValue}`);
@@ -239,11 +258,14 @@
       const scrambleText=scrambleToText(scramble);
       const player=new TwistyPlayer({
         puzzle:event.puzzle,
-        alg:scrambleText,
+        alg:'',
+        experimentalSetupAlg:scrambleText,
+        experimentalSetupAnchor:'start',
         visualization:'3D',
         background:'none',
         controlPanel:'none',
         backView:'none',
+        viewerLink:'none',
         hintFacelets:'none'
       });
       configurePlayer(player,event);
@@ -253,14 +275,12 @@
       setupResetGesture(container,state);
 
       await nextAnimationFrame();
+      await nextAnimationFrame();
       if(state.disposed||states.get(container)?.token!==token)return null;
-      try{
-        const result=player.jumpToEnd?.();
-        if(result&&typeof result.then==='function')await result;
-      }catch(error){
-        console.warn(`[SSC 3D] Could not jump to final state for ${event.id}`,error);
-      }
+
+      const ready=await waitForPlayerReady(player,state);
       if(state.disposed||states.get(container)?.token!==token)return null;
+      if(!ready)throw new Error(`TwistyPlayer did not produce a visible 3D canvas for ${event.id}.`);
 
       container.classList.add('ssc-preview-3d-ready');
       container.dataset.previewReady='true';
@@ -297,7 +317,6 @@
     ++renderSequence;
     cleanupState(container);
   }
-
   function dispose(container){clear(container);}
 
   async function getRealScramble(eventId,event){
@@ -319,7 +338,6 @@
     testHost.className='ssc-puzzle-3d-test-host';
     testHost.setAttribute('aria-hidden','true');
     document.body.appendChild(testHost);
-
     const results=[];
     try{
       for(const event of Object.values(registry())){
@@ -327,9 +345,7 @@
         try{
           scramble=await getRealScramble(event.id,event);
           const player=await render(testHost,scramble,event.id);
-          await nextAnimationFrame();
-          const rect=player?.getBoundingClientRect?.();
-          const ok=Boolean(player?.isConnected&&scramble.trim()&&rect&&rect.width>0&&rect.height>0);
+          const ok=Boolean(player&&testHost.dataset.previewReady==='true');
           results.push({eventId:event.id,puzzle:event.puzzle,ok,scramble});
           console[ok?'log':'error'](`${ok?'✓':'✗'} ${event.id}`);
         }catch(error){
