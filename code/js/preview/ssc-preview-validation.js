@@ -208,8 +208,9 @@
     const {eventId:normalized,order,puzzleExport}=configFor(eventId);
     if(referenceContexts.has(normalized))return referenceContexts.get(normalized);
     const {puzzles}=await loadCubingModules();
-    const loader=puzzles[puzzleExport];
-    if(!loader?.kpuzzle||!loader?.pg)throw new Error(`cubing.js puzzle loader ${puzzleExport} is unavailable.`);
+    const puzzleId=`${order}x${order}x${order}`;
+    const loader=puzzles[puzzleExport]||puzzles.puzzles?.[puzzleId];
+    if(!loader?.kpuzzle||!loader?.pg)throw new Error(`cubing.js puzzle loader ${puzzleExport}/${puzzleId} is unavailable.`);
     const [kpuzzle,pg]=await Promise.all([loader.kpuzzle(),loader.pg()]);
     const stickerDat=pg.get3d();
     const {cells,faceNames,usable}=createCellMap(stickerDat,order);
