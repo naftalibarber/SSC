@@ -13,7 +13,6 @@
 
   function migrateToProfessionalTwistyPreview(){
     if(localStorage.getItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY)==='1')return;
-    localStorage.setItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY,'1');
 
     const settings=window.SSCPreviewSettings;
     if(!settings)return;
@@ -22,6 +21,7 @@
       const modeResult=settings.setMode?.('3d',{rerender:false});
       if(modeResult&&typeof modeResult.catch==='function')modeResult.catch(error=>console.warn('[SSC preview] Could not switch default preview to 3D.',error));
       settings.setInteractive?.(true);
+      localStorage.setItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY,'1');
     }catch(error){
       console.warn('[SSC preview] Professional TwistyPlayer migration failed.',error);
     }
