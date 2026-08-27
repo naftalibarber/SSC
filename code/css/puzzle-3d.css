@@ -1,9 +1,33 @@
-/* SSC — universal cubing.js 3D preview */
+/* SSC — professional cubing.js / TwistyPlayer preview */
 .cube-preview-card.ssc-preview-mode-3d{
   padding:0!important;
   display:block!important;
   overflow:hidden!important;
   background:transparent!important;
+}
+
+/* Higher specificity than the runtime integration styles so the thumbnail keeps
+   one consistent premium surface in every theme. */
+html body .cube-preview-card.ssc-preview-mode-3d{
+  position:relative!important;
+  isolation:isolate!important;
+  border:1px solid color-mix(in srgb,var(--border) 78%,transparent)!important;
+  border-radius:14px!important;
+  background:
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,#ffffff 80%,transparent),transparent 66%),
+    color-mix(in srgb,var(--card-solid,#fff) 96%,var(--soft) 4%)!important;
+  box-shadow:
+    0 1px 2px rgba(15,23,42,.05),
+    0 8px 24px rgba(15,23,42,.08)!important;
+  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease!important;
+  contain:layout paint!important;
+}
+
+html body .cube-preview-card.ssc-preview-mode-3d:hover{
+  border-color:color-mix(in srgb,var(--accent) 28%,var(--border))!important;
+  box-shadow:
+    0 2px 4px rgba(15,23,42,.06),
+    0 12px 30px rgba(15,23,42,.11)!important;
 }
 
 .ssc-puzzle-3d-player{
@@ -22,17 +46,20 @@
   touch-action:pan-y pinch-zoom;
   overscroll-behavior:contain;
   cursor:grab;
+  filter:drop-shadow(0 7px 8px rgba(15,23,42,.12));
 }
 
 .ssc-puzzle-3d-player:active{cursor:grabbing}
 .ssc-preview-3d-static .ssc-puzzle-3d-player{cursor:default}
 
-.ssc-preview-mode-3d::after{
+html body .ssc-preview-mode-3d::after{
   content:"";
   position:absolute;
   inset:0;
   pointer-events:none;
-  background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent) 7%,transparent),transparent 64%);
+  background:
+    radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--accent) 5%,transparent),transparent 62%),
+    linear-gradient(to bottom,rgba(255,255,255,.05),transparent 45%)!important;
   z-index:0;
 }
 
@@ -86,13 +113,51 @@
   opacity:.001!important;
 }
 
-html[data-theme="dark"] .ssc-preview-mode-3d,
-html[data-theme="oled"] .ssc-preview-mode-3d{
-  background:transparent!important;
+html[data-theme="dark"] body .cube-preview-card.ssc-preview-mode-3d{
+  background:
+    radial-gradient(circle at 50% 42%,rgba(255,255,255,.055),transparent 65%),
+    color-mix(in srgb,var(--card-solid,#171a1f) 94%,#000 6%)!important;
+  border-color:color-mix(in srgb,var(--border) 88%,transparent)!important;
+  box-shadow:0 10px 28px rgba(0,0,0,.22)!important;
+}
+
+html[data-theme="dark"] body .cube-preview-card.ssc-preview-mode-3d:hover{
+  border-color:color-mix(in srgb,var(--accent) 34%,var(--border))!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.28)!important;
+}
+
+html[data-theme="oled"] body .cube-preview-card.ssc-preview-mode-3d{
+  background:radial-gradient(circle at 50% 42%,rgba(255,255,255,.035),transparent 64%),#030405!important;
+  border-color:#252a31!important;
+  box-shadow:none!important;
+}
+
+html[data-theme="oled"] body .cube-preview-card.ssc-preview-mode-3d:hover{
+  border-color:color-mix(in srgb,var(--accent) 34%,#252a31)!important;
+  box-shadow:none!important;
+}
+
+html[data-theme="dark"] .ssc-puzzle-3d-player,
+html[data-theme="oled"] .ssc-puzzle-3d-player{
+  filter:drop-shadow(0 8px 10px rgba(0,0,0,.26));
+}
+
+/* Professional modal surface for the interactive TwistyPlayer. */
+html body .ssc-preview-3d-dialog{
+  border-radius:20px!important;
+  border-color:color-mix(in srgb,var(--border) 82%,transparent)!important;
+  box-shadow:0 28px 90px rgba(0,0,0,.32)!important;
+}
+
+html body .ssc-preview-3d-viewer{
+  background:
+    radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent) 5%,transparent),transparent 66%),
+    color-mix(in srgb,var(--card-solid,#fff) 97%,var(--soft) 3%)!important;
 }
 
 @keyframes ssc3dSpin{to{transform:rotate(360deg)}}
 
 @media (prefers-reduced-motion:reduce){
   .ssc-puzzle-3d-loading::before{animation-duration:1.5s}
+  html body .cube-preview-card.ssc-preview-mode-3d{transition:none!important}
 }
