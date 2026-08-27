@@ -149,7 +149,7 @@ assert.ok(fitCalls>=6);
 
 const index=fs.readFileSync('index.html','utf8');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
-assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
+assert.match(index,/window\.SSC_FEATURES=\{previewV1:true,scrambleProviderV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
