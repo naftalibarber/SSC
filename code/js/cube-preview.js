@@ -5,6 +5,7 @@
   const FACE_ORDER=['U','L','F','R','B','D'];
   const FACE_CLASS={U:'face-u',L:'face-l',F:'face-f',R:'face-r',B:'face-b',D:'face-d'};
   const SVG_NS='http://www.w3.org/2000/svg';
+  const DEBUG_CUBE_MAPPING=false;
   const NATIVE_CUBE_ORDERS=new Map([
     ['2x2',2],['222',2],
     ['3x3',3],['333',3],
@@ -48,10 +49,13 @@
     B:[3,1],
     D:[1,2]
   });
+  const threeByThreeDomCache=new WeakMap();
+  const threeByThreePrefixCache=new WeakMap();
+  let threeByThreePrefixSequence=0;
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260825-flat-net-2';
+    const cubeHref='./code/css/cube-preview.css?v=20260827-333-id-map';
     const wcaHref='./code/css/wca-previews.css?v=20260824-3';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(existing)existing.href=cubeHref;
@@ -186,6 +190,96 @@
     }
   }
 
+  function stickerKey(face,row,col){return`${face}${(row*3)+col+1}`}
+  function buildThreeByThreeStickerMapping(faces){
+    const mapping={};
+    for(const face of FACE_ORDER){
+      for(let row=0;row<3;row++){
+        for(let col=0;col<3;col++){
+          mapping[stickerKey(face,row,col)]=faces[face][row][col]||face;
+        }
+      }
+    }
+    return Object.freeze(mapping);
+  }
+
+  function getFaceColor(layer){return colors[layer]||DEFAULT_COLORS[layer]||'transparent'}
+
+  function domIdPrefix(container){
+    const cached=threeByThreePrefixCache.get(container);
+    if(cached)return cached;
+    const raw=container.id?container.id:`ssc-cube-preview-${++threeByThreePrefixSequence}`;
+    const prefix=`${raw.replace(/[^a-zA-Z0-9_-]/g,'-')}-333-`;
+    threeByThreePrefixCache.set(container,prefix);
+    return prefix;
+  }
+
+  function ensureThreeByThreeDom(container){
+    const cached=threeByThreeDomCache.get(container);
+    if(cached?.net?.parentElement===container)return cached;
+
+    const net=document.createElement('div');
+    net.className='cube-preview-net ssc-preview-333-net';
+    net.setAttribute('aria-hidden','true');
+    const stickerElements=new Map();
+    const prefix=domIdPrefix(container);
+
+    for(const face of FACE_ORDER){
+      const faceEl=document.createElement('div');
+      faceEl.className=`cube-preview-face ${FACE_CLASS[face]} ssc-preview-333-face`;
+      faceEl.dataset.face=face;
+      faceEl.style.setProperty('--n','3');
+      for(let row=0;row<3;row++){
+        for(let col=0;col<3;col++){
+          const semanticId=stickerKey(face,row,col);
+          const sticker=document.createElement('span');
+          sticker.id=`${prefix}${semanticId}`;
+          sticker.className='cube-preview-sticker ssc-preview-333-sticker';
+          sticker.dataset.stickerId=semanticId;
+          sticker.dataset.face=face;
+          sticker.dataset.row=String(row);
+          sticker.dataset.col=String(col);
+          faceEl.appendChild(sticker);
+          stickerElements.set(semanticId,sticker);
+        }
+      }
+      net.appendChild(faceEl);
+    }
+
+    container.replaceChildren(net);
+    const created={net,stickers:stickerElements};
+    threeByThreeDomCache.set(container,created);
+    return created;
+  }
+
+  function paintThreeByThree(container,mapping){
+    const dom=ensureThreeByThreeDom(container);
+    const debugRows=[];
+    for(const [stickerId,layer] of Object.entries(mapping)){
+      const sticker=dom.stickers.get(stickerId);
+      if(!sticker)continue;
+      const color=getFaceColor(layer);
+      sticker.style.backgroundColor=color;
+      sticker.dataset.layer=layer;
+      if(DEBUG_CUBE_MAPPING){
+        sticker.title=`${stickerId}\nLayer: ${layer}\nColor: ${color}`;
+        debugRows.push({stickerId,layer,color});
+      }else{
+        sticker.removeAttribute('title');
+      }
+    }
+    if(DEBUG_CUBE_MAPPING&&debugRows.length)console.table(debugRows);
+  }
+
+  function renderThreeByThree(container,faces){
+    const mapping=buildThreeByThreeStickerMapping(faces);
+    container.classList.remove('ssc-preview-svg-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
+    container.classList.add('ssc-preview-333-dom-card');
+    container.dataset.previewRenderer='dom-3x3-id-map';
+    paintThreeByThree(container,mapping);
+    return mapping;
+  }
+
   function svgEl(name,attributes={}){
     const node=document.createElementNS(SVG_NS,name);
     for(const [key,value] of Object.entries(attributes)){
@@ -275,7 +369,7 @@
       svg.appendChild(faceGroup);
     }
 
-    container.classList.remove('ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
+    container.classList.remove('ssc-preview-333-dom-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
     container.classList.add('ssc-preview-svg-card',`ssc-preview-${n}x${n}-svg-card`);
     container.dataset.previewRenderer=`svg-${n}x${n}`;
     container.replaceChildren(svg);
@@ -307,7 +401,7 @@
       }
       net.appendChild(faceEl);
     }
-    container.classList.remove('ssc-preview-svg-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
+    container.classList.remove('ssc-preview-svg-card','ssc-preview-333-dom-card','ssc-preview-2x2-svg-card','ssc-preview-3x3-svg-card','ssc-preview-4x4-svg-card');
     delete container.dataset.previewRenderer;
     container.replaceChildren(net);
   }
@@ -322,27 +416,44 @@
 
   function render(container,scramble,puzzle='3x3'){
     if(!container)return;
+    const normalizedPuzzle=normalizePuzzleId(puzzle);
     const n=puzzleSize(puzzle);
     const faces=buildState(scramble,n);
     validateCubeState(faces,n,{puzzle,scramble});
 
-    if(NATIVE_CUBE_ORDERS.has(normalizePuzzleId(puzzle)))renderNativeSvg(container,faces,n);
+    let mapping=null;
+    if(n===3&&NATIVE_CUBE_ORDERS.has(normalizedPuzzle))mapping=renderThreeByThree(container,faces);
+    else if(NATIVE_CUBE_ORDERS.has(normalizedPuzzle))renderNativeSvg(container,faces,n);
     else renderLegacyGrid(container,faces,n);
 
     container.dataset.puzzle=`${n}×${n}`;
     container.setAttribute('role','img');
     container.setAttribute('aria-label',document.documentElement.lang==='en'?`${n} by ${n} cube scramble preview`:`תצוגת ערבוב קובייה ${n} על ${n}`);
-    lastRender={container,scramble:normalizeScramble(scramble),puzzle};
+    lastRender={container,scramble:normalizeScramble(scramble),puzzle,n,cubeState:faces,mapping};
     window.SSCPreviewSizing?.scheduleFit?.(container);
   }
-  function rerenderLast(){if(lastRender&&lastRender.container?.isConnected)render(lastRender.container,lastRender.scramble,lastRender.puzzle)}
+
+  function rerenderLast({paletteOnly=false}={}){
+    if(!lastRender?.container?.isConnected)return;
+    if(paletteOnly&&lastRender.n===3&&lastRender.mapping){
+      paintThreeByThree(lastRender.container,lastRender.mapping);
+      window.SSCPreviewSizing?.scheduleFit?.(lastRender.container);
+      return;
+    }
+    render(lastRender.container,lastRender.scramble,lastRender.puzzle);
+  }
+
   function getColors(){return{...colors}}
   function setColors(next){
     colors=Object.fromEntries(Object.entries(DEFAULT_COLORS).map(([face,fallback])=>[face,validColor(next?.[face])?next[face]:colors[face]||fallback]));
     localStorage.setItem(COLOR_KEY,JSON.stringify(colors));
-    rerenderLast();
+    rerenderLast({paletteOnly:true});
   }
-  function resetColors(){colors={...DEFAULT_COLORS};localStorage.removeItem(COLOR_KEY);rerenderLast()}
+  function resetColors(){
+    colors={...DEFAULT_COLORS};
+    localStorage.removeItem(COLOR_KEY);
+    rerenderLast({paletteOnly:true});
+  }
 
   window.SSCCubePreview={render,getColors,setColors,resetColors};
 })();
