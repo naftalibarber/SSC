@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const V1_EVENTS=new Set(['222','333','444','555','666']);
+  const V1_EVENTS=new Set(['222','333','444','555','666','777']);
   const legacyPreview=window.SSCCubePreview||null;
   const legacyRender=legacyPreview?.render?.bind(legacyPreview)||null;
   const managerRender=window.SSCPreviewManager?.render?.bind(window.SSCPreviewManager)||null;
