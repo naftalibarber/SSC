@@ -4,7 +4,8 @@
   const FACE_ORDER=Object.freeze(['U','D','F','B','R','L']);
   const EVENT_CONFIG=Object.freeze({
     '222':Object.freeze({order:2,puzzleExport:'cube2x2x2'}),
-    '333':Object.freeze({order:3,puzzleExport:'cube3x3x3'})
+    '333':Object.freeze({order:3,puzzleExport:'cube3x3x3'}),
+    '444':Object.freeze({order:4,puzzleExport:'cube4x4x4'})
   });
   const BASIC_MOVES=Object.freeze(
     ['R','U','F','L','D','B'].flatMap(face=>[face,`${face}'`,`${face}2`])
@@ -18,6 +19,14 @@
     "R U R' U R U2 R'",
     "F R U R' U' F'"
   ]);
+  const WIDE_DETERMINISTIC_SCRAMBLES=Object.freeze([
+    ...['Rw','Uw','Fw','Lw','Dw','Bw'].flatMap(move=>[move,`${move}'`,`${move}2`]),
+    "Rw Rw'","Uw Uw'","Fw Fw'","Lw Lw'","Dw Dw'","Bw Bw'",
+    'Rw Rw Rw Rw','Uw Uw Uw Uw','Fw Fw Fw Fw','Lw Lw Lw Lw','Dw Dw Dw Dw','Bw Bw Bw Bw',
+    "Rw U Rw' U'",
+    "Rw U2 Rw' U2",
+    "Rw U Rw' F2 Uw' F Uw"
+  ]);
 
   let cubingModulesPromise=null;
   const referenceContexts=new Map();
@@ -26,14 +35,22 @@
     const raw=String(eventId??'333').trim().toLowerCase();
     if(raw==='2x2'||raw==='2×2')return'222';
     if(raw==='3x3'||raw==='3×3')return'333';
+    if(raw==='4x4'||raw==='4×4')return'444';
     return raw;
   }
 
   function configFor(eventId){
     const normalized=normalizeEventId(eventId);
     const config=EVENT_CONFIG[normalized];
-    if(!config)throw new Error(`SSC Preview validation supports only 222 and 333; received ${String(eventId)}.`);
+    if(!config)throw new Error(`SSC Preview validation supports only 222, 333 and 444; received ${String(eventId)}.`);
     return{eventId:normalized,...config};
+  }
+
+  function deterministicScramblesFor(eventId){
+    const normalized=normalizeEventId(eventId);
+    return normalized==='444'
+      ?Object.freeze([...DETERMINISTIC_SCRAMBLES,...WIDE_DETERMINISTIC_SCRAMBLES])
+      :DETERMINISTIC_SCRAMBLES;
   }
 
   function assertFaceArray(value,face,order){
@@ -283,10 +300,11 @@ Reference: ${mismatch.referenceValue}`
   async function validate({eventId='333',count=100}={}){
     const {eventId:normalized}=configFor(eventId);
     const randomCount=Math.max(0,Math.floor(Number(count)||0));
+    const deterministic=deterministicScramblesFor(normalized);
     const results=[];
 
-    for(let index=0;index<DETERMINISTIC_SCRAMBLES.length;index++){
-      const scramble=DETERMINISTIC_SCRAMBLES[index];
+    for(let index=0;index<deterministic.length;index++){
+      const scramble=deterministic[index];
       results.push(await runCase(normalized,scramble,`deterministic-${index+1}`,'deterministic'));
     }
 
@@ -310,7 +328,7 @@ Reference: ${mismatch.referenceValue}`
       ok:failedResults.length===0,
       eventId:normalized,
       tested:randomCount,
-      deterministicTested:DETERMINISTIC_SCRAMBLES.length,
+      deterministicTested:deterministic.length,
       totalTested:results.length,
       failed:failedResults.length,
       results:Object.freeze(results)
@@ -318,23 +336,26 @@ Reference: ${mismatch.referenceValue}`
   }
 
   async function validateAll({count=100}={}){
-    const [two,three]=await Promise.all([
+    const [two,three,four]=await Promise.all([
       validate({eventId:'222',count}),
-      validate({eventId:'333',count})
+      validate({eventId:'333',count}),
+      validate({eventId:'444',count})
     ]);
     return Object.freeze({
-      ok:two.ok&&three.ok,
-      tested:two.tested+three.tested,
-      deterministicTested:two.deterministicTested+three.deterministicTested,
-      totalTested:two.totalTested+three.totalTested,
-      failed:two.failed+three.failed,
-      results:Object.freeze({'222':two,'333':three})
+      ok:two.ok&&three.ok&&four.ok,
+      tested:two.tested+three.tested+four.tested,
+      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested,
+      totalTested:two.totalTested+three.totalTested+four.totalTested,
+      failed:two.failed+three.failed+four.failed,
+      results:Object.freeze({'222':two,'333':three,'444':four})
     });
   }
 
   globalThis.SSCPreviewValidation=Object.freeze({
     FACE_ORDER,
     deterministicScrambles:DETERMINISTIC_SCRAMBLES,
+    wideDeterministicScrambles:WIDE_DETERMINISTIC_SCRAMBLES,
+    deterministicScramblesFor,
     normalizeState,
     compareStates,
     buildReferenceState,
