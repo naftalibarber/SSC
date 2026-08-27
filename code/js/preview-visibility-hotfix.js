@@ -3,12 +3,29 @@
 
   const PREVIEW_ID='cubePreview2D';
   const VERIFY_FRAMES=90;
+  const PROFESSIONAL_PREVIEW_MIGRATION_KEY='sscTwistyProfessionalPreviewV1';
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
   let verificationSequence=0;
   let viewportListenersBound=false;
 
   function nextFrame(){return new Promise(resolve=>requestAnimationFrame(resolve));}
+
+  function migrateToProfessionalTwistyPreview(){
+    if(localStorage.getItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY)==='1')return;
+    localStorage.setItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY,'1');
+
+    const settings=window.SSCPreviewSettings;
+    if(!settings)return;
+
+    try{
+      const modeResult=settings.setMode?.('3d',{rerender:false});
+      if(modeResult&&typeof modeResult.catch==='function')modeResult.catch(error=>console.warn('[SSC preview] Could not switch default preview to 3D.',error));
+      settings.setInteractive?.(true);
+    }catch(error){
+      console.warn('[SSC preview] Professional TwistyPlayer migration failed.',error);
+    }
+  }
 
   function forceVisible(container){
     if(!(container instanceof HTMLElement))return;
@@ -121,9 +138,11 @@
     bindViewportListeners();
   }
 
+  migrateToProfessionalTwistyPreview();
   installRenderGuard();
   watchCard();
   document.addEventListener('DOMContentLoaded',()=>{
+    migrateToProfessionalTwistyPreview();
     installRenderGuard();
     watchCard();
     window.SSCPreviewSizing?.applyPreviewSize?.();
