@@ -46,12 +46,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install cubing.js reference engine
-        run: npm install --no-save --no-package-lock cubing@0.63.4
+      - name: Install validation dependencies
+        run: npm install --no-save --no-package-lock cubing@0.63.4 jsdom@26.1.0
       - name: Validate 600 NxN scramble generations
         run: node tests/scramble-validation.mjs
       - name: Validate forced NxN legacy fallback
         run: node tests/scramble-fallback.mjs
+      - name: Validate NxN timer/history/repeat integration
+        run: node tests/scramble-app-integration.mjs
       - name: Validate SSC state against cubing.js
         run: node tests/preview-validation.mjs
       - name: Validate SVG rendering geometry
