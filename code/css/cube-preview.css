@@ -1,4 +1,4 @@
-/* SSC — clean, flat, resolution-safe 2D preview.
+/* SSC — clean, flat, resolution-safe DOM/CSS NxN preview.
    Physical sizing comes from code/js/preview-sizing.js. */
 
 .cube-preview-card{
@@ -42,7 +42,6 @@ html[dir="ltr"] .cube-preview-card{
 .scramble-bar{grid-template-columns:42px minmax(0,1fr) 42px!important}
 .scramble-side{width:42px!important;min-width:42px!important}
 
-/* The reference layout is intentionally label-free and visually flat. */
 .cube-preview-card::before{display:none!important}
 
 .cube-preview-card:hover{
@@ -50,7 +49,7 @@ html[dir="ltr"] .cube-preview-card{
   box-shadow:none!important;
 }
 
-/* Native SSC NxN net: classic cross layout with visible space between faces. */
+/* Shared 2×2 / 3×3 / 4×4 DOM net. */
 .cube-preview-net{
   --ssc-preview-face:34px;
   --ssc-preview-net-gap:9px;
@@ -70,7 +69,7 @@ html[dir="ltr"] .cube-preview-card{
   filter:none!important;
 }
 
-/* Each face uses a one-pixel black grid, like a printed cube net. */
+/* One background + one uniform gap prevents doubled borders. */
 .cube-preview-face{
   width:var(--ssc-preview-face)!important;
   height:var(--ssc-preview-face)!important;
@@ -84,6 +83,7 @@ html[dir="ltr"] .cube-preview-card{
   gap:1px!important;
   padding:1px!important;
   overflow:hidden!important;
+  border:0!important;
   border-radius:0!important;
   background:#222!important;
   box-shadow:none!important;
@@ -96,7 +96,11 @@ html[dir="ltr"] .cube-preview-card{
   min-width:0!important;
   min-height:0!important;
   aspect-ratio:1 / 1!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  padding:0!important;
   border:0!important;
+  outline:0!important;
   border-radius:0!important;
   box-shadow:none!important;
 }
@@ -126,74 +130,4 @@ html[data-theme="oled"] .cube-preview-card{
   .scramble-bar{grid-template-columns:34px minmax(0,1fr) 34px!important}
   .scramble-side{width:34px!important;min-width:34px!important}
   .cube-preview-card{border-radius:3px!important}
-}
-
-/* Shared pixel-perfect flat net for both 2×2 and 3×3. The SVG owns all cube
-   geometry; the card only provides a responsive, proportional viewport. */
-.cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-  --ssc-preview-padding:calc(var(--ssc-preview-card-width,174px) * .0344827586)!important;
-  --ssc-cube-grid:#171717;
-  border-radius:4px!important;
-  border-color:#d9dde3!important;
-  background:#fff!important;
-  box-shadow:none!important;
-}
-
-.cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d):hover{
-  border-color:#cbd0d7!important;
-  box-shadow:none!important;
-}
-
-.ssc-cube-preview-svg{
-  display:block!important;
-  width:100%!important;
-  height:100%!important;
-  max-width:100%!important;
-  max-height:100%!important;
-  overflow:hidden!important;
-  direction:ltr!important;
-  shape-rendering:crispEdges;
-}
-
-.ssc-cube-svg-sticker{
-  shape-rendering:crispEdges;
-}
-
-.ssc-cube-svg-grid-lines,
-.ssc-cube-svg-face-outline{
-  fill:none;
-  stroke:var(--ssc-cube-grid,#171717);
-  vector-effect:non-scaling-stroke;
-  shape-rendering:crispEdges;
-  pointer-events:none;
-}
-
-html[data-theme="dark"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-  --ssc-cube-grid:#111!important;
-  background:#f8f8f8!important;
-  border-color:#343a43!important;
-  box-shadow:none!important;
-}
-
-html[data-theme="dark"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d):hover{
-  border-color:#474e59!important;
-  box-shadow:none!important;
-}
-
-html[data-theme="oled"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-  --ssc-cube-grid:#111!important;
-  background:#f8f8f8!important;
-  border-color:#262a31!important;
-  box-shadow:none!important;
-}
-
-html[data-theme="oled"] .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d):hover{
-  border-color:#373c45!important;
-  box-shadow:none!important;
-}
-
-@media(max-width:560px){
-  .cube-preview-card.ssc-preview-svg-card:not(.ssc-preview-mode-3d){
-    border-radius:3px!important;
-  }
 }
