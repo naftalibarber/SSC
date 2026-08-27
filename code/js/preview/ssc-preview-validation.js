@@ -7,7 +7,8 @@
     '333':Object.freeze({order:3,puzzleExport:'cube3x3x3'}),
     '444':Object.freeze({order:4,puzzleExport:'cube4x4x4'}),
     '555':Object.freeze({order:5,puzzleExport:'cube5x5x5'}),
-    '666':Object.freeze({order:6,puzzleExport:'cube6x6x6'})
+    '666':Object.freeze({order:6,puzzleExport:'cube6x6x6'}),
+    '777':Object.freeze({order:7,puzzleExport:'cube7x7x7'})
   });
   const BASIC_MOVES=Object.freeze(
     ['R','U','F','L','D','B'].flatMap(face=>[face,`${face}'`,`${face}2`])
@@ -48,13 +49,14 @@
     if(raw==='4x4'||raw==='4×4')return'444';
     if(raw==='5x5'||raw==='5×5')return'555';
     if(raw==='6x6'||raw==='6×6')return'666';
+    if(raw==='7x7'||raw==='7×7')return'777';
     return raw;
   }
 
   function configFor(eventId){
     const normalized=normalizeEventId(eventId);
     const config=EVENT_CONFIG[normalized];
-    if(!config)throw new Error(`SSC Preview validation supports only 222, 333, 444, 555 and 666; received ${String(eventId)}.`);
+    if(!config)throw new Error(`SSC Preview validation supports only 222, 333, 444, 555, 666 and 777; received ${String(eventId)}.`);
     return{eventId:normalized,...config};
   }
 
@@ -278,17 +280,7 @@
   function firstMismatchLog(mismatch){
     if(!mismatch)return;
     console.error(
-`[SSC Preview Validation FAILED]
-
-event: ${mismatch.eventId}
-scramble: ${mismatch.scramble||'(solved)'}
-
-face: ${mismatch.face}
-row: ${mismatch.row}
-col: ${mismatch.col}
-
-SSC: ${mismatch.sscValue}
-Reference: ${mismatch.referenceValue}`
+`[SSC Preview Validation FAILED]\n\nevent: ${mismatch.eventId}\nscramble: ${mismatch.scramble||'(solved)'}\n\nface: ${mismatch.face}\nrow: ${mismatch.row}\ncol: ${mismatch.col}\n\nSSC: ${mismatch.sscValue}\nReference: ${mismatch.referenceValue}`
     );
   }
 
@@ -356,20 +348,21 @@ Reference: ${mismatch.referenceValue}`
   }
 
   async function validateAll({count=100}={}){
-    const [two,three,four,five,six]=await Promise.all([
+    const [two,three,four,five,six,seven]=await Promise.all([
       validate({eventId:'222',count}),
       validate({eventId:'333',count}),
       validate({eventId:'444',count}),
       validate({eventId:'555',count}),
-      validate({eventId:'666',count})
+      validate({eventId:'666',count}),
+      validate({eventId:'777',count})
     ]);
     return Object.freeze({
-      ok:two.ok&&three.ok&&four.ok&&five.ok&&six.ok,
-      tested:two.tested+three.tested+four.tested+five.tested+six.tested,
-      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested+five.deterministicTested+six.deterministicTested,
-      totalTested:two.totalTested+three.totalTested+four.totalTested+five.totalTested+six.totalTested,
-      failed:two.failed+three.failed+four.failed+five.failed+six.failed,
-      results:Object.freeze({'222':two,'333':three,'444':four,'555':five,'666':six})
+      ok:two.ok&&three.ok&&four.ok&&five.ok&&six.ok&&seven.ok,
+      tested:two.tested+three.tested+four.tested+five.tested+six.tested+seven.tested,
+      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested+five.deterministicTested+six.deterministicTested+seven.deterministicTested,
+      totalTested:two.totalTested+three.totalTested+four.totalTested+five.totalTested+six.totalTested+seven.totalTested,
+      failed:two.failed+three.failed+four.failed+five.failed+six.failed+seven.failed,
+      results:Object.freeze({'222':two,'333':three,'444':four,'555':five,'666':six,'777':seven})
     });
   }
 
