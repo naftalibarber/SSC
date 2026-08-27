@@ -5,7 +5,8 @@
   const EVENT_CONFIG=Object.freeze({
     '222':Object.freeze({order:2,puzzleExport:'cube2x2x2'}),
     '333':Object.freeze({order:3,puzzleExport:'cube3x3x3'}),
-    '444':Object.freeze({order:4,puzzleExport:'cube4x4x4'})
+    '444':Object.freeze({order:4,puzzleExport:'cube4x4x4'}),
+    '555':Object.freeze({order:5,puzzleExport:'cube5x5x5'})
   });
   const BASIC_MOVES=Object.freeze(
     ['R','U','F','L','D','B'].flatMap(face=>[face,`${face}'`,`${face}2`])
@@ -36,19 +37,20 @@
     if(raw==='2x2'||raw==='2×2')return'222';
     if(raw==='3x3'||raw==='3×3')return'333';
     if(raw==='4x4'||raw==='4×4')return'444';
+    if(raw==='5x5'||raw==='5×5')return'555';
     return raw;
   }
 
   function configFor(eventId){
     const normalized=normalizeEventId(eventId);
     const config=EVENT_CONFIG[normalized];
-    if(!config)throw new Error(`SSC Preview validation supports only 222, 333 and 444; received ${String(eventId)}.`);
+    if(!config)throw new Error(`SSC Preview validation supports only 222, 333, 444 and 555; received ${String(eventId)}.`);
     return{eventId:normalized,...config};
   }
 
   function deterministicScramblesFor(eventId){
-    const normalized=normalizeEventId(eventId);
-    return normalized==='444'
+    const {order}=configFor(eventId);
+    return order>=4
       ?Object.freeze([...DETERMINISTIC_SCRAMBLES,...WIDE_DETERMINISTIC_SCRAMBLES])
       :DETERMINISTIC_SCRAMBLES;
   }
@@ -266,17 +268,7 @@
   function firstMismatchLog(mismatch){
     if(!mismatch)return;
     console.error(
-`[SSC Preview Validation FAILED]
-
-event: ${mismatch.eventId}
-scramble: ${mismatch.scramble||'(solved)'}
-
-face: ${mismatch.face}
-row: ${mismatch.row}
-col: ${mismatch.col}
-
-SSC: ${mismatch.sscValue}
-Reference: ${mismatch.referenceValue}`
+`[SSC Preview Validation FAILED]\n\nevent: ${mismatch.eventId}\nscramble: ${mismatch.scramble||'(solved)'}\n\nface: ${mismatch.face}\nrow: ${mismatch.row}\ncol: ${mismatch.col}\n\nSSC: ${mismatch.sscValue}\nReference: ${mismatch.referenceValue}`
     );
   }
 
@@ -317,8 +309,15 @@ Reference: ${mismatch.referenceValue}`
         results.push(await runCase(normalized,text,`random-${index+1}`,'random'));
       }catch(error){
         results.push(Object.freeze({
-          name:`random-${index+1}`,type:'random',eventId:normalized,scramble:'',ok:false,
-          mismatches:[Object.freeze({eventId:normalized,scramble:'',face:null,row:null,col:null,sscValue:null,referenceValue:null,error:String(error?.message||error)})],
+          name:`random-${index+1}`,
+          type:'random',
+          eventId:normalized,
+          scramble:'',
+          ok:false,
+          mismatches:[Object.freeze({
+            eventId:normalized,scramble:'',face:null,row:null,col:null,
+            sscValue:null,referenceValue:null,error:String(error?.message||error)
+          })],
           error:String(error?.message||error)
         }));
       }
@@ -337,26 +336,25 @@ Reference: ${mismatch.referenceValue}`
   }
 
   async function validateAll({count=100}={}){
-    const [two,three,four]=await Promise.all([
+    const [two,three,four,five]=await Promise.all([
       validate({eventId:'222',count}),
       validate({eventId:'333',count}),
-      validate({eventId:'444',count})
+      validate({eventId:'444',count}),
+      validate({eventId:'555',count})
     ]);
     return Object.freeze({
-      ok:two.ok&&three.ok&&four.ok,
-      tested:two.tested+three.tested+four.tested,
-      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested,
-      totalTested:two.totalTested+three.totalTested+four.totalTested,
-      failed:two.failed+three.failed+four.failed,
-      results:Object.freeze({'222':two,'333':three,'444':four})
+      ok:two.ok&&three.ok&&four.ok&&five.ok,
+      tested:two.tested+three.tested+four.tested+five.tested,
+      deterministicTested:two.deterministicTested+three.deterministicTested+four.deterministicTested+five.deterministicTested,
+      totalTested:two.totalTested+three.totalTested+four.totalTested+five.totalTested,
+      failed:two.failed+three.failed+four.failed+five.failed,
+      results:Object.freeze({'222':two,'333':three,'444':four,'555':five})
     });
   }
 
-  globalThis.SSCPreviewValidation=Object.freeze({
+  window.SSCPreviewValidation=Object.freeze({
     FACE_ORDER,
-    deterministicScrambles:DETERMINISTIC_SCRAMBLES,
-    wideDeterministicScrambles:WIDE_DETERMINISTIC_SCRAMBLES,
-    deterministicScramblesFor,
+    normalizeEventId,
     normalizeState,
     compareStates,
     buildReferenceState,
