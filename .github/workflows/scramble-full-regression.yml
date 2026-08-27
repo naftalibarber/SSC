@@ -22,6 +22,7 @@ on:
       - 'code/js/preview-visibility-hotfix.js'
       - 'code/js/wca-previews.js'
       - 'tests/scramble-*.mjs'
+      - 'tests/run-scramble-*.mjs'
       - 'tests/preview-*.mjs'
       - '.github/workflows/scramble-full-regression.yml'
   pull_request:
@@ -43,6 +44,7 @@ on:
       - 'code/js/preview-visibility-hotfix.js'
       - 'code/js/wca-previews.js'
       - 'tests/scramble-*.mjs'
+      - 'tests/run-scramble-*.mjs'
       - 'tests/preview-*.mjs'
       - '.github/workflows/scramble-full-regression.yml'
 
