@@ -1,15 +1,14 @@
-import fs from 'node:fs';
-import vm from 'node:vm';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
 
-function loadClassicScript(path){
-  const source=fs.readFileSync(path,'utf8');
-  vm.runInThisContext(source,{filename:path});
+async function loadClassicScript(path){
+  await import(pathToFileURL(resolve(path)).href);
 }
 
 globalThis.window=globalThis;
 
-loadClassicScript('code/js/preview/ssc-nxn-state.js');
-loadClassicScript('code/js/preview/ssc-preview-validation.js');
+await loadClassicScript('code/js/preview/ssc-nxn-state.js');
+await loadClassicScript('code/js/preview/ssc-preview-validation.js');
 
 const selfTest=globalThis.SSCNxNState.selfTest();
 if(!selfTest.ok){
