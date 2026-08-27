@@ -46,7 +46,7 @@
       sessionMenu:'ניהול סשנים',solves:'פתרונות',mean:'ממוצע',best:'שיא',lastActivity:'פעילות אחרונה',moreStats:'סטטיסטיקות נוספות',lessStats:'פחות סטטיסטיקות',current:'נוכחי',bestSection:'שיאים',worst:'הגרוע ביותר',solveCountLabel:'מספר פתרונות',focusMode:'מצב מיקוד',exitFocus:'יציאה ממיקוד',enterFullscreen:'מסך מלא',exitFullscreen:'יציאה ממסך מלא',fullscreenUnavailable:'מסך מלא אינו זמין בדפדפן זה',solveDeleted:'הפתרון נמחק',undo:'ביטול',details:'פרטי פתרון',finalTime:'זמן סופי',rawTime:'זמן גולמי',penalty:'עונש',date:'תאריך',event:'מקצה',session:'סשן',copyScramble:'העתק ערבוב',repeatScramble:'חזור על הערבוב',copied:'הערבוב הועתק',newPb:'PB חדש!',keyboardShortcuts:'קיצורי מקלדת',close:'סגור',shortcutSquare1:'מעבר ל־Square-1',shortcutNxn:'מעבר ל־{n}×{n}',shortcutPyraminx:'מעבר ל־Pyraminx',shortcutMegaminx:'מעבר ל־Megaminx',shortcutBlind:'מעבר ל־3BLD',shortcutMultiBlind:'מעבר ל־MBLD',shortcutSkewb:'מעבר ל־Skewb',shortcutClock:'מעבר ל־Clock',shortcutUndo:'ביטול הפעולה האחרונה',shortcutFto:'מעבר ל־FTO',shortcutMarkDnf:'סימון הפתרון האחרון כ־DNF',shortcutMarkPlus2:'סימון הפתרון האחרון כ־+2',shortcutDeleteSolve:'מחיקת הפתרון האחרון',shortcutHelp:'עזרה לקיצורים',shortcutLanguage:'מעבר לשפה הבאה',sessionEmptyDelete:'למחוק את הסשן הריק הזה?'
     },
     en:{
-      newScramble:'New scramble',holdHere:'Hold here to start',timerAria:'Timer',puzzleSelectorAria:'Event selection',historyAria:'History and statistics',sessionSelectAria:'Session selection',historySettingsTitle:'Choose statistics to display',customAo:'Custom Ao',add:'Add',recentSolves:'Recent solves',emptyHistory:'No saved solves yet.',scramble:'Scramble',idle:'Hold Space, wait for green, then release to start',holding:'Keep holding...',ready:'Ready — release to start',running:'Space to stop',saved:'Saved! Hold Space for the next solve',addSessionPrompt:'Name for the new session (leave blank for an automatic name):',renameSessionPrompt:'New session name:',deleteSessionConfirm:'Delete this session and all of its solves?',cannotDeleteLastSession:'At least one session must remain.',clearHistoryConfirm:'Delete all solves in the current session?',deleteSolve:'Delete',historySettings:'History settings',addSession:'New session',renameSession:'Rename session',deleteSession:'Delete session',clearHistory:'Clear history',remove:'Remove',defaultSession:'Session 1',languageButton:'עברית',generatingScramble:'Generating scramble…',scrambleError:'Unable to generate scramble',eventSelector:'Event selection',inspection:'15-second inspection',inspectionHolding:'Keep holding to start',inspectionReady:'Ready — release to start',inspection8:'8 seconds',inspection12:'12 seconds',inspectionPlus2:'+2',inspectionDnf:'DNF',ok:'OK',delete:'Delete',penaltyEditor:'Result penalty',
+      newScramble:'New scramble',holdHere:'Hold here to start',timerAria:'Timer',puzzleSelectorAria:'Event selection',historyAria:'History and statistics',sessionSelectAria:'Session selection',historySettingsTitle:'Choose statistics to display',customAo:'Custom Ao',add:'Add',recentSolves:'Recent solves',emptyHistory:'No saved solves yet.',scramble:'Scramble',idle:'Hold Space, wait for green, then release to start',holding:'Keep holding...',ready:'Ready — release to start',running:'Space to stop',saved:'Saved! Hold Space for the next solve',addSessionPrompt:'Name for the new session (leave blank for an automatic name):',renameSessionPrompt:'New session name',deleteSessionConfirm:'Delete this session and all of its solves?',cannotDeleteLastSession:'At least one session must remain.',clearHistoryConfirm:'Delete all solves in the current session?',deleteSolve:'Delete',historySettings:'History settings',addSession:'New session',renameSession:'Rename session',deleteSession:'Delete session',clearHistory:'Clear history',remove:'Remove',defaultSession:'Session 1',languageButton:'עברית',generatingScramble:'Generating scramble…',scrambleError:'Unable to generate scramble',eventSelector:'Event selection',inspection:'15-second inspection',inspectionHolding:'Keep holding to start',inspectionReady:'Ready — release to start',inspection8:'8 seconds',inspection12:'12 seconds',inspectionPlus2:'+2',inspectionDnf:'DNF',ok:'OK',delete:'Delete',penaltyEditor:'Result penalty',
       sessionMenu:'Session manager',solves:'solves',mean:'Mean',best:'Best',lastActivity:'Last activity',moreStats:'More statistics',lessStats:'Less statistics',current:'CURRENT',bestSection:'BEST',worst:'Worst',solveCountLabel:'Solve count',focusMode:'Focus Mode',exitFocus:'Exit Focus',enterFullscreen:'Enter Fullscreen',exitFullscreen:'Exit Fullscreen',fullscreenUnavailable:'Fullscreen is not available in this browser',solveDeleted:'Solve deleted',undo:'Undo',details:'Solve details',finalTime:'Final Time',rawTime:'Raw Time',penalty:'Penalty',date:'Date',event:'Event',session:'Session',copyScramble:'Copy Scramble',repeatScramble:'Repeat Scramble',copied:'Scramble copied',newPb:'NEW PB',keyboardShortcuts:'Keyboard shortcuts',close:'Close',shortcutSquare1:'Switch to Square-1',shortcutNxn:'Switch to {n}×{n}',shortcutPyraminx:'Switch to Pyraminx',shortcutMegaminx:'Switch to Megaminx',shortcutBlind:'Switch to 3BLD',shortcutMultiBlind:'Switch to MBLD',shortcutSkewb:'Switch to Skewb',shortcutClock:'Switch to Clock',shortcutUndo:'Undo the last action',shortcutFto:'Switch to FTO',shortcutMarkDnf:'Mark the latest solve DNF',shortcutMarkPlus2:'Mark the latest solve +2',shortcutDeleteSolve:'Delete the latest solve',shortcutHelp:'Shortcuts help',shortcutLanguage:'Switch to the next language',sessionEmptyDelete:'Delete this empty session?'
     }
   };
@@ -75,6 +75,8 @@
   function t(key){return I18N[currentLanguage]?.[key]||key;}
   function normalizeEventId(value){return window.SSCScrambles?.normalizeEventId?.(value)||null;}
   function eventFor(value){return window.SSCScrambles?.getEvent?.(value)||null;}
+  function useNxNProvider(eventId){return window.SSC_FEATURES?.scrambleProviderV1!==false&&window.SSCScrambleProvider?.supportsEvent?.(eventId)===true;}
+  async function generateEventScramble(eventId){return useNxNProvider(eventId)?window.SSCScrambleProvider.generate(eventId):window.SSCScrambles.generate(eventId);}
   function legacyPuzzleForEvent(eventId){return eventId==='222'?'2x2':eventId==='333'?'3x3':eventId;}
   function eventIdForLegacyPuzzle(puzzle){return normalizeEventId(puzzle)||'333';}
   function formatTime(ms){return Number.isFinite(ms)?(ms/1000).toFixed(timePrecision):'DNF';}
@@ -181,7 +183,10 @@
   let sessions=sessionsByEvent[currentEvent];
   let currentSessionId=null;
   let currentScramble='';
+  let currentScrambleEvent=null;
   let scrambleRequestId=0;
+  let isGeneratingScramble=false;
+  let activeSolveScramble=null;
 
   function saveSessions(){sessionsByEvent[currentEvent]=sessions;localStorage.setItem(SESSIONS_KEY,JSON.stringify(sessionsByEvent));}
   function saveActiveSession(){activeSessionByEvent[currentEvent]=currentSessionId;localStorage.setItem(ACTIVE_SESSION_KEY,JSON.stringify(activeSessionByEvent));}
@@ -333,31 +338,26 @@
 
   function multiBlindPreviewScramble(scramble){if(currentEvent!=='333mbf')return scramble;const text=String(scramble||'');const match=text.match(/^1\)\s*(.*?)(?:\s+\|\s+2\)|$)/);return match?.[1]?.trim()||text;}
   let scrambleFitFrame=0;
-  function scrambleOverflows(){
-    return els.scramble.scrollWidth>els.scramble.clientWidth+1||els.scramble.scrollHeight>els.scramble.clientHeight+1;
-  }
+  function scrambleOverflows(){return els.scramble.scrollWidth>els.scramble.clientWidth+1||els.scramble.scrollHeight>els.scramble.clientHeight+1;}
   function fitScrambleText(){
     cancelAnimationFrame(scrambleFitFrame);
     scrambleFitFrame=requestAnimationFrame(()=>{
-      const bar=els.scramble.closest('.scramble-bar');
-      if(!bar)return;
-      bar.classList.remove('scramble-expanded');
-      els.scramble.style.removeProperty('font-size');
-      if(!scrambleOverflows())return;
-      bar.classList.add('scramble-expanded');
-      if(!scrambleOverflows())return;
-      const natural=parseFloat(getComputedStyle(els.scramble).fontSize)||27;
-      let low=8,high=natural,best=low;
-      for(let i=0;i<10;i+=1){
-        const size=(low+high)/2;
-        els.scramble.style.fontSize=`${size}px`;
-        if(scrambleOverflows())high=size;else{best=size;low=size;}
-      }
+      const bar=els.scramble.closest('.scramble-bar');if(!bar)return;bar.classList.remove('scramble-expanded');els.scramble.style.removeProperty('font-size');if(!scrambleOverflows())return;bar.classList.add('scramble-expanded');if(!scrambleOverflows())return;
+      const natural=parseFloat(getComputedStyle(els.scramble).fontSize)||27;let low=8,high=natural,best=low;
+      for(let i=0;i<10;i+=1){const size=(low+high)/2;els.scramble.style.fontSize=`${size}px`;if(scrambleOverflows())high=size;else{best=size;low=size;}}
       els.scramble.style.fontSize=`${best}px`;
     });
   }
-  function showScramble(scramble,eventId=currentEvent,previewScramble=scramble){const text=Array.isArray(scramble)?scramble.join(' ').trim():String(scramble||'').trim();els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=eventId;els.scramble.textContent=text;fitScrambleText();window.SSCCubePreview?.render(els.cubePreview2D,previewScramble,eventId);}
-  function loadScramble(scramble,eventId=currentEvent){const text=String(scramble||'').trim();if(!text||eventId!==currentEvent||timer.isBusy())return false;scrambleRequestId+=1;currentScramble=text;els.scramble.removeAttribute('aria-busy');showScramble(text,currentEvent,multiBlindPreviewScramble(text));return true;}
+  function showScramble(scramble,eventId=currentEvent,previewScramble=scramble){
+    const text=Array.isArray(scramble)?scramble.join(' ').trim():String(scramble||'').trim();
+    const previewText=useNxNProvider(eventId)?text:previewScramble;
+    els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=eventId;els.scramble.textContent=text;fitScrambleText();window.SSCCubePreview?.render(els.cubePreview2D,previewText,eventId);
+  }
+  function loadScramble(scramble,eventId=currentEvent){
+    const normalizedEvent=normalizeEventId(eventId)||eventId;const text=String(scramble||'').trim();
+    if(!text||normalizedEvent!==currentEvent||timer.isBusy())return false;
+    scrambleRequestId+=1;isGeneratingScramble=false;currentScramble=text;currentScrambleEvent=currentEvent;els.scramble.removeAttribute('aria-busy');showScramble(text,currentEvent,multiBlindPreviewScramble(text));return true;
+  }
 
   function renderEventSelect(){if(!els.eventSelect)return;const events=window.SSCScrambles?.getEvents?.()||[];els.eventSelect.innerHTML='';events.forEach(event=>{const option=document.createElement('option');option.value=event.id;option.textContent=event.label||event.id.toUpperCase();option.title=event.name||event.id;els.eventSelect.appendChild(option);});els.eventSelect.value=currentEvent;els.eventSelect.setAttribute('aria-label',t('eventSelector'));}
   function updateEventUI(){const event=eventFor(currentEvent);const label=event?.label||currentEvent.toUpperCase();els.scrambleLabel.textContent=`${t('scramble')} ${label}`;if(els.eventSelect){els.eventSelect.value=currentEvent;els.eventSelect.setAttribute('aria-label',t('eventSelector'));}document.querySelectorAll('.puzzle-btn').forEach(btn=>btn.classList.toggle('active',normalizeEventId(btn.dataset.puzzle)===currentEvent));}
@@ -371,36 +371,27 @@
 
   function setFocusMode(enabled){document.documentElement.dataset.focusMode=enabled?'on':'off';const button=document.getElementById('focusModeButton');if(button)button.setAttribute('aria-pressed',enabled?'true':'false');}
   function isFocusMode(){return document.documentElement.dataset.focusMode==='on';}
-  async function toggleFullscreen(){
-    if(document.fullscreenElement){await document.exitFullscreen?.();return;}
-    if(!document.documentElement.requestFullscreen){alert(t('fullscreenUnavailable'));return;}
-    try{await document.documentElement.requestFullscreen();}catch{alert(t('fullscreenUnavailable'));}
-  }
+  async function toggleFullscreen(){if(document.fullscreenElement){await document.exitFullscreen?.();return;}if(!document.documentElement.requestFullscreen){alert(t('fullscreenUnavailable'));return;}try{await document.documentElement.requestFullscreen();}catch{alert(t('fullscreenUnavailable'));}}
   function updateFullscreenButton(){const button=document.querySelector('[data-focus-fullscreen]');if(button)button.textContent=document.fullscreenElement?t('exitFullscreen'):t('enterFullscreen');}
   function openShortcuts(){const modal=document.getElementById('shortcutsModal');if(!modal)return;modal.querySelector('[data-shortcuts-title]').textContent=t('keyboardShortcuts');const nxn=number=>t('shortcutNxn').replace('{n}',number);const items=[['Ctrl/Cmd + 1',t('shortcutSquare1')],['Ctrl/Cmd + 2',nxn(2)],['Ctrl/Cmd + 3',nxn(3)],['Ctrl/Cmd + 4',nxn(4)],['Ctrl/Cmd + 5',nxn(5)],['Ctrl/Cmd + 6',nxn(6)],['Ctrl/Cmd + 7',nxn(7)],['Ctrl/Cmd + P',t('shortcutPyraminx')],['Ctrl/Cmd + M',t('shortcutMegaminx')],['Ctrl/Cmd + B',t('shortcutBlind')],['Ctrl/Cmd + M + B',t('shortcutMultiBlind')],['Ctrl/Cmd + S',t('shortcutSkewb')],['Ctrl/Cmd + C',t('shortcutClock')],['Ctrl/Cmd + F',t('shortcutFto')],['Ctrl/Cmd + D',t('shortcutMarkDnf')],['Ctrl/Cmd + +',t('shortcutMarkPlus2')],['Ctrl/Cmd + N',t('shortcutDeleteSolve')],['Ctrl/Cmd + Z',t('shortcutUndo')],['Ctrl/Cmd + L',t('shortcutLanguage')],['Ctrl/Cmd + ?',t('shortcutHelp')]];const grid=modal.querySelector('.shortcuts-grid');grid.innerHTML='';items.forEach(([key,label])=>{const row=document.createElement('div');row.innerHTML='<kbd></kbd><span></span>';row.querySelector('kbd').textContent=key;row.querySelector('span').textContent=label;grid.appendChild(row);});modal.hidden=false;}
   function closeShortcuts(){const modal=document.getElementById('shortcutsModal');if(modal)modal.hidden=true;}
   function closeTransientUi(){const settings=document.getElementById('generalSettingsModal');const imp=document.getElementById('importExportModal');if(!document.getElementById('solveDetailsModal')?.hidden){closeSolveDetails();return true;}if(!document.getElementById('shortcutsModal')?.hidden){closeShortcuts();return true;}if(settings&&!settings.hidden){settings.hidden=true;return true;}if(imp&&!imp.hidden){imp.hidden=true;return true;}const menu=document.getElementById('sessionMenu');if(menu&&!menu.hidden){menu.hidden=true;return true;}return false;}
 
   class TimerEngine{
-    constructor({holdMs=500,onTick,onInspectionTick,onStateChange,onStop}){this.holdMs=holdMs;this.onTick=onTick;this.onInspectionTick=onInspectionTick;this.onStateChange=onStateChange;this.onStop=onStop;this.state='idle';this.holdTimeout=null;this.startTime=0;this.animationFrame=null;this.inspectionStartTime=0;this.inspectionFrame=null;this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.cue8Sent=false;this.cue12Sent=false;}
+    constructor({holdMs=500,onTick,onInspectionTick,onStateChange,onAttemptPrepare,onAttemptCancel,onStop}){this.holdMs=holdMs;this.onTick=onTick;this.onInspectionTick=onInspectionTick;this.onStateChange=onStateChange;this.onAttemptPrepare=onAttemptPrepare;this.onAttemptCancel=onAttemptCancel;this.onStop=onStop;this.state='idle';this.holdTimeout=null;this.startTime=0;this.animationFrame=null;this.inspectionStartTime=0;this.inspectionFrame=null;this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.cue8Sent=false;this.cue12Sent=false;}
     setState(state){this.state=state;this.onStateChange?.(state);}isBusy(){return this.state!=='idle';}clearHold(){clearTimeout(this.holdTimeout);this.holdTimeout=null;}
     beginHold(fromInspection=false){const holdingState=fromInspection?'inspection-holding':'holding';const readyState=fromInspection?'inspection-ready':'ready';this.setState(holdingState);this.clearHold();this.holdTimeout=setTimeout(()=>{if(this.state===holdingState)this.setState(readyState);},this.holdMs);}
-    press(){if(this.state==='running'){this.stop();return;}if(this.state==='idle'){this.beginHold(false);return;}if(this.state==='inspection'){this.beginHold(true);}}
+    press(){if(this.state==='running'){this.stop();return;}if(this.state==='idle'){if(this.onAttemptPrepare?.()===false)return;this.beginHold(false);return;}if(this.state==='inspection'){this.beginHold(true);}}
     release(){if(this.state==='ready'){if((competitionSettings.mode&&competitionSettings.inspection)||window.SSCTraining?.shouldInspect?.())this.startInspection();else this.start();return;}if(this.state==='holding'){this.cancelHold(false);return;}if(this.state==='inspection-ready'){this.start();return;}if(this.state==='inspection-holding')this.cancelHold(true);}
-    cancelHold(fromInspection){this.clearHold();if(this.state===(fromInspection?'inspection-holding':'holding'))this.setState(fromInspection?'inspection':'idle');}
-    cancelArming(){
-      this.clearHold();
-      if(this.state==='holding'||this.state==='ready'){this.setState('idle');return true;}
-      if(this.state==='inspection-holding'||this.state==='inspection-ready'){this.setState('inspection');return true;}
-      return false;
-    }
+    cancelHold(fromInspection){this.clearHold();if(this.state===(fromInspection?'inspection-holding':'holding')){this.setState(fromInspection?'inspection':'idle');if(!fromInspection)this.onAttemptCancel?.();}}
+    cancelArming(){this.clearHold();if(this.state==='holding'||this.state==='ready'){this.setState('idle');this.onAttemptCancel?.();return true;}if(this.state==='inspection-holding'||this.state==='inspection-ready'){this.setState('inspection');return true;}return false;}
     startInspection(){this.clearHold();this.cancelRunFrame();this.cancelInspectionFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.inspectionStartTime=performance.now();this.cue8Sent=false;this.cue12Sent=false;this.setState('inspection');this.tickInspection();}
     tickInspection=()=>{if(!isInspectionState(this.state))return;const elapsed=performance.now()-this.inspectionStartTime;const nextPenalty=getInspectionPenalty(elapsed);if(nextPenalty!==this.lastInspectionPenalty){if(nextPenalty==='+2'||nextPenalty==='DNF')window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:nextPenalty,elapsedMs:elapsed}}));this.lastInspectionPenalty=nextPenalty;}this.pendingPenalty=nextPenalty;if(!this.cue8Sent&&elapsed>=INSPECTION_CUE_8_MS){this.cue8Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'8s',elapsedMs:elapsed}}));}if(!this.cue12Sent&&elapsed>=INSPECTION_CUE_12_MS){this.cue12Sent=true;window.dispatchEvent(new CustomEvent('ssc-inspection-cue',{detail:{cue:'12s',elapsedMs:elapsed}}));}this.onInspectionTick?.(elapsed,this.pendingPenalty,{cue8:this.cue8Sent,cue12:this.cue12Sent});this.inspectionFrame=requestAnimationFrame(this.tickInspection);};
     cancelInspectionFrame(){if(this.inspectionFrame!==null)cancelAnimationFrame(this.inspectionFrame);this.inspectionFrame=null;}cancelRunFrame(){if(this.animationFrame!==null)cancelAnimationFrame(this.animationFrame);this.animationFrame=null;}
     start(){this.clearHold();if(isInspectionState(this.state)){const elapsed=Math.max(0,performance.now()-this.inspectionStartTime);this.pendingPenalty=getInspectionPenalty(elapsed);this.cancelInspectionFrame();}else this.pendingPenalty='OK';this.startTime=performance.now();this.setState('running');this.tick();}
     tick=()=>{if(this.state!=='running')return;this.onTick?.(performance.now()-this.startTime);this.animationFrame=requestAnimationFrame(this.tick);};
     stop(){if(this.state!=='running')return;const elapsed=performance.now()-this.startTime;const penalty=this.pendingPenalty;this.cancelRunFrame();this.setState('idle');this.onStop?.(elapsed,penalty);this.pendingPenalty='OK';}
-    reset(){this.clearHold();this.cancelInspectionFrame();this.cancelRunFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.setState('idle');}
+    reset(){this.clearHold();this.cancelInspectionFrame();this.cancelRunFrame();this.pendingPenalty='OK';this.lastInspectionPenalty='OK';this.setState('idle');this.onAttemptCancel?.();}
   }
 
   function statusKeyForState(state){if(state==='inspection-holding')return'inspectionHolding';if(state==='inspection-ready')return'inspectionReady';return state;}
@@ -408,8 +399,7 @@
   function applyCompetitionUiState(){document.documentElement.dataset.competitionMode=competitionSettings.mode?'on':'off';renderHistory();}
   function renderInspection(elapsed,penalty){let phase='normal';let display='';let status=t('inspection');if(penalty==='DNF'){phase='dnf';display='DNF';status=t('inspectionDnf');}else if(penalty==='+2'){phase='penalty';display='+2';status=t('inspectionPlus2');}else{const remaining=Math.max(0,Math.ceil((INSPECTION_NORMAL_MS-elapsed)/1000));display=String(remaining);if(elapsed>=INSPECTION_CUE_12_MS){phase='warning-strong';status=t('inspection12');}else if(elapsed>=INSPECTION_CUE_8_MS){phase='warning';status=t('inspection8');}}if(timer.state==='inspection-ready')status=t('inspectionReady');else if(timer.state==='inspection-holding')status=t('inspectionHolding');els.timer.textContent=display;els.timer.className=`inspection ${phase}${timer.state==='inspection-ready'?' ready':''}${timer.state==='inspection-holding'?' holding':''}`;els.status.textContent=status;}
 
-  ensureCurrentSession();
-  ensureAdvancedUi();
+  ensureCurrentSession();ensureAdvancedUi();
 
   function applyLanguage(){
     document.documentElement.lang=currentLanguage;document.documentElement.dir=currentLanguage==='he'?'rtl':'ltr';document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});document.querySelectorAll('[data-i18n-aria]').forEach(el=>{el.setAttribute('aria-label',t(el.dataset.i18nAria));});
@@ -422,16 +412,48 @@
   function cycleLanguage(){currentLanguage=currentLanguage==='he'?'en':'he';localStorage.setItem(LANGUAGE_KEY,currentLanguage);applyLanguage();}
 
   async function createNewScramble(){
-    if(timer.isBusy())return null;const requestId=++scrambleRequestId;const requestedEvent=currentEvent;currentScramble='';els.scramble.dataset.scrambleTransient='true';els.scramble.dataset.eventId=requestedEvent;els.scramble.setAttribute('aria-busy','true');els.scramble.textContent=t('generatingScramble');
-    try{let scramble;let previewScramble;const trainingScramble=await window.SSCTraining?.nextScramble?.();if(trainingScramble){scramble=trainingScramble;previewScramble=scramble;}else if(requestedEvent==='333mbf'){const scrambles=await window.SSCScrambles.generateMultiBlind(DEFAULT_MBLD_CUBES);scramble=scrambles.map((value,index)=>`${index+1}) ${value}`).join(' | ');previewScramble=scrambles[0]||'';}else{scramble=await window.SSCScrambles.generate(requestedEvent);previewScramble=scramble;}if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;currentScramble=String(scramble);showScramble(scramble,requestedEvent,previewScramble);return currentScramble;}catch(error){if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;els.scramble.dataset.scrambleTransient='true';els.scramble.textContent=`${t('scrambleError')}: ${requestedEvent}`;console.error(`[SSC] Unable to generate scramble for: ${requestedEvent}`,error);return null;}finally{if(requestId===scrambleRequestId)els.scramble.removeAttribute('aria-busy');}
+    if(timer.isBusy())return null;
+    const requestId=++scrambleRequestId;const requestedEvent=currentEvent;isGeneratingScramble=true;els.scramble.setAttribute('aria-busy','true');
+    try{
+      let scramble;let previewScramble;
+      const trainingScramble=await window.SSCTraining?.nextScramble?.();
+      if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;
+      if(trainingScramble){scramble=trainingScramble;previewScramble=scramble;}
+      else if(requestedEvent==='333mbf'){const scrambles=await window.SSCScrambles.generateMultiBlind(DEFAULT_MBLD_CUBES);scramble=scrambles.map((value,index)=>`${index+1}) ${value}`).join(' | ');previewScramble=scrambles[0]||'';}
+      else{scramble=await generateEventScramble(requestedEvent);previewScramble=scramble;}
+      if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;
+      const text=Array.isArray(scramble)?scramble.join(' ').trim():String(scramble||'').trim();if(!text)throw new Error(`Generated empty scramble for ${requestedEvent}.`);
+      currentScramble=text;currentScrambleEvent=requestedEvent;showScramble(text,requestedEvent,previewScramble);return currentScramble;
+    }catch(error){
+      if(requestId!==scrambleRequestId||requestedEvent!==currentEvent)return null;
+      console.error('[SSC Scramble] unable to generate new scramble',{eventId:requestedEvent,error});return null;
+    }finally{
+      if(requestId===scrambleRequestId){isGeneratingScramble=false;els.scramble.removeAttribute('aria-busy');}
+    }
   }
-  async function setEvent(value){const eventId=normalizeEventId(value);if(!eventId||timer.isBusy()||eventId===currentEvent)return false;scrambleRequestId+=1;currentEvent=eventId;currentPuzzle=legacyPuzzleForEvent(eventId);currentScramble='';localStorage.setItem(EVENT_KEY,eventId);if(eventId==='222'||eventId==='333')localStorage.setItem(PUZZLE_KEY,currentPuzzle);ensureCurrentSession();renderSessionSelect();renderSessionMenu();updateEventUI();renderHistory();window.dispatchEvent(new CustomEvent('ssc-event-change',{detail:{eventId}}));await createNewScramble();return true;}
+  async function setEvent(value){
+    const eventId=normalizeEventId(value);if(!eventId||timer.isBusy()||eventId===currentEvent)return false;
+    scrambleRequestId+=1;isGeneratingScramble=false;currentEvent=eventId;currentPuzzle=legacyPuzzleForEvent(eventId);localStorage.setItem(EVENT_KEY,eventId);if(eventId==='222'||eventId==='333')localStorage.setItem(PUZZLE_KEY,currentPuzzle);ensureCurrentSession();renderSessionSelect();renderSessionMenu();updateEventUI();renderHistory();window.dispatchEvent(new CustomEvent('ssc-event-change',{detail:{eventId}}));await createNewScramble();return true;
+  }
 
-  const timer=new TimerEngine({holdMs:500,onTick:ms=>{els.timer.textContent=formatTime(ms);},onInspectionTick:(elapsed,penalty)=>renderInspection(elapsed,penalty),onStateChange:state=>{setTimerState(state);if(state==='running')els.timer.textContent=(0).toFixed(timePrecision);},onStop:(elapsed,penalty)=>{const effective=penalty==='DNF'?Infinity:elapsed+(penalty==='+2'?2000:0);els.timer.textContent=formatTime(effective);els.status.textContent=t('saved');addSolve(elapsed,currentScramble,penalty);renderHistory();createNewScramble();}});
+  const timer=new TimerEngine({
+    holdMs:500,
+    onTick:ms=>{els.timer.textContent=formatTime(ms);},
+    onInspectionTick:(elapsed,penalty)=>renderInspection(elapsed,penalty),
+    onAttemptPrepare:()=>{if(isGeneratingScramble||!currentScramble||currentScrambleEvent!==currentEvent)return false;activeSolveScramble=currentScramble;return true;},
+    onAttemptCancel:()=>{activeSolveScramble=null;},
+    onStateChange:state=>{setTimerState(state);if(state==='running')els.timer.textContent=(0).toFixed(timePrecision);},
+    onStop:(elapsed,penalty)=>{
+      const effective=penalty==='DNF'?Infinity:elapsed+(penalty==='+2'?2000:0);els.timer.textContent=formatTime(effective);els.status.textContent=t('saved');
+      const solveScramble=activeSolveScramble||currentScramble;activeSolveScramble=null;
+      if(!solveScramble){console.error('[SSC Scramble] refusing to save solve without scramble',{eventId:currentEvent});return;}
+      addSolve(elapsed,solveScramble,penalty);renderHistory();createNewScramble();
+    }
+  });
 
   window.addEventListener('ssc-general-settings-change',event=>{const detail=event.detail||{};const previousMode=competitionSettings.mode;competitionSettings={mode:Boolean(detail.competitionMode),inspection:detail.competitionInspection!==false};if(previousMode&&!competitionSettings.mode&&isInspectionState(timer.state))timer.reset();applyCompetitionUiState();});
   window.addEventListener('storage',event=>{if(event.key===GENERAL_SETTINGS_KEY){competitionSettings=readGeneralSettings();timePrecision=readTimePrecision();if(!competitionSettings.mode&&isInspectionState(timer.state))timer.reset();applyCompetitionUiState();}if(event.key===STORAGE_KEY){rawHistoryCache=null;historyRevision+=1;sessionHistoryCache={key:'',value:[]};statsCache.clear();renderHistory();}});
-  window.addEventListener('ssc-scramble-history-select',event=>{const eventId=normalizeEventId(event.detail?.eventId||currentEvent);const scramble=String(event.detail?.scramble||'').trim();if(!scramble||eventId!==currentEvent||timer.isBusy())return;scrambleRequestId+=1;currentScramble=scramble;els.scramble.dataset.scrambleTransient='false';els.scramble.dataset.eventId=currentEvent;els.scramble.removeAttribute('aria-busy');window.SSCCubePreview?.render(els.cubePreview2D,multiBlindPreviewScramble(scramble),currentEvent);});
+  window.addEventListener('ssc-scramble-history-select',event=>{const eventId=normalizeEventId(event.detail?.eventId||currentEvent);const scramble=String(event.detail?.scramble||'').trim();if(!scramble||eventId!==currentEvent||timer.isBusy())return;loadScramble(scramble,eventId);});
   window.addEventListener('ssc-time-precision-change',()=>{const next=readTimePrecision();if(next===timePrecision)return;timePrecision=next;renderHistory();if(timer.state==='idle'){const displayed=Number(els.timer.textContent);if(Number.isFinite(displayed))els.timer.textContent=displayed.toFixed(timePrecision);}});
   window.addEventListener('blur',()=>{timer.cancelArming();shortcutKeysDown.clear();pendingMegaminxShortcut=false;});
   document.addEventListener('visibilitychange',()=>{if(document.hidden)timer.cancelArming();});
@@ -440,14 +462,15 @@
   document.addEventListener('keydown',event=>{
     if(event.repeat&&event.code!=='Space')return;
     if(event.code==='Space'){
-      if(event.repeat||isEditableTarget(event.target))return;event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&!currentScramble)return;timer.press();return;
+      if(event.repeat||isEditableTarget(event.target))return;event.preventDefault();
+      if(timer.state!=='running'&&!isInspectionState(timer.state)&&(isGeneratingScramble||!currentScramble||currentScrambleEvent!==currentEvent))return;
+      timer.press();return;
     }
     if(isEditableTarget(event.target))return;
     if(event.key==='Escape'){event.preventDefault();if(closeTransientUi())return;if(isFocusMode()){setFocusMode(false);return;}return;}
     const primaryModifier=event.ctrlKey||event.metaKey;
     if(primaryModifier&&!event.altKey){
-      const key=event.key.toLowerCase();
-      const code=event.code;
+      const key=event.key.toLowerCase();const code=event.code;
       const eventShortcuts={Digit1:'sq1',Numpad1:'sq1',Digit2:'222',Numpad2:'222',Digit3:'333',Numpad3:'333',Digit4:'444',Numpad4:'444',Digit5:'555',Numpad5:'555',Digit6:'666',Numpad6:'666',Digit7:'777',Numpad7:'777',KeyP:'pyram',KeyB:'333bf',KeyS:'skewb',KeyC:'clock',KeyF:'fto'};
       if(code==='Slash'&&event.shiftKey){event.preventDefault();openShortcuts();return;}
       if(code==='KeyZ'){event.preventDefault();undoDelete();return;}
@@ -466,7 +489,7 @@
   });
   document.addEventListener('keyup',event=>{if(event.code==='KeyM'&&shortcutKeysDown.has('KeyM')){shortcutKeysDown.delete('KeyM');const openMegaminx=pendingMegaminxShortcut;pendingMegaminxShortcut=false;if(openMegaminx&&!isEditableTarget(event.target)){event.preventDefault();setEvent('minx');}}if(event.code!=='Space'||isEditableTarget(event.target))return;event.preventDefault();timer.release();});
 
-  els.touchTimer.addEventListener('pointerdown',event=>{event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&!currentScramble)return;els.touchTimer.setPointerCapture?.(event.pointerId);timer.press();});
+  els.touchTimer.addEventListener('pointerdown',event=>{event.preventDefault();if(timer.state!=='running'&&!isInspectionState(timer.state)&&(isGeneratingScramble||!currentScramble||currentScrambleEvent!==currentEvent))return;els.touchTimer.setPointerCapture?.(event.pointerId);timer.press();});
   els.touchTimer.addEventListener('pointerup',event=>{event.preventDefault();timer.release();});
   els.touchTimer.addEventListener('pointercancel',event=>{event.preventDefault();timer.cancelArming();});
   document.getElementById('newScramble').addEventListener('click',createNewScramble);document.querySelectorAll('.puzzle-btn').forEach(btn=>btn.addEventListener('click',()=>setEvent(btn.dataset.puzzle)));els.eventSelect?.addEventListener('change',()=>setEvent(els.eventSelect.value));
@@ -480,7 +503,11 @@
   els.languageToggle.addEventListener('click',cycleLanguage);els.historySettingsButton.addEventListener('click',()=>{els.historySettings.hidden=!els.historySettings.hidden;});
   els.addCustomAo.addEventListener('click',()=>{const count=Number.parseInt(els.customAoInput.value,10);if(!Number.isInteger(count)||count<3||count>100000)return;if(!metricSettings.custom.includes(count))metricSettings.custom.push(count);const id=`custom-${count}`;if(!metricSettings.selected.includes(id))metricSettings.selected.push(id);metricSettings.custom.sort((a,b)=>a-b);saveMetricSettings(metricSettings);els.customAoInput.value='';renderMetricSettings();renderStats();});els.customAoInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();els.addCustomAo.click();}});
 
-  window.SSCTimerEvents=Object.freeze({getCurrent:()=>currentEvent,getCurrentEvent:()=>eventFor(currentEvent),setCurrent:setEvent,newScramble:createNewScramble,getTimerState:()=>timer.state,getCompetitionSettings:()=>({...competitionSettings}),getEffectiveTime,getCurrentSession:()=>getSessionSnapshot(sessions.find(item=>item.id===currentSessionId),currentEvent),getSessions:()=>sessions.map(session=>getSessionSnapshot(session,currentEvent)),setPenalty:applyPenalty,deleteSolve,undoDelete,setFocusMode,isFocusMode,repeatScramble:loadScramble});
+  window.SSCTimerEvents=Object.freeze({
+    getCurrent:()=>currentEvent,getCurrentEvent:()=>eventFor(currentEvent),setCurrent:setEvent,newScramble:createNewScramble,getTimerState:()=>timer.state,getCompetitionSettings:()=>({...competitionSettings}),getEffectiveTime,
+    getCurrentScramble:()=>currentScramble,getActiveSolveScramble:()=>activeSolveScramble,isGeneratingScramble:()=>isGeneratingScramble,
+    getCurrentSession:()=>getSessionSnapshot(sessions.find(item=>item.id===currentSessionId),currentEvent),getSessions:()=>sessions.map(session=>getSessionSnapshot(session,currentEvent)),setPenalty:applyPenalty,deleteSolve,undoDelete,setFocusMode,isFocusMode,repeatScramble:loadScramble
+  });
 
   new ResizeObserver(fitScrambleText).observe(document.querySelector('.scramble-center'));
   if(document.fonts?.ready)document.fonts.ready.then(fitScrambleText);
