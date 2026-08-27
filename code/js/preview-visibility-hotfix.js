@@ -2,14 +2,11 @@
   'use strict';
 
   const PREVIEW_ID='cubePreview2D';
-  const VERIFY_FRAMES=90;
   const PROFESSIONAL_PREVIEW_MIGRATION_KEY='sscTwistyProfessionalPreviewV1';
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
   let verificationSequence=0;
   let viewportListenersBound=false;
-
-  function nextFrame(){return new Promise(resolve=>requestAnimationFrame(resolve));}
 
   function migrateToProfessionalTwistyPreview(){
     if(localStorage.getItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY)==='1')return;
@@ -47,56 +44,8 @@
     }
   }
 
-  async function hasRenderedCanvas(player){
-    if(!player)return false;
-    if(typeof player.experimentalCurrentCanvases==='function'){
-      try{
-        const canvases=await player.experimentalCurrentCanvases();
-        if(canvases?.some(canvas=>canvas instanceof HTMLCanvasElement&&canvas.width>0&&canvas.height>0))return true;
-      }catch{}
-    }
-    return false;
-  }
-
   function isCurrentVerification(container,token){
     return verificationTokens.get(container)===token;
-  }
-
-  async function verify3D(container,player,scramble,eventId,token){
-    if(!(container instanceof HTMLElement)||!isCurrentVerification(container,token))return;
-    forceVisible(container);
-    if(container.dataset.previewMode!=='3d')return;
-
-    for(let frame=0;frame<VERIFY_FRAMES;frame++){
-      if(!isCurrentVerification(container,token)||container.dataset.previewMode!=='3d')return;
-      if(await hasRenderedCanvas(player)){
-        if(!isCurrentVerification(container,token))return;
-        container.classList.remove('ssc-preview-render-failed');
-        forceVisible(container);
-        window.SSCPreviewSizing?.scheduleFit?.(container);
-        return;
-      }
-      await nextFrame();
-    }
-
-    if(!isCurrentVerification(container,token)||container.dataset.previewMode!=='3d')return;
-    console.warn('[SSC preview] 3D thumbnail did not produce a visible canvas; using safe 2D fallback for this thumbnail.');
-    container.classList.add('ssc-preview-render-failed');
-    try{
-      await window.SSCPreviewManager?.render?.({
-        container,
-        eventId,
-        scramble,
-        mode:'2d',
-        fallbackTo2D:true
-      });
-    }catch(error){
-      if(isCurrentVerification(container,token))console.error('[SSC preview] Fallback render failed',error);
-      return;
-    }
-    if(!isCurrentVerification(container,token))return;
-    forceVisible(container);
-    window.SSCPreviewSizing?.scheduleFit?.(container);
   }
 
   function installRenderGuard(){
@@ -110,10 +59,15 @@
         const token=++verificationSequence;
         if(container instanceof Element)verificationTokens.set(container,token);
         forceVisible(container);
+
         const player=await guardedRender(container,scramble,eventId);
         if(!isCurrentVerification(container,token))return player;
+
+        // TwistyPlayer's experimentalCurrentCanvases() is intentionally not used here.
+        // It is not a stable public readiness signal and caused valid 3D previews to be
+        // replaced with 2D when cubing.js changed its experimental surface.
         forceVisible(container);
-        if(container?.dataset?.previewMode==='3d')void verify3D(container,player,scramble,eventId,token);
+        window.SSCPreviewSizing?.scheduleFit?.(container);
         return player;
       }
     };
