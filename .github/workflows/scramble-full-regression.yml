@@ -61,7 +61,7 @@ jobs:
         run: npm install --no-save --no-package-lock cubing@0.63.4 jsdom@26.1.0
 
       - name: Phase 5 full SSC scramble regression
-        run: node tests/scramble-full-regression.mjs
+        run: node tests/run-scramble-full-regression.mjs
       - name: Phase 5 preserved non-NxN generators
         run: node tests/scramble-legacy-events-validation.mjs
       - name: Phase 5 PWA scramble assets
