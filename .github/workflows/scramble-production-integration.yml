@@ -16,6 +16,7 @@ on:
       - 'tests/scramble-provider-validation.mjs'
       - 'tests/scramble-provider-fallback-validation.mjs'
       - 'tests/scramble-production-integration.mjs'
+      - 'tests/preview-*.mjs'
       - '.github/workflows/scramble-production-integration.yml'
   pull_request:
     paths:
@@ -30,6 +31,7 @@ on:
       - 'tests/scramble-provider-validation.mjs'
       - 'tests/scramble-provider-fallback-validation.mjs'
       - 'tests/scramble-production-integration.mjs'
+      - 'tests/preview-*.mjs'
       - '.github/workflows/scramble-production-integration.yml'
 
 jobs:
@@ -45,9 +47,15 @@ jobs:
           node-version: '22'
       - name: Install validation dependencies
         run: npm install --no-save --no-package-lock cubing@0.63.4 jsdom@26.1.0
+      - name: Validate Phase 4 production integration
+        run: node tests/scramble-production-integration.mjs
       - name: Revalidate 600 NxN Provider scrambles
         run: node tests/scramble-provider-validation.mjs
       - name: Revalidate forced Provider fallback
         run: node tests/scramble-provider-fallback-validation.mjs
-      - name: Validate Phase 4 production integration
-        run: node tests/scramble-production-integration.mjs
+      - name: Revalidate Preview state against cubing.js
+        run: node tests/preview-validation.mjs
+      - name: Revalidate Preview SVG geometry
+        run: node tests/preview-rendering.mjs
+      - name: Revalidate Preview production routing
+        run: node tests/preview-integration.mjs
