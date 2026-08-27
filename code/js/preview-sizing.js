@@ -9,6 +9,7 @@
   const BASE_CARD_WIDTH=116;
   const BASE_CARD_HEIGHT=88;
   const BASE_NET_GAP=6;
+  const DEBUG_GEOMETRY=false;
   const FIT_PROFILES=Object.freeze({
     cube:{desktop:6,mobile:4},
     clock:{desktop:8,mobile:6},
@@ -107,11 +108,84 @@
     };
   }
 
+  function debugThreeByThreeGeometry(net,dpr){
+    if(!DEBUG_GEOMETRY)return;
+    requestAnimationFrame(()=>{
+      const faces=[...net.querySelectorAll(':scope > .ssc-preview-333-face')];
+      const rows=[];
+      faces.forEach(face=>{
+        const stickers=[...face.querySelectorAll(':scope > .ssc-preview-333-sticker')];
+        const rects=stickers.map(sticker=>sticker.getBoundingClientRect());
+        const widths=rects.map(rect=>Math.round(rect.width*dpr));
+        const heights=rects.map(rect=>Math.round(rect.height*dpr));
+        const horizontalGaps=[0,1,3,4].map(index=>Math.round((rects[index+1].left-rects[index].right)*dpr));
+        const verticalGaps=[0,1,2,3,4,5].map(index=>Math.round((rects[index+3].top-rects[index].bottom)*dpr));
+        const faceRect=face.getBoundingClientRect();
+        const valid=widths.every(value=>value===widths[0])&&heights.every(value=>value===heights[0])&&widths[0]===heights[0]&&horizontalGaps.every(value=>value===horizontalGaps[0])&&verticalGaps.every(value=>value===verticalGaps[0])&&horizontalGaps[0]===verticalGaps[0]&&Math.round(faceRect.width*dpr)===Math.round(faceRect.height*dpr);
+        rows.push({face:face.dataset.face,facePx:`${Math.round(faceRect.width*dpr)}×${Math.round(faceRect.height*dpr)}`,stickerPx:`${widths[0]}×${heights[0]}`,gapPx:horizontalGaps[0],valid});
+        console.assert(valid,'[SSC 3x3 geometry] Uneven geometry detected',{face:face.dataset.face,widths,heights,horizontalGaps,verticalGaps,faceRect});
+      });
+      console.table(rows);
+    });
+  }
+
+  function fitThreeByThreeDom(net,box,actualScale){
+    const dpr=Math.max(1,Number(window.devicePixelRatio)||1);
+    const requestedNetGap=Math.max(.5,BASE_NET_GAP*actualScale);
+    const netGapDevice=Math.max(1,Math.round(requestedNetGap*dpr));
+    const netGap=netGapDevice/dpr;
+    const maxFace=Math.max(1,Math.min((box.width-netGap*3)/4,(box.height-netGap*2)/3));
+
+    const separatorDevice=Math.max(1,Math.round(dpr));
+    const paddingDevice=separatorDevice;
+    const fixedDevice=(paddingDevice*2)+(separatorDevice*2);
+    const maxFaceDevice=Math.max(fixedDevice+3,Math.floor(maxFace*dpr));
+    const stickerDevice=Math.max(1,Math.floor((maxFaceDevice-fixedDevice)/3));
+    const faceDevice=(stickerDevice*3)+fixedDevice;
+
+    const sticker=stickerDevice/dpr;
+    const separator=separatorDevice/dpr;
+    const padding=paddingDevice/dpr;
+    const face=faceDevice/dpr;
+
+    net.style.setProperty('--ssc-preview-face',`${face}px`);
+    net.style.setProperty('--ssc-preview-net-gap',`${netGap}px`);
+    net.style.setProperty('--ssc-preview-detail-scale',String(actualScale));
+
+    net.querySelectorAll(':scope > .ssc-preview-333-face').forEach(faceEl=>{
+      faceEl.style.setProperty('width',`${face}px`,'important');
+      faceEl.style.setProperty('height',`${face}px`,'important');
+      faceEl.style.setProperty('padding',`${padding}px`,'important');
+      faceEl.style.setProperty('gap',`${separator}px`,'important');
+      faceEl.style.setProperty('grid-template-columns',`repeat(3,${sticker}px)`,'important');
+      faceEl.style.setProperty('grid-template-rows',`repeat(3,${sticker}px)`,'important');
+      faceEl.style.setProperty('box-sizing','border-box','important');
+
+      faceEl.querySelectorAll(':scope > .ssc-preview-333-sticker').forEach(stickerEl=>{
+        stickerEl.style.setProperty('width',`${sticker}px`,'important');
+        stickerEl.style.setProperty('height',`${sticker}px`,'important');
+        stickerEl.style.setProperty('min-width','0','important');
+        stickerEl.style.setProperty('min-height','0','important');
+        stickerEl.style.setProperty('margin','0','important');
+        stickerEl.style.setProperty('padding','0','important');
+        stickerEl.style.setProperty('border','0','important');
+        stickerEl.style.setProperty('outline','0','important');
+        stickerEl.style.setProperty('box-sizing','border-box','important');
+      });
+    });
+
+    debugThreeByThreeGeometry(net,dpr);
+    return true;
+  }
+
   function fitNativeCube(container){
     const net=container.querySelector(':scope > .cube-preview-net, :scope > .ssc-preview-content > .cube-preview-net');
     if(!net)return false;
     const box=readCardContentBox(container);
     const actualScale=computeLayout().actualScale;
+
+    if(net.classList.contains('ssc-preview-333-net'))return fitThreeByThreeDom(net,box,actualScale);
+
     const gap=Math.max(.5,BASE_NET_GAP*actualScale);
     const face=Math.max(1,Math.min((box.width-gap*3)/4,(box.height-gap*2)/3));
     net.style.setProperty('--ssc-preview-face',`${face.toFixed(3)}px`);
