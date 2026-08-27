@@ -1,10 +1,10 @@
 (() => {
   'use strict';
 
-  // PHASE 2 ONLY:
+  // PHASE 2/3 ONLY:
   // This provider is intentionally not loaded by index.html yet.
   // Production callers continue using the existing legacy scramble path
-  // until the later integration phase.
+  // until a later integration phase is explicitly requested.
 
   const CUBING_SCRAMBLE_URL='https://cdn.cubing.net/v0/js/cubing/scramble';
 
@@ -30,36 +30,41 @@
 
   function normalizeEventId(value){
     if(typeof value!=='string'||!value.trim())return null;
-    const raw=value.trim().toLowerCase();
-    return EVENT_ALIASES[raw]||null;
+    return EVENT_ALIASES[value.trim().toLowerCase()]||null;
   }
 
-  function supportsEvent(value){
-    return normalizeEventId(value)!==null;
-  }
+  function supportsEvent(value){return normalizeEventId(value)!==null;}
 
   function getEvent(value){
     const id=normalizeEventId(value);
     if(!id)return null;
-    return Object.freeze({
-      id,
-      order:EVENT_ORDERS[id],
-      label:`${EVENT_ORDERS[id]}×${EVENT_ORDERS[id]}`
-    });
+    return Object.freeze({id,order:EVENT_ORDERS[id],label:`${EVENT_ORDERS[id]}×${EVENT_ORDERS[id]}`});
   }
 
-  function getEvents(){
-    return Object.keys(EVENT_ORDERS).map(id=>getEvent(id));
+  function getEvents(){return Object.keys(EVENT_ORDERS).map(id=>getEvent(id));}
+
+  function moduleLoader(){
+    const injected=window.__SSC_SCRAMBLE_MODULE_LOADER__;
+    return typeof injected==='function'?injected:()=>import(CUBING_SCRAMBLE_URL);
   }
 
   function loadCubing(){
     if(!cubingModulePromise){
-      cubingModulePromise=import(CUBING_SCRAMBLE_URL).catch(error=>{
+      cubingModulePromise=Promise.resolve().then(()=>moduleLoader()()).catch(error=>{
         cubingModulePromise=null;
         throw error;
       });
     }
     return cubingModulePromise;
+  }
+
+  async function generateFallback(eventId,primaryError){
+    const fallback=window.SSCLegacyScrambleFallback?.generate;
+    if(typeof fallback!=='function')throw primaryError;
+    const value=await fallback(eventId);
+    const text=Array.isArray(value)?value.join(' ').trim():String(value??'').trim();
+    if(!text)throw new Error(`Legacy fallback returned an empty scramble for ${eventId}.`,{cause:primaryError});
+    return text;
   }
 
   async function generate(eventId){
@@ -69,17 +74,13 @@
     try{
       const module=await loadCubing();
       if(typeof module?.randomScrambleForEvent!=='function')throw new Error('cubing.js randomScrambleForEvent() is unavailable.');
-
       const alg=await module.randomScrambleForEvent(normalizedEventId);
       const scramble=alg?.toString?.().trim()||'';
       if(!scramble)throw new Error('cubing.js returned an empty scramble.');
       return scramble;
     }catch(error){
-      console.error('[SSC Scramble] cubing.js generation failed',{
-        eventId:normalizedEventId,
-        error
-      });
-      throw error;
+      console.error('[SSC Scramble] cubing.js generation failed',{eventId:normalizedEventId,error});
+      return generateFallback(normalizedEventId,error);
     }
   }
 
@@ -92,7 +93,9 @@
       lazy:true,
       cached:true,
       productionIntegrated:false,
-      fallbackIntegrated:false
+      fallbackAdapter:'SSCLegacyScrambleFallback',
+      fallbackAvailable:typeof window.SSCLegacyScrambleFallback?.generate==='function',
+      raceProtection:'integration-layer'
     });
   }
 
