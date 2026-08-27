@@ -11,6 +11,7 @@ on:
       - 'code/js/preview/ssc-svg-renderer.js'
       - 'code/js/preview/ssc-preview-v1.js'
       - 'tests/scramble-provider-validation.mjs'
+      - 'tests/scramble-provider-fallback-validation.mjs'
       - '.github/workflows/scramble-provider-validation.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - 'code/js/preview/ssc-svg-renderer.js'
       - 'code/js/preview/ssc-preview-v1.js'
       - 'tests/scramble-provider-validation.mjs'
+      - 'tests/scramble-provider-fallback-validation.mjs'
       - '.github/workflows/scramble-provider-validation.yml'
 
 jobs:
@@ -35,5 +37,7 @@ jobs:
           node-version: '22'
       - name: Install cubing.js reference engine
         run: npm install --no-save --no-package-lock cubing@0.63.4
-      - name: Validate 600 NxN scrambles, aliases, cache, fallback, State and Preview
+      - name: Validate 600 NxN scrambles, aliases, cache, State and Preview
         run: node tests/scramble-provider-validation.mjs
+      - name: Validate forced cubing.js failure and legacy fallback
+        run: node tests/scramble-provider-fallback-validation.mjs
