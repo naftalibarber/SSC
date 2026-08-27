@@ -75,9 +75,10 @@ const cases={
   3:['',"R U2 F' L2 D B2 R2 U' F D2 L' B U2"],
   4:['',"Rw U2 Fw' L2 D B2 Rw2 U' F D2 Lw' B U2"],
   5:['',"Rw U2 Fw' L2 D B2 Rw2 U' F D2 Lw' B Uw2 R2 Fw D' Bw2"],
-  6:['',"3Rw U2 Fw' L2 D B2 Rw2 U' F D2 3Lw' B Uw2 R2 Fw D' 3Bw2"]
+  6:['',"3Rw U2 Fw' L2 D B2 Rw2 U' F D2 3Lw' B Uw2 R2 Fw D' 3Bw2"],
+  7:['',"3Rw U2 Fw' L2 D B2 Rw2 U' 3Fw D2 3Lw' B Uw2 R2 Fw D' 3Bw2 Lw U2"]
 };
-const EVENT_BY_ORDER={2:'222',3:'333',4:'444',5:'555',6:'666'};
+const EVENT_BY_ORDER={2:'222',3:'333',4:'444',5:'555',6:'666',7:'777'};
 
 function descendants(root,predicate){
   const values=[];
@@ -136,7 +137,7 @@ for(const [orderText,scrambles] of Object.entries(cases)){
 
 const colorContainer=new FakeElement('div');
 colorContainer.id='color-preview';
-globalThis.SSCPreviewV1.render(colorContainer,"3Rw U 3Rw' U'",'666',{strict:true});
+globalThis.SSCPreviewV1.render(colorContainer,"3Rw U 3Rw' U'",'777',{strict:true});
 const changed=globalThis.SSCPreviewV1.setColors({U:'#123456',D:'#654321',F:'#112233',B:'#223344',R:'#334455',L:'#445566'});
 assert.equal(changed.U,'#123456');
 const colorStickers=colorContainer.querySelectorAll('.ssc-native-preview-svg .ssc-svg-sticker[data-layer]');
@@ -152,9 +153,9 @@ for(const sticker of colorStickers){
 
 const stableContainer=new FakeElement('div');
 stableContainer.id='scramble-update';
-globalThis.SSCPreviewV1.render(stableContainer,'','666',{strict:true});
+globalThis.SSCPreviewV1.render(stableContainer,'','777',{strict:true});
 const before=stableContainer.querySelectorAll('.ssc-native-preview-svg .ssc-svg-sticker[data-layer]').map(node=>({id:node.dataset.stickerId,layer:node.dataset.layer}));
-globalThis.SSCPreviewV1.render(stableContainer,"3Rw U 3Rw' U'",'666',{strict:true});
+globalThis.SSCPreviewV1.render(stableContainer,"3Rw U 3Rw' U'",'777',{strict:true});
 const after=stableContainer.querySelectorAll('.ssc-native-preview-svg .ssc-svg-sticker[data-layer]').map(node=>({id:node.dataset.stickerId,layer:node.dataset.layer}));
 assert.deepEqual(after.map(item=>item.id),before.map(item=>item.id));
 assert.notDeepEqual(after.map(item=>item.layer),before.map(item=>item.layer));
@@ -170,7 +171,7 @@ console.log('[SSC Preview CI] Rendering summary');
 console.log(JSON.stringify({
   ok:true,
   renderedStates:rendered+2,
-  orders:[2,3,4,5,6],
+  orders:[2,3,4,5,6,7],
   sizes,
   semanticIdsStable:true,
   colorUpdates:true,
