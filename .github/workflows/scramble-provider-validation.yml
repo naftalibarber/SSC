@@ -1,0 +1,39 @@
+name: SSC Scramble Provider Validation
+
+on:
+  push:
+    branches:
+      - phase2-scramble-provider-only
+    paths:
+      - 'code/js/scramble-provider.js'
+      - 'code/js/scramble-provider-legacy-fallback.js'
+      - 'code/js/preview/ssc-nxn-state.js'
+      - 'code/js/preview/ssc-svg-renderer.js'
+      - 'code/js/preview/ssc-preview-v1.js'
+      - 'tests/scramble-provider-validation.mjs'
+      - '.github/workflows/scramble-provider-validation.yml'
+  pull_request:
+    paths:
+      - 'code/js/scramble-provider.js'
+      - 'code/js/scramble-provider-legacy-fallback.js'
+      - 'code/js/preview/ssc-nxn-state.js'
+      - 'code/js/preview/ssc-svg-renderer.js'
+      - 'code/js/preview/ssc-preview-v1.js'
+      - 'tests/scramble-provider-validation.mjs'
+      - '.github/workflows/scramble-provider-validation.yml'
+
+jobs:
+  validate-scramble-provider:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install cubing.js reference engine
+        run: npm install --no-save --no-package-lock cubing@0.63.4
+      - name: Validate 600 NxN scrambles, aliases, cache, fallback, State and Preview
+        run: node tests/scramble-provider-validation.mjs
