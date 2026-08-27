@@ -16,6 +16,26 @@
     return featureEnabled()&&V1_EVENTS.has(normalizeEventId(eventId));
   }
 
+  function preferredPreviewMode(){
+    const mode=window.SSCPreviewSettings?.getMode?.();
+    return mode==='2d'||mode==='3d'?mode:null;
+  }
+
+  function primeConnectedPreview(container,scramble,eventId){
+    // preview-integration.js owns modal/open state and lastRender. When V1 renders 2D
+    // directly, prime that existing integration path first so the card remains clickable
+    // and settings can rerender the exact same scramble. The connected 2D renderer runs
+    // synchronously before its Promise settles; V1 immediately replaces its legacy 2D
+    // output, so no second scramble generation or stale state is introduced.
+    if(!legacyRender||!window.SSCPreviewSettings)return;
+    try{
+      const pending=legacyRender(container,scramble,eventId);
+      if(pending&&typeof pending.catch==='function')pending.catch(error=>console.warn('[SSC Preview V1] connected preview priming failed.',error));
+    }catch(error){
+      console.warn('[SSC Preview V1] connected preview priming failed.',error);
+    }
+  }
+
   async function legacyFallback(container,scramble,eventId,originalError){
     console.error('[SSC Preview V1] render failed; falling back to legacy preview.',{
       eventId:normalizeEventId(eventId),
@@ -47,6 +67,12 @@
     if(!shouldUseV1(eventId)){
       return legacyRender?.(container,scramble,eventId)??null;
     }
+
+    const preferredMode=preferredPreviewMode();
+    if(preferredMode==='3d'){
+      return legacyRender?.(container,scramble,eventId)??null;
+    }
+    if(preferredMode==='2d')primeConnectedPreview(container,scramble,eventId);
 
     try{
       if(!window.SSCPreviewV1?.render)throw new Error('SSCPreviewV1 is unavailable.');
