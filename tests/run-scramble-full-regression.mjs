@@ -29,6 +29,14 @@ const visibilityLoad="  loadClassic('code/js/preview-visibility-hotfix.js');\n";
 if(!source.includes(visibilityLoad))throw new Error('Phase 5 harness shape changed: visibility hotfix load not found.');
 source=source.replace(visibilityLoad,'');
 
+// app.js intentionally does not await Preview rendering. Before jsdom simulates a reload,
+// let pending Preview work settle so window.close() cannot invalidate document underneath it.
+const firstClose='h.dom.window.close();';
+const finalClose='r.dom.window.close();';
+if(!source.includes(firstClose)||!source.includes(finalClose))throw new Error('Phase 5 harness shape changed: jsdom teardown not found.');
+source=source.replace(firstClose,'await sleep(50);\nh.dom.window.close();');
+source=source.replace(finalClose,'await sleep(50);\nr.dom.window.close();');
+
 fs.writeFileSync(runtimePath,source);
 try{
   await import(`${pathToFileURL(resolve(runtimePath)).href}?v=${Date.now()}`);
