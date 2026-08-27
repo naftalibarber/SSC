@@ -51,17 +51,27 @@
     return order;
   }
 
-  function readColors(){
+  function normalizeColors(colors){
     requireCore();
     const defaults=window.SSCSvgCubeRenderer.DEFAULT_COLORS;
+    return Object.fromEntries(Object.entries(defaults).map(([face,fallback])=>[
+      face,
+      /^#[0-9a-f]{6}$/i.test(colors?.[face]||'')?String(colors[face]):fallback
+    ]));
+  }
+
+  function readColors(){
+    requireCore();
     try{
       const saved=JSON.parse(localStorage.getItem(COLOR_KEY));
-      if(!saved||typeof saved!=='object')return{...defaults};
-      return Object.fromEntries(Object.entries(defaults).map(([face,fallback])=>[
-        face,
-        /^#[0-9a-f]{6}$/i.test(saved[face]||'')?saved[face]:fallback
-      ]));
-    }catch{return{...defaults};}
+      return normalizeColors(saved&&typeof saved==='object'?saved:null);
+    }catch{return normalizeColors(null);}
+  }
+
+  function writeColors(colors){
+    const normalized=normalizeColors(colors);
+    localStorage.setItem(COLOR_KEY,JSON.stringify(normalized));
+    return normalized;
   }
 
   function normalizeMultiBlindScramble(scramble,eventId){
@@ -78,13 +88,21 @@
     return window.SSCNxNState.buildState(normalizedScramble,order,{strict});
   }
 
+  function getState(eventId,scramble=''){
+    const normalizedEventId=normalizeEventId(eventId);
+    const order=orderForEvent(normalizedEventId);
+    const state=buildState(normalizedEventId,scramble,{strict:true});
+    if(window.SSCPreviewValidation?.normalizeState)return window.SSCPreviewValidation.normalizeState(state,order);
+    return Object.fromEntries(['U','D','F','B','R','L'].map(face=>[face,state.faces[face].flat()]));
+  }
+
   function render(container,scramble,eventId='333',options={}){
     requireCore();
     if(!(container instanceof Element))throw new TypeError('SSCPreviewV1.render() requires a DOM container.');
     const normalizedEventId=normalizeEventId(eventId);
     const order=orderForEvent(normalizedEventId);
     const normalizedScramble=normalizeMultiBlindScramble(scramble,normalizedEventId);
-    const colors=options.colors||readColors();
+    const colors=options.colors?normalizeColors(options.colors):readColors();
     const state=window.SSCNxNState.buildState(normalizedScramble,order,{strict:Boolean(options.strict)});
     const svg=window.SSCSvgCubeRenderer.renderState(container,state,{colors,idPrefix:options.idPrefix});
 
@@ -111,8 +129,35 @@
 
   function repaint(colors=readColors()){
     if(!lastRender?.container?.isConnected)return false;
-    lastRender.colors={...colors};
-    return window.SSCSvgCubeRenderer.updateColors(lastRender.container,colors);
+    const normalized=normalizeColors(colors);
+    lastRender.colors={...normalized};
+    return window.SSCSvgCubeRenderer.updateColors(lastRender.container,normalized);
+  }
+
+  function getColors(){return readColors();}
+
+  function setColors(colors){
+    const normalized=writeColors(colors);
+    repaint(normalized);
+    return{...normalized};
+  }
+
+  function resetColors(){
+    requireCore();
+    localStorage.removeItem(COLOR_KEY);
+    const colors=readColors();
+    repaint(colors);
+    return{...colors};
+  }
+
+  async function validate(options={}){
+    if(!window.SSCPreviewValidation?.validate)throw new Error('SSCPreviewValidation is not loaded.');
+    return window.SSCPreviewValidation.validate(options);
+  }
+
+  async function validateAll(options={}){
+    if(!window.SSCPreviewValidation?.validateAll)throw new Error('SSCPreviewValidation is not loaded.');
+    return window.SSCPreviewValidation.validateAll(options);
   }
 
   function selfTest(){
@@ -136,15 +181,21 @@
   }
 
   window.SSCPreviewV1=Object.freeze({
-    version:'1.0.0-alpha.1',
+    version:'1.0.0-alpha.2',
     normalizeEventId,
     supportsEvent,
     orderForEvent,
     readColors,
+    getColors,
+    setColors,
+    resetColors,
     buildState,
+    getState,
     render,
     rerender,
     repaint,
+    validate,
+    validateAll,
     selfTest,
     eventOrders:EVENT_ORDERS
   });
