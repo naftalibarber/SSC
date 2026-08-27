@@ -50,6 +50,8 @@ jobs:
         run: npm install --no-save --no-package-lock cubing@0.63.4
       - name: Validate 600 NxN scramble generations
         run: node tests/scramble-validation.mjs
+      - name: Validate forced NxN legacy fallback
+        run: node tests/scramble-fallback.mjs
       - name: Validate SSC state against cubing.js
         run: node tests/preview-validation.mjs
       - name: Validate SVG rendering geometry
