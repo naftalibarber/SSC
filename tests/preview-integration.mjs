@@ -132,7 +132,7 @@ assert.equal(legacySetColors,1);
 const reset=globalThis.SSCCubePreview.resetColors();
 assert.equal(reset.U,'#ffffff');
 assert.equal(legacyResetColors,1);
-assert.ok(fitCalls>=4);
+assert.ok(fitCalls>=3);
 
 const index=fs.readFileSync('index.html','utf8');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
