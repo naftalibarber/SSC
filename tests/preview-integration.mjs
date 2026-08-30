@@ -170,8 +170,8 @@ assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[
 assert.match(competitionStyles,/\.workspace\.cstimer-layout\s*\{[\s\S]*?direction:ltr!important;/,'Workspace geometry must stay physical instead of inheriting RTL grid placement.');
 assert.match(competitionStyles,/html\[dir="ltr"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:var\(--mc-sidebar\) minmax\(0,1fr\)!important;/,'English must reserve the left column for statistics.');
 assert.match(competitionStyles,/html\[dir="rtl"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:minmax\(0,1fr\) var\(--mc-sidebar\)!important;/,'Hebrew must reserve the right column for statistics.');
-assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*grid-column:1!important;/,'English statistics must occupy the left column.');
-assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*grid-column:2!important;/,'Hebrew statistics must occupy the right column.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:1!important;/,'English statistics must occupy and fit the left sidebar column.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:2!important;/,'Hebrew statistics must occupy and fit the right sidebar column.');
 assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-timer\s*\{grid-column:2!important\}/,'English timer must occupy the right column.');
 assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-timer\s*\{grid-column:1!important\}/,'Hebrew timer must occupy the left column.');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');

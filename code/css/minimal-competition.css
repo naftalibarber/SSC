@@ -226,11 +226,13 @@ html[dir="rtl"] .workspace.cstimer-layout{
   background:var(--card)!important;
 }
 html[dir="ltr"] .flat-panel{
+  width:var(--mc-sidebar)!important;
   grid-column:1!important;
   border-right:1px solid var(--border)!important;
   border-left:0!important;
 }
 html[dir="rtl"] .flat-panel{
+  width:var(--mc-sidebar)!important;
   grid-column:2!important;
   border-right:0!important;
   border-left:1px solid var(--border)!important;
