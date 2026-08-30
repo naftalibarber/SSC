@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SSC Preview Lab</title>
-  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260830-integer-cells-23-1">
+  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260830-integer-cells-234-1">
   <style>
     :root{font-family:Arial,sans-serif;color:#111827;background:#f3f4f6}
     *{box-sizing:border-box}
@@ -89,7 +89,7 @@
   </main>
 
   <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-777-1"></script>
-  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260830-integer-cells-23-1"></script>
+  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260830-integer-cells-234-1"></script>
   <script src="./code/js/preview/ssc-preview-validation.js?v=20260827-777-1"></script>
   <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-777-1"></script>
   <script>
@@ -107,7 +107,7 @@
         try{
           const result=window.SSCPreviewV1.render(preview,scramble.value,event.value,{strict:true});
           let pixelLabel='';
-          if(result.order===2||result.order===3){
+          if(result.order>=2&&result.order<=4){
             const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
             const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(
               result.svg,previewFrame.clientWidth,previewFrame.clientHeight,dpr

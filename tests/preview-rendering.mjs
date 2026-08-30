@@ -79,6 +79,7 @@ await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
 
 const sizes=[150,200,300,400];
+const PIXEL_PERFECT_ORDERS=[2,3,4];
 const CSTIMER_COLORS={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
 const cases={
   2:['',"R U2 F' R2 U' F2 R U'"],
@@ -91,6 +92,7 @@ const cases={
 const EVENT_BY_ORDER={2:'222',3:'333',4:'444',5:'555',6:'666',7:'777'};
 
 assert.deepEqual(globalThis.SSCSvgCubeRenderer.DEFAULT_COLORS,CSTIMER_COLORS);
+assert.deepEqual(globalThis.SSCSvgCubeRenderer.PIXEL_PERFECT_ORDERS,PIXEL_PERFECT_ORDERS);
 assert.deepEqual(globalThis.SSCPreviewV1.getColors(),CSTIMER_COLORS);
 const savedPalette={U:'#123456',D:'#234567',F:'#345678',B:'#456789',R:'#56789a',L:'#6789ab'};
 storage.set('sscCubeColorsV1',JSON.stringify(savedPalette));
@@ -140,7 +142,7 @@ function validateRender(order,scramble){
     assert.ok(geometry.height*scale<=size+1e-9);
   }
 
-  if(order===2||order===3){
+  if(PIXEL_PERFECT_ORDERS.includes(order)){
     assert.equal(svg.getAttribute('data-layout-style'),`cstimer-${order}x${order}`);
     assert.equal(geometry.faceGap,Math.round(geometry.stickerSize/3));
     assert.equal(geometry.outerPadding,Math.round(geometry.stickerSize/10));
@@ -159,8 +161,13 @@ function validateRender(order,scramble){
       geometry.width,
       geometry.height
     ].every(Number.isInteger),`${order}x${order} geometry must use whole SVG units.`);
-    assert.equal(container.classList.contains(`ssc-preview-cstimer-${order}x${order}`),true);
-    assert.equal(container.classList.contains(`ssc-preview-cstimer-${order===2?'3x3':'2x2'}`),false);
+    for(const profileOrder of PIXEL_PERFECT_ORDERS){
+      assert.equal(
+        container.classList.contains(`ssc-preview-cstimer-${profileOrder}x${profileOrder}`),
+        profileOrder===order,
+        `Only the ${order}x${order} csTimer layout class may be active.`
+      );
+    }
     for(const sticker of stickers){
       assert.equal(Number(sticker.getAttribute('rx')),0);
       assert.equal(sticker.getAttribute('stroke'),null);
@@ -186,7 +193,11 @@ function validateRender(order,scramble){
       [geometry.step,geometry.step,geometry.step]
     );
 
-    const expectedStickers=order===2?[15,22,34,60]:[10,15,24,41];
+    const expectedStickers={
+      2:[15,22,34,60],
+      3:[10,15,24,41],
+      4:[7,11,18,31]
+    }[order];
     const pixelCases=[
       {width:160,height:118,dpr:1,sticker:expectedStickers[0]},
       {width:218,height:162,dpr:1,sticker:expectedStickers[1]},
@@ -294,6 +305,12 @@ assert.equal(reusedContainer.dataset.previewLayout,'cstimer-2x2');
 globalThis.SSCPreviewV1.render(reusedContainer,'','444',{strict:true});
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-2x2'),false,'2x2-only style leaked into 4x4.');
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 4x4.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-4x4'),true);
+assert.equal(reusedContainer.dataset.previewLayout,'cstimer-4x4');
+globalThis.SSCPreviewV1.render(reusedContainer,'','555',{strict:true});
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-2x2'),false,'2x2-only style leaked into 5x5.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 5x5.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-4x4'),false,'4x4-only style leaked into 5x5.');
 assert.equal(reusedContainer.dataset.previewLayout,'ssc-standard');
 
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
@@ -316,10 +333,10 @@ console.log(JSON.stringify({
   cstimerDefaultPalette:true,
   savedPalettePreserved:true,
   scrambleUpdates:true,
-  cstimer2x2And3x3Profiles:true,
-  integerDevicePixelOrders:[2,3],
+  cstimer2x2Through4x4Profiles:true,
+  integerDevicePixelOrders:PIXEL_PERFECT_ORDERS,
   filledPixelSeparators:true,
-  symmetric2x2And3x3Axes:true,
+  symmetric2x2Through4x4Axes:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
 },null,2));

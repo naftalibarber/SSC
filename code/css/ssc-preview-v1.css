@@ -23,16 +23,14 @@
   shape-rendering:geometricPrecision;
 }
 
-/* 2x2 and 3x3: classic csTimer-style flat nets. Other cube orders retain the
+/* 2x2 through 4x4: classic csTimer-style flat nets. Other cube orders retain the
    existing rounded Premium SVG geometry and theme treatment. */
-.ssc-native-preview-svg[data-layout-style="cstimer-2x2"] .ssc-svg-face-background,
-.ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-face-background{
+.ssc-native-preview-svg[data-layout-style^="cstimer-"] .ssc-svg-face-background{
   fill:#050505;
   shape-rendering:crispEdges;
 }
 
-.ssc-native-preview-svg[data-layout-style="cstimer-2x2"] .ssc-svg-sticker,
-.ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-sticker{
+.ssc-native-preview-svg[data-layout-style^="cstimer-"] .ssc-svg-sticker{
   stroke:none;
   shape-rendering:crispEdges;
 }
