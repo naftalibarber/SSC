@@ -138,12 +138,51 @@ function validateRender(order,scramble){
     assert.equal(geometry.outerPadding,geometry.stickerSize/10);
     assert.equal(geometry.stickerRadius,0);
     assert.equal(geometry.faceRadius,0);
+    assert.equal(geometry.gridStroke,'#050505');
+    assert.equal(geometry.gridStrokeWidth,1);
+    assert.ok([
+      geometry.stickerSize,
+      geometry.faceGap,
+      geometry.outerPadding,
+      geometry.faceSize,
+      geometry.step,
+      geometry.width,
+      geometry.height
+    ].every(Number.isInteger),'3x3 geometry must use whole SVG units.');
     assert.equal(container.classList.contains('ssc-preview-cstimer-3x3'),true);
     for(const sticker of stickers){
       assert.equal(Number(sticker.getAttribute('rx')),0);
-      assert.equal(sticker.getAttribute('stroke'),'#050505');
-      assert.equal(Number(sticker.getAttribute('stroke-width')),10/3);
+      assert.equal(sticker.getAttribute('stroke'),null);
+      assert.equal(sticker.getAttribute('stroke-width'),null);
     }
+
+    const faces=descendants(svg,node=>node.classList.contains('ssc-svg-face'));
+    const grids=descendants(svg,node=>node.classList.contains('ssc-svg-face-grid'));
+    assert.equal(faces.length,6);
+    assert.equal(grids.length,6,'3x3 must render exactly one shared grid per face.');
+    const expectedGrid=`M0 0H${geometry.faceSize}V${geometry.faceSize}H0Z`+
+      `M${geometry.stickerSize} 0V${geometry.faceSize}M0 ${geometry.stickerSize}H${geometry.faceSize}`+
+      `M${geometry.stickerSize*2} 0V${geometry.faceSize}M0 ${geometry.stickerSize*2}H${geometry.faceSize}`;
+    for(const grid of grids){
+      assert.equal(grid.getAttribute('d'),expectedGrid);
+      assert.equal(grid.getAttribute('stroke'),'#050505');
+      assert.equal(Number(grid.getAttribute('stroke-width')),1);
+      assert.equal(grid.getAttribute('vector-effect'),'non-scaling-stroke');
+    }
+
+    const origins=Object.fromEntries(faces.map(face=>[face.dataset.face,{
+      x:Number(face.dataset.originX),
+      y:Number(face.dataset.originY)
+    }]));
+    assert.equal(origins.U.x,origins.F.x);
+    assert.equal(origins.F.x,origins.D.x);
+    assert.equal(origins.L.y,origins.F.y);
+    assert.equal(origins.F.y,origins.R.y);
+    assert.equal(origins.R.y,origins.B.y);
+    assert.deepEqual(
+      [origins.F.x-origins.L.x,origins.R.x-origins.F.x,origins.B.x-origins.R.x],
+      [geometry.step,geometry.step,geometry.step]
+    );
   }else{
     assert.equal(svg.getAttribute('data-layout-style'),'ssc-standard');
     assert.equal(geometry.stickerGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerGap);
@@ -215,6 +254,8 @@ console.log(JSON.stringify({
   savedPalettePreserved:true,
   scrambleUpdates:true,
   cstimer3x3Profile:true,
+  sharedPixelGrid:true,
+  symmetric3x3Axes:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
 },null,2));

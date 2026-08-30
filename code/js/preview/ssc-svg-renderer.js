@@ -27,20 +27,25 @@
     faceRadius:11,
     stickerStroke:null,
     stickerStrokeWidth:0,
+    gridStroke:null,
+    gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // csTimer's 3x3 image uses contiguous square stickers with a black SVG
-  // outline, a one-third-sticker gap between faces, and a small outer margin.
+  // The 3x3 profile uses one integer coordinate system and one shared grid per
+  // face. Avoiding fractional per-sticker strokes keeps every separator the
+  // same width and every sticker on the same symmetric axes after scaling.
   // Keep this profile order-specific so every other NxN preview is unchanged.
   const CSTIMER_3X3_GEOMETRY=Object.freeze({
-    stickerSize:100,
+    stickerSize:30,
     stickerGap:0,
-    faceGap:100/3,
-    outerPadding:10,
+    faceGap:10,
+    outerPadding:3,
     stickerRadius:0,
     faceRadius:0,
-    stickerStroke:'#050505',
-    stickerStrokeWidth:10/3,
+    stickerStroke:null,
+    stickerStrokeWidth:0,
+    gridStroke:'#050505',
+    gridStrokeWidth:1,
     layoutStyle:'cstimer-3x3'
   });
 
@@ -98,11 +103,24 @@
     ];
   }
 
+  function faceGridPath(order,geometry){
+    const size=geometry.faceSize;
+    const step=geometry.stickerSize+geometry.stickerGap;
+    const commands=[`M0 0H${size}V${size}H0Z`];
+    for(let index=1;index<order;index++){
+      const offset=index*step;
+      commands.push(`M${offset} 0V${size}`,`M0 ${offset}H${size}`);
+    }
+    return commands.join('');
+  }
+
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
     const [faceX,faceY]=faceOrigin(face,geometry);
     const group=svgElement('g',{
       class:'ssc-svg-face',
       'data-face':face,
+      'data-origin-x':faceX,
+      'data-origin-y':faceY,
       transform:`translate(${faceX} ${faceY})`
     });
 
@@ -143,6 +161,18 @@
         });
         group.appendChild(sticker);
       }
+    }
+
+    if(geometry.gridStroke&&geometry.gridStrokeWidth){
+      group.appendChild(svgElement('path',{
+        class:'ssc-svg-face-grid',
+        d:faceGridPath(order,geometry),
+        fill:'none',
+        stroke:geometry.gridStroke,
+        'stroke-width':geometry.gridStrokeWidth,
+        'vector-effect':'non-scaling-stroke',
+        'data-face':face
+      }));
     }
 
     svg.appendChild(group);

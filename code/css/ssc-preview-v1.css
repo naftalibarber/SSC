@@ -31,12 +31,20 @@
 }
 
 .ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-sticker{
+  stroke:none;
+  shape-rendering:geometricPrecision;
+}
+
+.ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-face-grid{
+  fill:none;
   stroke:#050505;
-  stroke-width:3.3333333333;
+  stroke-width:1;
+  vector-effect:non-scaling-stroke;
   stroke-linecap:butt;
   stroke-linejoin:miter;
   stroke-miterlimit:2;
-  shape-rendering:geometricPrecision;
+  shape-rendering:crispEdges;
+  pointer-events:none;
 }
 
 html[data-theme="dark"] .ssc-native-preview-svg .ssc-svg-face-background{
