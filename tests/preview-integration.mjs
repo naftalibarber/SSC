@@ -19,7 +19,7 @@ let managerCalls=0;
 let v1Calls=0;
 let v1Mode='ok';
 let fitCalls=0;
-let colors={U:'#ffffff',D:'#ffd500',F:'#16a34a',B:'#2563eb',R:'#ef4444',L:'#f97316'};
+let colors={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
 
 const legacyPreview={
   render(container,scramble,eventId){
@@ -62,7 +62,7 @@ globalThis.SSCPreviewV1={
   },
   getColors(){return{...colors};},
   setColors(next){colors={...colors,...next};return{...colors};},
-  resetColors(){colors={U:'#ffffff',D:'#ffd500',F:'#16a34a',B:'#2563eb',R:'#ef4444',L:'#f97316'};return{...colors};}
+  resetColors(){colors={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};return{...colors};}
 };
 
 await import(pathToFileURL(resolve('code/js/preview/ssc-preview-v1-integration.js')).href);
@@ -148,6 +148,19 @@ assert.equal(legacyResetColors,1);
 assert.ok(fitCalls>=6);
 
 const index=fs.readFileSync('index.html','utf8');
+const sizingSource=fs.readFileSync('code/js/preview-sizing.js','utf8');
+const settingsSource=fs.readFileSync('code/js/settings.js','utf8');
+const legacyPreviewSource=fs.readFileSync('code/js/cube-preview.js','utf8');
+const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
+assert.match(sizingSource,/const MIN_SIZE=150;/);
+assert.match(sizingSource,/const MAX_SIZE=500;/);
+assert.match(sizingSource,/const STEP=5;/);
+assert.match(sizingSource,/const DEFAULT_SIZE=200;/);
+assert.match(sizingSource,/const STORAGE_KEY='sscCubePreviewSizeV1';/);
+assert.match(sizingSource,/raw===null\?DEFAULT_SIZE:raw/,'Existing saved preview sizes must remain the source when present.');
+assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
+assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
+assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[\s\S]*R:'#ff0000',[\s\S]*L:'#ffaa00'/);
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
@@ -176,5 +189,8 @@ console.log(JSON.stringify({
   featureFlagSingle:true,
   fallbackToLegacy:true,
   emergencyLegacy2D:true,
-  colorApiWired:true
+  colorApiWired:true,
+  defaultPreviewSize:200,
+  savedPreviewSizePreserved:true,
+  cstimerDefaultPalette:true
 },null,2));
