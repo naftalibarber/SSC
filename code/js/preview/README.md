@@ -9,6 +9,7 @@ SSC's native cube preview infrastructure. The state engine and SVG renderer are 
 - Normalized state output using face identities (`U D F B R L`), never colors.
 - Deterministic semantic sticker IDs such as `U1`, `U2`, `F9`.
 - Generic mathematical SVG net renderer shared by 2x2-7x7.
+- Order-specific 3x3 presentation profile modeled on csTimer: contiguous square stickers, thin black outlines, one-third-sticker face gaps, and compact outer margins. State mapping remains shared and unchanged.
 - Palette is applied only in the renderer and comes from SSC's existing `sscCubeColorsV1` settings.
 - `cubing.js` reference validation for every NxN order from 2x2 through 7x7.
 - Production routing for `222`, `333`, `444`, `555`, `666` and `777` behind one feature flag.
@@ -103,7 +104,7 @@ Current state-validation baseline:
 - 7x7: `200/200` passing (`100` random + `100` deterministic/wide/deep-wide);
 - combined: `1002/1002`, zero sticker mismatches.
 
-Rendering regression checks cover solved/scrambled 2x2 through 7x7; stable semantic IDs; immediate color updates; scramble updates; no mirroring transforms; and 150/200/300/400 px scale calculations. Integration regression verifies V1 routing for `222`/`333`/`444`/`555`/`666`/`777`, preservation of the legacy path for a non-NxN event, the single feature flag, legacy fallback and emergency legacy-2D fallback.
+Rendering regression checks cover solved/scrambled 2x2 through 7x7; the isolated csTimer-style 3x3 geometry profile; unchanged geometry for every other order; stable semantic IDs; immediate color updates; scramble updates; no mirroring transforms; and 150/200/300/400 px scale calculations. Integration regression verifies V1 routing for `222`/`333`/`444`/`555`/`666`/`777`, preservation of the legacy path for a non-NxN event, the single feature flag, legacy fallback and emergency legacy-2D fallback.
 
 ## Safety rules
 

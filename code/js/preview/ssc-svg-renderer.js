@@ -24,7 +24,24 @@
     faceGap:24,
     outerPadding:12,
     stickerRadius:7,
-    faceRadius:11
+    faceRadius:11,
+    stickerStroke:null,
+    stickerStrokeWidth:0,
+    layoutStyle:'ssc-standard'
+  });
+  // csTimer's 3x3 image uses contiguous square stickers with a black SVG
+  // outline, a one-third-sticker gap between faces, and a small outer margin.
+  // Keep this profile order-specific so every other NxN preview is unchanged.
+  const CSTIMER_3X3_GEOMETRY=Object.freeze({
+    stickerSize:100,
+    stickerGap:0,
+    faceGap:100/3,
+    outerPadding:10,
+    stickerRadius:0,
+    faceRadius:0,
+    stickerStroke:'#050505',
+    stickerStrokeWidth:10/3,
+    layoutStyle:'cstimer-3x3'
   });
 
   let instanceSequence=0;
@@ -64,12 +81,13 @@
 
   function geometryFor(order){
     const n=Number(order);
-    const {stickerSize,stickerGap,faceGap,outerPadding}=GEOMETRY;
+    const profile=n===3?CSTIMER_3X3_GEOMETRY:GEOMETRY;
+    const {stickerSize,stickerGap,faceGap,outerPadding}=profile;
     const faceSize=(n*stickerSize)+((n-1)*stickerGap);
     const step=faceSize+faceGap;
     const width=(4*faceSize)+(3*faceGap)+(outerPadding*2);
     const height=(3*faceSize)+(2*faceGap)+(outerPadding*2);
-    return Object.freeze({n,faceSize,step,width,height,stickerSize,stickerGap,faceGap,outerPadding});
+    return Object.freeze({n,faceSize,step,width,height,...profile});
   }
 
   function faceOrigin(face,geometry){
@@ -94,8 +112,8 @@
       y:0,
       width:geometry.faceSize,
       height:geometry.faceSize,
-      rx:GEOMETRY.faceRadius,
-      ry:GEOMETRY.faceRadius
+      rx:geometry.faceRadius,
+      ry:geometry.faceRadius
     });
     group.appendChild(background);
 
@@ -112,9 +130,11 @@
           y,
           width:geometry.stickerSize,
           height:geometry.stickerSize,
-          rx:GEOMETRY.stickerRadius,
-          ry:GEOMETRY.stickerRadius,
+          rx:geometry.stickerRadius,
+          ry:geometry.stickerRadius,
           fill:colors[layer]||DEFAULT_COLORS[layer]||'transparent',
+          stroke:geometry.stickerStroke,
+          'stroke-width':geometry.stickerStrokeWidth||null,
           'data-sticker-id':semanticId,
           'data-face':face,
           'data-row':row,
@@ -146,6 +166,7 @@
       'aria-hidden':'true',
       focusable:'false',
       'data-cube-order':order,
+      'data-layout-style':geometry.layoutStyle,
       'data-preview-engine':'ssc-svg-v1'
     });
 
@@ -156,6 +177,9 @@
     container.replaceChildren(svg);
     container.dataset.previewRenderer='ssc-svg-v1';
     container.dataset.cubeOrder=String(order);
+    container.dataset.previewLayout=geometry.layoutStyle;
+    container.classList.remove('ssc-preview-cstimer-3x3');
+    if(order===3)container.classList.add('ssc-preview-cstimer-3x3');
     container.classList.add('ssc-native-svg-preview');
     return svg;
   }
@@ -182,6 +206,7 @@
     DEFAULT_COLORS,
     FACE_POSITIONS,
     GEOMETRY,
+    CSTIMER_3X3_GEOMETRY,
     geometryFor,
     render,
     renderState,
