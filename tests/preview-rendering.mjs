@@ -31,15 +31,24 @@ class FakeElement{
     if(name==='class')text.split(/\s+/).filter(Boolean).forEach(item=>this.classList.add(item));
     if(name.startsWith('data-'))this.dataset[datasetKey(name)]=text;
   }
+  removeAttribute(name){
+    delete this.attributes[name];
+    if(name.startsWith('data-'))delete this.dataset[datasetKey(name)];
+  }
   getAttribute(name){return this.attributes[name]??null;}
   appendChild(child){this.children.push(child);child.parentNode=this;return child;}
   replaceChildren(...children){this.children=[...children];children.forEach(child=>{child.parentNode=this;});}
   querySelectorAll(selector){
     const matches=[];
+    const classes=[...selector.matchAll(/\.([a-zA-Z0-9_-]+)/g)].map(match=>match[1]);
+    const targetClass=classes.at(-1)||null;
+    const dataMatch=selector.match(/\[data-([a-zA-Z0-9_-]+)\]/);
+    const dataKey=dataMatch?datasetKey(`data-${dataMatch[1]}`):null;
     const visit=node=>{
       for(const child of node.children||[]){
-        const sticker=child.classList?.contains('ssc-svg-sticker');
-        if(selector.includes('.ssc-svg-sticker')&&sticker&&(!selector.includes('[data-layer]')||child.dataset.layer!==undefined))matches.push(child);
+        const classMatches=!targetClass||child.classList?.contains(targetClass);
+        const dataMatches=!dataKey||child.dataset?.[dataKey]!==undefined;
+        if(classMatches&&dataMatches)matches.push(child);
         visit(child);
       }
     };
@@ -117,8 +126,8 @@ function validateRender(order,scramble){
     assert.equal(Number(sticker.getAttribute('height')),geometry.stickerSize);
     const row=Number(sticker.dataset.row);
     const col=Number(sticker.dataset.col);
-    assert.equal(Number(sticker.getAttribute('x')),col*(geometry.stickerSize+geometry.stickerGap));
-    assert.equal(Number(sticker.getAttribute('y')),row*(geometry.stickerSize+geometry.stickerGap));
+    assert.equal(Number(sticker.getAttribute('x')),geometry.facePadding+col*(geometry.stickerSize+geometry.stickerGap));
+    assert.equal(Number(sticker.getAttribute('y')),geometry.facePadding+row*(geometry.stickerSize+geometry.stickerGap));
   }
   for(const size of sizes){
     const scale=Math.min(size/geometry.width,size/geometry.height);
@@ -126,8 +135,7 @@ function validateRender(order,scramble){
     const stickerHeight=geometry.stickerSize*scale;
     const gap=geometry.stickerGap*scale;
     assert.equal(stickerWidth,stickerHeight);
-    if(order===3)assert.equal(gap,0);
-    else assert.ok(gap>0);
+    assert.ok(gap>0);
     assert.ok(geometry.width*scale<=size+1e-9);
     assert.ok(geometry.height*scale<=size+1e-9);
   }
@@ -138,8 +146,10 @@ function validateRender(order,scramble){
     assert.equal(geometry.outerPadding,geometry.stickerSize/10);
     assert.equal(geometry.stickerRadius,0);
     assert.equal(geometry.faceRadius,0);
-    assert.equal(geometry.gridStroke,'#050505');
-    assert.equal(geometry.gridStrokeWidth,1);
+    assert.equal(geometry.facePadding,1);
+    assert.equal(geometry.stickerGap,1);
+    assert.equal(geometry.gridStroke,null);
+    assert.equal(geometry.gridStrokeWidth,0);
     assert.ok([
       geometry.stickerSize,
       geometry.faceGap,
@@ -159,16 +169,7 @@ function validateRender(order,scramble){
     const faces=descendants(svg,node=>node.classList.contains('ssc-svg-face'));
     const grids=descendants(svg,node=>node.classList.contains('ssc-svg-face-grid'));
     assert.equal(faces.length,6);
-    assert.equal(grids.length,6,'3x3 must render exactly one shared grid per face.');
-    const expectedGrid=`M0 0H${geometry.faceSize}V${geometry.faceSize}H0Z`+
-      `M${geometry.stickerSize} 0V${geometry.faceSize}M0 ${geometry.stickerSize}H${geometry.faceSize}`+
-      `M${geometry.stickerSize*2} 0V${geometry.faceSize}M0 ${geometry.stickerSize*2}H${geometry.faceSize}`;
-    for(const grid of grids){
-      assert.equal(grid.getAttribute('d'),expectedGrid);
-      assert.equal(grid.getAttribute('stroke'),'#050505');
-      assert.equal(Number(grid.getAttribute('stroke-width')),1);
-      assert.equal(grid.getAttribute('vector-effect'),'non-scaling-stroke');
-    }
+    assert.equal(grids.length,0,'3x3 separators must be filled gaps, not SVG strokes.');
 
     const origins=Object.fromEntries(faces.map(face=>[face.dataset.face,{
       x:Number(face.dataset.originX),
@@ -183,6 +184,50 @@ function validateRender(order,scramble){
       [origins.F.x-origins.L.x,origins.R.x-origins.F.x,origins.B.x-origins.R.x],
       [geometry.step,geometry.step,geometry.step]
     );
+
+    const pixelCases=[
+      {width:160,height:118,dpr:1,sticker:10},
+      {width:218,height:162,dpr:1,sticker:15},
+      {width:334,height:250,dpr:1,sticker:24},
+      {width:566,height:426,dpr:1,sticker:41},
+      {width:218,height:162,dpr:1.25},
+      {width:334,height:250,dpr:1.5},
+      {width:334,height:250,dpr:2}
+    ];
+    for(const pixelCase of pixelCases){
+      const fitted=globalThis.SSCSvgCubeRenderer.fitThreeByThreeToBox(
+        svg,pixelCase.width,pixelCase.height,pixelCase.dpr
+      );
+      if(pixelCase.sticker)assert.equal(fitted.stickerSize,pixelCase.sticker);
+      assert.equal(fitted.stickerGap,1);
+      assert.equal(fitted.facePadding,1);
+      assert.ok(fitted.width<=Math.floor(pixelCase.width*pixelCase.dpr));
+      assert.ok(fitted.height<=Math.floor(pixelCase.height*pixelCase.dpr));
+      assert.ok([
+        fitted.stickerSize,fitted.stickerGap,fitted.facePadding,fitted.faceGap,
+        fitted.outerPadding,fitted.faceSize,fitted.step,fitted.width,fitted.height
+      ].every(Number.isInteger),'Fitted 3x3 geometry must use integer device pixels.');
+
+      for(const sticker of stickers){
+        const row=Number(sticker.dataset.row);
+        const col=Number(sticker.dataset.col);
+        assert.equal(Number(sticker.getAttribute('width')),fitted.stickerSize);
+        assert.equal(Number(sticker.getAttribute('height')),fitted.stickerSize);
+        assert.equal(Number(sticker.getAttribute('x')),fitted.facePadding+col*(fitted.stickerSize+1));
+        assert.equal(Number(sticker.getAttribute('y')),fitted.facePadding+row*(fitted.stickerSize+1));
+        assert.equal(sticker.getAttribute('stroke'),null);
+        assert.equal(sticker.getAttribute('stroke-width'),null);
+      }
+
+      const fittedOrigins=Object.fromEntries(faces.map(face=>[face.dataset.face,{
+        x:Number(face.dataset.originX),y:Number(face.dataset.originY)
+      }]));
+      assert.equal(fittedOrigins.U.x,fittedOrigins.F.x);
+      assert.equal(fittedOrigins.F.x,fittedOrigins.D.x);
+      assert.equal(fittedOrigins.L.y,fittedOrigins.F.y);
+      assert.equal(fittedOrigins.F.y,fittedOrigins.R.y);
+      assert.equal(fittedOrigins.R.y,fittedOrigins.B.y);
+    }
   }else{
     assert.equal(svg.getAttribute('data-layout-style'),'ssc-standard');
     assert.equal(geometry.stickerGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerGap);
@@ -239,6 +284,8 @@ const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8
 const cssSource=fs.readFileSync('code/css/ssc-preview-v1.css','utf8');
 assert.doesNotMatch(rendererSource,/scaleX\s*\(|rotate\s*\(|matrix\s*\(/i);
 assert.doesNotMatch(cssSource,/scaleX\s*\(|rotate\s*\(|matrix\s*\(/i);
+assert.doesNotMatch(rendererSource,/vector-effect/i);
+assert.doesNotMatch(cssSource,/non-scaling-stroke/i);
 assert.match(cssSource,/width:\s*100%/);
 assert.match(cssSource,/height:\s*100%/);
 
@@ -254,7 +301,8 @@ console.log(JSON.stringify({
   savedPalettePreserved:true,
   scrambleUpdates:true,
   cstimer3x3Profile:true,
-  sharedPixelGrid:true,
+  integerDevicePixelCells:true,
+  filledPixelSeparators:true,
   symmetric3x3Axes:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
