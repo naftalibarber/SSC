@@ -118,9 +118,29 @@ function validateRender(order,scramble){
     const stickerHeight=geometry.stickerSize*scale;
     const gap=geometry.stickerGap*scale;
     assert.equal(stickerWidth,stickerHeight);
-    assert.ok(gap>0);
+    if(order===3)assert.equal(gap,0);
+    else assert.ok(gap>0);
     assert.ok(geometry.width*scale<=size+1e-9);
     assert.ok(geometry.height*scale<=size+1e-9);
+  }
+
+  if(order===3){
+    assert.equal(svg.getAttribute('data-layout-style'),'cstimer-3x3');
+    assert.equal(geometry.faceGap,geometry.stickerSize/3);
+    assert.equal(geometry.outerPadding,geometry.stickerSize/10);
+    assert.equal(geometry.stickerRadius,0);
+    assert.equal(geometry.faceRadius,0);
+    assert.equal(container.classList.contains('ssc-preview-cstimer-3x3'),true);
+    for(const sticker of stickers){
+      assert.equal(Number(sticker.getAttribute('rx')),0);
+      assert.equal(sticker.getAttribute('stroke'),'#050505');
+      assert.equal(Number(sticker.getAttribute('stroke-width')),10/3);
+    }
+  }else{
+    assert.equal(svg.getAttribute('data-layout-style'),'ssc-standard');
+    assert.equal(geometry.stickerGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerGap);
+    assert.equal(geometry.faceGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.faceGap);
+    assert.equal(geometry.stickerRadius,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerRadius);
   }
   return{container,svg,stickers,ids:stickers.map(sticker=>sticker.dataset.stickerId),layers:stickers.map(sticker=>sticker.dataset.layer)};
 }
@@ -160,6 +180,14 @@ const after=stableContainer.querySelectorAll('.ssc-native-preview-svg .ssc-svg-s
 assert.deepEqual(after.map(item=>item.id),before.map(item=>item.id));
 assert.notDeepEqual(after.map(item=>item.layer),before.map(item=>item.layer));
 
+const reusedContainer=new FakeElement('div');
+reusedContainer.id='reused-preview';
+globalThis.SSCPreviewV1.render(reusedContainer,'','333',{strict:true});
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),true);
+globalThis.SSCPreviewV1.render(reusedContainer,'','222',{strict:true});
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 2x2.');
+assert.equal(reusedContainer.dataset.previewLayout,'ssc-standard');
+
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
 const cssSource=fs.readFileSync('code/css/ssc-preview-v1.css','utf8');
 assert.doesNotMatch(rendererSource,/scaleX\s*\(|rotate\s*\(|matrix\s*\(/i);
@@ -176,5 +204,7 @@ console.log(JSON.stringify({
   semanticIdsStable:true,
   colorUpdates:true,
   scrambleUpdates:true,
+  cstimer3x3Profile:true,
+  otherOrdersUnchanged:true,
   mirroringHacks:false
 },null,2));

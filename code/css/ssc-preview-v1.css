@@ -23,6 +23,22 @@
   shape-rendering:geometricPrecision;
 }
 
+/* 3x3 only: classic csTimer-style flat net. Other cube orders retain the
+   existing rounded Premium SVG geometry and theme treatment. */
+.ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-face-background{
+  fill:#050505;
+  shape-rendering:crispEdges;
+}
+
+.ssc-native-preview-svg[data-layout-style="cstimer-3x3"] .ssc-svg-sticker{
+  stroke:#050505;
+  stroke-width:3.3333333333;
+  stroke-linecap:butt;
+  stroke-linejoin:miter;
+  stroke-miterlimit:2;
+  shape-rendering:geometricPrecision;
+}
+
 html[data-theme="dark"] .ssc-native-preview-svg .ssc-svg-face-background{
   fill:#0b0f16;
 }
