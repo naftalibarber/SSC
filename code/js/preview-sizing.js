@@ -165,24 +165,29 @@
 
   function fitNativeCube(container){
     const box=readCardContentBox(container),actualScale=computeLayout().actualScale;
-    const threeByThreeSvg=container.querySelector(':scope > .ssc-native-preview-svg[data-cube-order="3"], :scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]');
-    if(threeByThreeSvg&&window.SSCSvgCubeRenderer?.fitThreeByThreeToBox){
+    const pixelPerfectSvg=container.querySelector([
+      ':scope > .ssc-native-preview-svg[data-cube-order="2"]',
+      ':scope > .ssc-native-preview-svg[data-cube-order="3"]',
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="2"]',
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]'
+    ].join(','));
+    if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
       const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
-      const geometry=window.SSCSvgCubeRenderer.fitThreeByThreeToBox(threeByThreeSvg,box.width,box.height,dpr);
+      const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(pixelPerfectSvg,box.width,box.height,dpr);
       if(geometry){
         const offsetX=Math.max(0,Math.floor((geometry.availableWidth-geometry.width)/2));
         const offsetY=Math.max(0,Math.floor((geometry.availableHeight-geometry.height)/2));
-        threeByThreeSvg.style.width=`${geometry.width/dpr}px`;
-        threeByThreeSvg.style.height=`${geometry.height/dpr}px`;
-        threeByThreeSvg.style.maxWidth='none';
-        threeByThreeSvg.style.maxHeight='none';
-        threeByThreeSvg.style.margin='0';
-        threeByThreeSvg.style.marginLeft=`${offsetX/dpr}px`;
-        threeByThreeSvg.style.marginTop=`${offsetY/dpr}px`;
-        threeByThreeSvg.style.justifySelf='left';
-        threeByThreeSvg.style.alignSelf='start';
-        threeByThreeSvg.style.display='block';
-        threeByThreeSvg.style.overflow='hidden';
+        pixelPerfectSvg.style.width=`${geometry.width/dpr}px`;
+        pixelPerfectSvg.style.height=`${geometry.height/dpr}px`;
+        pixelPerfectSvg.style.maxWidth='none';
+        pixelPerfectSvg.style.maxHeight='none';
+        pixelPerfectSvg.style.margin='0';
+        pixelPerfectSvg.style.marginLeft=`${offsetX/dpr}px`;
+        pixelPerfectSvg.style.marginTop=`${offsetY/dpr}px`;
+        pixelPerfectSvg.style.justifySelf='left';
+        pixelPerfectSvg.style.alignSelf='start';
+        pixelPerfectSvg.style.display='block';
+        pixelPerfectSvg.style.overflow='hidden';
         container.dataset.previewStickerDevicePixels=String(geometry.stickerSize);
         container.dataset.previewSeparatorDevicePixels=String(geometry.stickerGap);
         return true;
