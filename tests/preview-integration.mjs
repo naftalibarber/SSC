@@ -153,6 +153,8 @@ const settingsSource=fs.readFileSync('code/js/settings.js','utf8');
 const legacyPreviewSource=fs.readFileSync('code/js/cube-preview.js','utf8');
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
 const competitionStyles=fs.readFileSync('code/css/minimal-competition.css','utf8');
+const cubePreviewStyles=fs.readFileSync('code/css/cube-preview.css','utf8');
+const appSource=fs.readFileSync('code/js/app.js','utf8');
 assert.match(sizingSource,/const MIN_SIZE=150;/);
 assert.match(sizingSource,/const MAX_SIZE=500;/);
 assert.match(sizingSource,/const STEP=5;/);
@@ -170,10 +172,16 @@ assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[
 assert.match(competitionStyles,/\.workspace\.cstimer-layout\s*\{[\s\S]*?direction:ltr!important;/,'Workspace geometry must stay physical instead of inheriting RTL grid placement.');
 assert.match(competitionStyles,/html\[dir="ltr"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:var\(--mc-sidebar\) minmax\(0,1fr\)!important;/,'English must reserve the left column for statistics.');
 assert.match(competitionStyles,/html\[dir="rtl"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:minmax\(0,1fr\) var\(--mc-sidebar\)!important;/,'Hebrew must reserve the right column for statistics.');
-assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:1!important;/,'English statistics must occupy and fit the left sidebar column.');
-assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:2!important;/,'Hebrew statistics must occupy and fit the right sidebar column.');
-assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-timer\s*\{grid-column:2!important\}/,'English timer must occupy the right column.');
-assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-timer\s*\{grid-column:1!important\}/,'Hebrew timer must occupy the left column.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:1!important;\s*grid-row:1!important;/,'English statistics must occupy and fit the left sidebar column in the first row.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:2!important;\s*grid-row:1!important;/,'Hebrew statistics must occupy and fit the right sidebar column in the first row.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-timer\s*\{grid-column:2!important;grid-row:1!important\}/,'English timer must share the first row with statistics.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-timer\s*\{grid-column:1!important;grid-row:1!important\}/,'Hebrew timer must share the first row with statistics.');
+assert.match(cubePreviewStyles,/right:calc\(var\(--ssc-preview-right-offset\) \+ env\(safe-area-inset-right,0px\)\)!important;/,'The cube preview must use one physical right anchor in both languages.');
+assert.match(cubePreviewStyles,/html\[dir="rtl"\] \.cube-preview-card\s*\{\s*--ssc-preview-right-offset:calc\(var\(--mc-sidebar,320px\) \+ var\(--ssc-preview-safe-margin,18px\)\);\s*\}/,'Hebrew must reserve the right statistics sidebar while keeping the preview inside the timer area.');
+assert.doesNotMatch(cubePreviewStyles,/Hebrew = bottom-left/,'The preview must not be mirrored to the bottom-left in Hebrew.');
+assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
+assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
+assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The session selector must use the localized built-in session name.');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
@@ -206,5 +214,6 @@ console.log(JSON.stringify({
   defaultPreviewSize:200,
   savedPreviewSizePreserved:true,
   cstimerDefaultPalette:true,
-  languageAwareStatisticsSide:true
+  languageAwareStatisticsSide:true,
+  languageLayoutParity:true
 },null,2));
