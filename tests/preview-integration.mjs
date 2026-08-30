@@ -158,6 +158,8 @@ assert.match(sizingSource,/const STEP=5;/);
 assert.match(sizingSource,/const DEFAULT_SIZE=200;/);
 assert.match(sizingSource,/const STORAGE_KEY='sscCubePreviewSizeV1';/);
 assert.match(sizingSource,/raw===null\?DEFAULT_SIZE:raw/,'Existing saved preview sizes must remain the source when present.');
+assert.match(sizingSource,/fitThreeByThreeToBox/,'3x3 SVG must be fitted using integer device-pixel geometry.');
+assert.match(sizingSource,/previewStickerDevicePixels/,'3x3 fit must expose its physical sticker size for diagnostics.');
 assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
 assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
 assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[\s\S]*R:'#ff0000',[\s\S]*L:'#ffaa00'/);

@@ -164,9 +164,33 @@
   }
 
   function fitNativeCube(container){
+    const box=readCardContentBox(container),actualScale=computeLayout().actualScale;
+    const threeByThreeSvg=container.querySelector(':scope > .ssc-native-preview-svg[data-cube-order="3"], :scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]');
+    if(threeByThreeSvg&&window.SSCSvgCubeRenderer?.fitThreeByThreeToBox){
+      const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
+      const geometry=window.SSCSvgCubeRenderer.fitThreeByThreeToBox(threeByThreeSvg,box.width,box.height,dpr);
+      if(geometry){
+        const offsetX=Math.max(0,Math.floor((geometry.availableWidth-geometry.width)/2));
+        const offsetY=Math.max(0,Math.floor((geometry.availableHeight-geometry.height)/2));
+        threeByThreeSvg.style.width=`${geometry.width/dpr}px`;
+        threeByThreeSvg.style.height=`${geometry.height/dpr}px`;
+        threeByThreeSvg.style.maxWidth='none';
+        threeByThreeSvg.style.maxHeight='none';
+        threeByThreeSvg.style.margin='0';
+        threeByThreeSvg.style.marginLeft=`${offsetX/dpr}px`;
+        threeByThreeSvg.style.marginTop=`${offsetY/dpr}px`;
+        threeByThreeSvg.style.justifySelf='left';
+        threeByThreeSvg.style.alignSelf='start';
+        threeByThreeSvg.style.display='block';
+        threeByThreeSvg.style.overflow='hidden';
+        container.dataset.previewStickerDevicePixels=String(geometry.stickerSize);
+        container.dataset.previewSeparatorDevicePixels=String(geometry.stickerGap);
+        return true;
+      }
+    }
+
     const net=container.querySelector(':scope > .cube-preview-net, :scope > .ssc-preview-content > .cube-preview-net');
     if(!net)return false;
-    const box=readCardContentBox(container),actualScale=computeLayout().actualScale;
     if(net.classList.contains('ssc-preview-dom-net'))return fitDomCube(net,box,actualScale);
     const gap=Math.max(.5,BASE_NET_GAP*actualScale);
     const face=Math.max(1,Math.min((box.width-gap*3)/4,(box.height-gap*2)/3));
@@ -178,6 +202,7 @@
 
   function tuneSvg(svg){
     if(!(svg instanceof SVGElement))return;
+    if(svg.getAttribute('data-pixel-perfect-grid')==='true')return;
     svg.setAttribute('preserveAspectRatio','xMidYMid meet');
     svg.style.width='100%';svg.style.height='100%';svg.style.maxWidth='100%';svg.style.maxHeight='100%';svg.style.display='block';svg.style.overflow='hidden';
   }

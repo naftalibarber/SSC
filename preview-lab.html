@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>SSC Preview Lab</title>
-  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260830-pixel-grid-1">
+  <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260830-integer-cells-1">
   <style>
     :root{font-family:Arial,sans-serif;color:#111827;background:#f3f4f6}
     *{box-sizing:border-box}
@@ -20,7 +20,7 @@
     button:disabled{opacity:.55;cursor:wait}
     .preview-shell{min-height:440px;display:grid;place-items:center;overflow:auto}
     #previewFrame{width:300px;height:300px;display:grid;place-items:center;overflow:hidden;border:1px dashed #cbd5e1;border-radius:12px}
-    #preview{width:100%;height:100%;min-width:0;min-height:0}
+    #preview{width:100%;height:100%;min-width:0;min-height:0;display:grid;place-items:center}
     #status{margin-top:12px;font:13px/1.5 monospace;white-space:pre-wrap;direction:ltr;text-align:left;color:#475569}
     .validation-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
     .validation-card{border:1px solid #e2e8f0;border-radius:12px;padding:13px}
@@ -89,7 +89,7 @@
   </main>
 
   <script src="./code/js/preview/ssc-nxn-state.js?v=20260827-777-1"></script>
-  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260830-pixel-grid-1"></script>
+  <script src="./code/js/preview/ssc-svg-renderer.js?v=20260830-integer-cells-1"></script>
   <script src="./code/js/preview/ssc-preview-validation.js?v=20260827-777-1"></script>
   <script src="./code/js/preview/ssc-preview-v1.js?v=20260827-777-1"></script>
   <script>
@@ -106,7 +106,20 @@
       function draw(){
         try{
           const result=window.SSCPreviewV1.render(preview,scramble.value,event.value,{strict:true});
-          status.textContent=`OK · ${result.order}x${result.order} · ${result.state.moves.length} moves · ${Object.keys(result.state.mapping).length} stickers · ${previewSize.value}px`;
+          let pixelLabel='';
+          if(result.order===3){
+            const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
+            const geometry=window.SSCSvgCubeRenderer.fitThreeByThreeToBox(
+              result.svg,previewFrame.clientWidth,previewFrame.clientHeight,dpr
+            );
+            result.svg.style.width=`${geometry.width/dpr}px`;
+            result.svg.style.height=`${geometry.height/dpr}px`;
+            result.svg.style.maxWidth='none';
+            result.svg.style.maxHeight='none';
+            result.svg.style.margin='auto';
+            pixelLabel=` · cell ${geometry.stickerSize}px/device`;
+          }
+          status.textContent=`OK · ${result.order}x${result.order} · ${result.state.moves.length} moves · ${Object.keys(result.state.mapping).length} stickers · ${previewSize.value}px${pixelLabel}`;
         }catch(error){
           status.textContent=`ERROR · ${error.message}`;
           console.error(error);

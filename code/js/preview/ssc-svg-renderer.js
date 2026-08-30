@@ -21,6 +21,7 @@
   const GEOMETRY=Object.freeze({
     stickerSize:100,
     stickerGap:7,
+    facePadding:0,
     faceGap:24,
     outerPadding:12,
     stickerRadius:7,
@@ -31,21 +32,22 @@
     gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // The 3x3 profile uses one integer coordinate system and one shared grid per
-  // face. Avoiding fractional per-sticker strokes keeps every separator the
-  // same width and every sticker on the same symmetric axes after scaling.
+  // The 3x3 profile uses filled one-device-pixel separators instead of SVG
+  // strokes. preview-sizing.js fits this profile to the card in physical
+  // device pixels, so every sticker has the exact same integer dimensions.
   // Keep this profile order-specific so every other NxN preview is unchanged.
   const CSTIMER_3X3_GEOMETRY=Object.freeze({
     stickerSize:30,
-    stickerGap:0,
+    stickerGap:1,
+    facePadding:1,
     faceGap:10,
     outerPadding:3,
     stickerRadius:0,
     faceRadius:0,
     stickerStroke:null,
     stickerStrokeWidth:0,
-    gridStroke:'#050505',
-    gridStrokeWidth:1,
+    gridStroke:null,
+    gridStrokeWidth:0,
     layoutStyle:'cstimer-3x3'
   });
 
@@ -87,8 +89,8 @@
   function geometryFor(order){
     const n=Number(order);
     const profile=n===3?CSTIMER_3X3_GEOMETRY:GEOMETRY;
-    const {stickerSize,stickerGap,faceGap,outerPadding}=profile;
-    const faceSize=(n*stickerSize)+((n-1)*stickerGap);
+    const {stickerSize,stickerGap,facePadding=0,faceGap,outerPadding}=profile;
+    const faceSize=(n*stickerSize)+((n-1)*stickerGap)+(facePadding*2);
     const step=faceSize+faceGap;
     const width=(4*faceSize)+(3*faceGap)+(outerPadding*2);
     const height=(3*faceSize)+(2*faceGap)+(outerPadding*2);
@@ -103,15 +105,30 @@
     ];
   }
 
-  function faceGridPath(order,geometry){
-    const size=geometry.faceSize;
-    const step=geometry.stickerSize+geometry.stickerGap;
-    const commands=[`M0 0H${size}V${size}H0Z`];
-    for(let index=1;index<order;index++){
-      const offset=index*step;
-      commands.push(`M${offset} 0V${size}`,`M0 ${offset}H${size}`);
+  function pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio=1){
+    const dpr=Math.max(.25,Number(devicePixelRatio)||1);
+    const availableWidth=Math.max(1,Math.floor((Number(boxWidth)||1)*dpr));
+    const availableHeight=Math.max(1,Math.floor((Number(boxHeight)||1)*dpr));
+    const stickerGap=1;
+    const facePadding=1;
+    const maximumSticker=Math.max(1,Math.floor(Math.min(availableWidth/12,availableHeight/9)));
+
+    for(let stickerSize=maximumSticker;stickerSize>=1;stickerSize--){
+      const faceGap=Math.max(1,Math.round(stickerSize/3));
+      const outerPadding=Math.max(1,Math.round(stickerSize/10));
+      const faceSize=(stickerSize*3)+(stickerGap*2)+(facePadding*2);
+      const step=faceSize+faceGap;
+      const width=(faceSize*4)+(faceGap*3)+(outerPadding*2);
+      const height=(faceSize*3)+(faceGap*2)+(outerPadding*2);
+      if(width<=availableWidth&&height<=availableHeight){
+        return Object.freeze({
+          n:3,dpr,availableWidth,availableHeight,stickerSize,stickerGap,
+          facePadding,faceGap,outerPadding,faceSize,step,width,height
+        });
+      }
     }
-    return commands.join('');
+
+    throw new RangeError('The preview card is too small for a 3x3 pixel grid.');
   }
 
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
@@ -139,8 +156,8 @@
       for(let col=0;col<order;col++){
         const semanticId=getCore().stickerId(face,row,col,order);
         const layer=faceMatrix[row][col];
-        const x=col*(geometry.stickerSize+geometry.stickerGap);
-        const y=row*(geometry.stickerSize+geometry.stickerGap);
+        const x=geometry.facePadding+col*(geometry.stickerSize+geometry.stickerGap);
+        const y=geometry.facePadding+row*(geometry.stickerSize+geometry.stickerGap);
         const sticker=svgElement('rect',{
           id:`${prefix}-${semanticId}`,
           class:'ssc-svg-sticker',
@@ -163,19 +180,46 @@
       }
     }
 
-    if(geometry.gridStroke&&geometry.gridStrokeWidth){
-      group.appendChild(svgElement('path',{
-        class:'ssc-svg-face-grid',
-        d:faceGridPath(order,geometry),
-        fill:'none',
-        stroke:geometry.gridStroke,
-        'stroke-width':geometry.gridStrokeWidth,
-        'vector-effect':'non-scaling-stroke',
-        'data-face':face
-      }));
-    }
-
     svg.appendChild(group);
+  }
+
+  function fitThreeByThreeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
+    if(!svg||svg.getAttribute?.('data-cube-order')!=='3')return null;
+    const geometry=pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio);
+    svg.setAttribute('viewBox',`0 0 ${geometry.width} ${geometry.height}`);
+    svg.setAttribute('preserveAspectRatio','xMinYMin meet');
+    svg.setAttribute('shape-rendering','crispEdges');
+    svg.setAttribute('data-pixel-perfect-grid','true');
+
+    svg.querySelectorAll('.ssc-svg-face[data-face]').forEach(group=>{
+      const face=group.dataset.face;
+      const [gridX,gridY]=FACE_POSITIONS[face];
+      const faceX=geometry.outerPadding+(gridX*geometry.step);
+      const faceY=geometry.outerPadding+(gridY*geometry.step);
+      group.setAttribute('data-origin-x',String(faceX));
+      group.setAttribute('data-origin-y',String(faceY));
+      group.setAttribute('transform',`translate(${faceX} ${faceY})`);
+
+      const background=[...group.children].find(node=>node.classList?.contains('ssc-svg-face-background'));
+      if(background){
+        background.setAttribute('width',String(geometry.faceSize));
+        background.setAttribute('height',String(geometry.faceSize));
+      }
+
+      [...group.children].filter(node=>node.classList?.contains('ssc-svg-sticker')).forEach(sticker=>{
+        const row=Number(sticker.dataset.row);
+        const col=Number(sticker.dataset.col);
+        const step=geometry.stickerSize+geometry.stickerGap;
+        sticker.setAttribute('x',String(geometry.facePadding+(col*step)));
+        sticker.setAttribute('y',String(geometry.facePadding+(row*step)));
+        sticker.setAttribute('width',String(geometry.stickerSize));
+        sticker.setAttribute('height',String(geometry.stickerSize));
+        sticker.removeAttribute('stroke');
+        sticker.removeAttribute('stroke-width');
+      });
+    });
+
+    return geometry;
   }
 
   function renderState(container,state,{colors,idPrefix}={}){
@@ -238,6 +282,8 @@
     GEOMETRY,
     CSTIMER_3X3_GEOMETRY,
     geometryFor,
+    pixelPerfect3x3Geometry,
+    fitThreeByThreeToBox,
     render,
     renderState,
     updateColors
