@@ -168,8 +168,10 @@
     const pixelPerfectSvg=container.querySelector([
       ':scope > .ssc-native-preview-svg[data-cube-order="2"]',
       ':scope > .ssc-native-preview-svg[data-cube-order="3"]',
+      ':scope > .ssc-native-preview-svg[data-cube-order="4"]',
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="2"]',
-      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]'
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]',
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]'
     ].join(','));
     if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
       const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);

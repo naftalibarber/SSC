@@ -32,7 +32,7 @@
     gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // The 2x2 and 3x3 profiles use filled one-device-pixel separators instead
+  // The 2x2 through 4x4 profiles use filled one-device-pixel separators instead
   // of SVG strokes. preview-sizing.js fits these profiles to the card in
   // physical device pixels, so every sticker has the exact same integer
   // dimensions. Keep them order-specific so every other NxN preview is
@@ -65,6 +65,26 @@
     gridStrokeWidth:0,
     layoutStyle:'cstimer-3x3'
   });
+  const CSTIMER_4X4_GEOMETRY=Object.freeze({
+    stickerSize:22,
+    stickerGap:1,
+    facePadding:1,
+    faceGap:7,
+    outerPadding:2,
+    stickerRadius:0,
+    faceRadius:0,
+    stickerStroke:null,
+    stickerStrokeWidth:0,
+    gridStroke:null,
+    gridStrokeWidth:0,
+    layoutStyle:'cstimer-4x4'
+  });
+  const CSTIMER_GEOMETRIES=Object.freeze({
+    2:CSTIMER_2X2_GEOMETRY,
+    3:CSTIMER_3X3_GEOMETRY,
+    4:CSTIMER_4X4_GEOMETRY
+  });
+  const PIXEL_PERFECT_ORDERS=Object.freeze([2,3,4]);
 
   let instanceSequence=0;
   const containerIds=new WeakMap();
@@ -103,7 +123,7 @@
 
   function geometryFor(order){
     const n=Number(order);
-    const profile=n===2?CSTIMER_2X2_GEOMETRY:n===3?CSTIMER_3X3_GEOMETRY:GEOMETRY;
+    const profile=CSTIMER_GEOMETRIES[n]||GEOMETRY;
     const {stickerSize,stickerGap,facePadding=0,faceGap,outerPadding}=profile;
     const faceSize=(n*stickerSize)+((n-1)*stickerGap)+(facePadding*2);
     const step=faceSize+faceGap;
@@ -122,7 +142,7 @@
 
   function pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio=1){
     const n=Number(order);
-    if(n!==2&&n!==3)throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 and 3x3.');
+    if(!PIXEL_PERFECT_ORDERS.includes(n))throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 through 4x4.');
     const dpr=Math.max(.25,Number(devicePixelRatio)||1);
     const availableWidth=Math.max(1,Math.floor((Number(boxWidth)||1)*dpr));
     const availableHeight=Math.max(1,Math.floor((Number(boxHeight)||1)*dpr));
@@ -206,7 +226,7 @@
 
   function fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
     const order=Number(svg?.getAttribute?.('data-cube-order'));
-    if(order!==2&&order!==3)return null;
+    if(!PIXEL_PERFECT_ORDERS.includes(order))return null;
     const geometry=pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio);
     svg.setAttribute('viewBox',`0 0 ${geometry.width} ${geometry.height}`);
     svg.setAttribute('preserveAspectRatio','xMinYMin meet');
@@ -279,9 +299,8 @@
     container.dataset.previewRenderer='ssc-svg-v1';
     container.dataset.cubeOrder=String(order);
     container.dataset.previewLayout=geometry.layoutStyle;
-    container.classList.remove('ssc-preview-cstimer-2x2','ssc-preview-cstimer-3x3');
-    if(order===2)container.classList.add('ssc-preview-cstimer-2x2');
-    if(order===3)container.classList.add('ssc-preview-cstimer-3x3');
+    container.classList.remove(...PIXEL_PERFECT_ORDERS.map(n=>`ssc-preview-cstimer-${n}x${n}`));
+    if(PIXEL_PERFECT_ORDERS.includes(order))container.classList.add(`ssc-preview-cstimer-${order}x${order}`);
     container.classList.add('ssc-native-svg-preview');
     return svg;
   }
@@ -310,6 +329,8 @@
     GEOMETRY,
     CSTIMER_2X2_GEOMETRY,
     CSTIMER_3X3_GEOMETRY,
+    CSTIMER_4X4_GEOMETRY,
+    PIXEL_PERFECT_ORDERS,
     geometryFor,
     pixelPerfectCubeGeometry,
     pixelPerfect3x3Geometry,
