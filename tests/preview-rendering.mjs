@@ -140,10 +140,10 @@ function validateRender(order,scramble){
     assert.ok(geometry.height*scale<=size+1e-9);
   }
 
-  if(order===3){
-    assert.equal(svg.getAttribute('data-layout-style'),'cstimer-3x3');
-    assert.equal(geometry.faceGap,geometry.stickerSize/3);
-    assert.equal(geometry.outerPadding,geometry.stickerSize/10);
+  if(order===2||order===3){
+    assert.equal(svg.getAttribute('data-layout-style'),`cstimer-${order}x${order}`);
+    assert.equal(geometry.faceGap,Math.round(geometry.stickerSize/3));
+    assert.equal(geometry.outerPadding,Math.round(geometry.stickerSize/10));
     assert.equal(geometry.stickerRadius,0);
     assert.equal(geometry.faceRadius,0);
     assert.equal(geometry.facePadding,1);
@@ -158,8 +158,9 @@ function validateRender(order,scramble){
       geometry.step,
       geometry.width,
       geometry.height
-    ].every(Number.isInteger),'3x3 geometry must use whole SVG units.');
-    assert.equal(container.classList.contains('ssc-preview-cstimer-3x3'),true);
+    ].every(Number.isInteger),`${order}x${order} geometry must use whole SVG units.`);
+    assert.equal(container.classList.contains(`ssc-preview-cstimer-${order}x${order}`),true);
+    assert.equal(container.classList.contains(`ssc-preview-cstimer-${order===2?'3x3':'2x2'}`),false);
     for(const sticker of stickers){
       assert.equal(Number(sticker.getAttribute('rx')),0);
       assert.equal(sticker.getAttribute('stroke'),null);
@@ -169,7 +170,7 @@ function validateRender(order,scramble){
     const faces=descendants(svg,node=>node.classList.contains('ssc-svg-face'));
     const grids=descendants(svg,node=>node.classList.contains('ssc-svg-face-grid'));
     assert.equal(faces.length,6);
-    assert.equal(grids.length,0,'3x3 separators must be filled gaps, not SVG strokes.');
+    assert.equal(grids.length,0,`${order}x${order} separators must be filled gaps, not SVG strokes.`);
 
     const origins=Object.fromEntries(faces.map(face=>[face.dataset.face,{
       x:Number(face.dataset.originX),
@@ -185,19 +186,21 @@ function validateRender(order,scramble){
       [geometry.step,geometry.step,geometry.step]
     );
 
+    const expectedStickers=order===2?[15,22,34,60]:[10,15,24,41];
     const pixelCases=[
-      {width:160,height:118,dpr:1,sticker:10},
-      {width:218,height:162,dpr:1,sticker:15},
-      {width:334,height:250,dpr:1,sticker:24},
-      {width:566,height:426,dpr:1,sticker:41},
+      {width:160,height:118,dpr:1,sticker:expectedStickers[0]},
+      {width:218,height:162,dpr:1,sticker:expectedStickers[1]},
+      {width:334,height:250,dpr:1,sticker:expectedStickers[2]},
+      {width:566,height:426,dpr:1,sticker:expectedStickers[3]},
       {width:218,height:162,dpr:1.25},
       {width:334,height:250,dpr:1.5},
       {width:334,height:250,dpr:2}
     ];
     for(const pixelCase of pixelCases){
-      const fitted=globalThis.SSCSvgCubeRenderer.fitThreeByThreeToBox(
+      const fitted=globalThis.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(
         svg,pixelCase.width,pixelCase.height,pixelCase.dpr
       );
+      assert.equal(fitted.n,order);
       if(pixelCase.sticker)assert.equal(fitted.stickerSize,pixelCase.sticker);
       assert.equal(fitted.stickerGap,1);
       assert.equal(fitted.facePadding,1);
@@ -206,7 +209,7 @@ function validateRender(order,scramble){
       assert.ok([
         fitted.stickerSize,fitted.stickerGap,fitted.facePadding,fitted.faceGap,
         fitted.outerPadding,fitted.faceSize,fitted.step,fitted.width,fitted.height
-      ].every(Number.isInteger),'Fitted 3x3 geometry must use integer device pixels.');
+      ].every(Number.isInteger),`Fitted ${order}x${order} geometry must use integer device pixels.`);
 
       for(const sticker of stickers){
         const row=Number(sticker.dataset.row);
@@ -227,6 +230,14 @@ function validateRender(order,scramble){
       assert.equal(fittedOrigins.L.y,fittedOrigins.F.y);
       assert.equal(fittedOrigins.F.y,fittedOrigins.R.y);
       assert.equal(fittedOrigins.R.y,fittedOrigins.B.y);
+    }
+
+    if(order===3){
+      assert.deepEqual(
+        globalThis.SSCSvgCubeRenderer.pixelPerfect3x3Geometry(218,162,1),
+        globalThis.SSCSvgCubeRenderer.pixelPerfectCubeGeometry(3,218,162,1),
+        'The existing 3x3 geometry API must remain unchanged.'
+      );
     }
   }else{
     assert.equal(svg.getAttribute('data-layout-style'),'ssc-standard');
@@ -278,6 +289,11 @@ globalThis.SSCPreviewV1.render(reusedContainer,'','333',{strict:true});
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),true);
 globalThis.SSCPreviewV1.render(reusedContainer,'','222',{strict:true});
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 2x2.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-2x2'),true);
+assert.equal(reusedContainer.dataset.previewLayout,'cstimer-2x2');
+globalThis.SSCPreviewV1.render(reusedContainer,'','444',{strict:true});
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-2x2'),false,'2x2-only style leaked into 4x4.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 4x4.');
 assert.equal(reusedContainer.dataset.previewLayout,'ssc-standard');
 
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
@@ -300,10 +316,10 @@ console.log(JSON.stringify({
   cstimerDefaultPalette:true,
   savedPalettePreserved:true,
   scrambleUpdates:true,
-  cstimer3x3Profile:true,
-  integerDevicePixelCells:true,
+  cstimer2x2And3x3Profiles:true,
+  integerDevicePixelOrders:[2,3],
   filledPixelSeparators:true,
-  symmetric3x3Axes:true,
+  symmetric2x2And3x3Axes:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
 },null,2));

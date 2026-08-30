@@ -32,10 +32,25 @@
     gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // The 3x3 profile uses filled one-device-pixel separators instead of SVG
-  // strokes. preview-sizing.js fits this profile to the card in physical
-  // device pixels, so every sticker has the exact same integer dimensions.
-  // Keep this profile order-specific so every other NxN preview is unchanged.
+  // The 2x2 and 3x3 profiles use filled one-device-pixel separators instead
+  // of SVG strokes. preview-sizing.js fits these profiles to the card in
+  // physical device pixels, so every sticker has the exact same integer
+  // dimensions. Keep them order-specific so every other NxN preview is
+  // unchanged.
+  const CSTIMER_2X2_GEOMETRY=Object.freeze({
+    stickerSize:44,
+    stickerGap:1,
+    facePadding:1,
+    faceGap:15,
+    outerPadding:4,
+    stickerRadius:0,
+    faceRadius:0,
+    stickerStroke:null,
+    stickerStrokeWidth:0,
+    gridStroke:null,
+    gridStrokeWidth:0,
+    layoutStyle:'cstimer-2x2'
+  });
   const CSTIMER_3X3_GEOMETRY=Object.freeze({
     stickerSize:30,
     stickerGap:1,
@@ -88,7 +103,7 @@
 
   function geometryFor(order){
     const n=Number(order);
-    const profile=n===3?CSTIMER_3X3_GEOMETRY:GEOMETRY;
+    const profile=n===2?CSTIMER_2X2_GEOMETRY:n===3?CSTIMER_3X3_GEOMETRY:GEOMETRY;
     const {stickerSize,stickerGap,facePadding=0,faceGap,outerPadding}=profile;
     const faceSize=(n*stickerSize)+((n-1)*stickerGap)+(facePadding*2);
     const step=faceSize+faceGap;
@@ -105,30 +120,36 @@
     ];
   }
 
-  function pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio=1){
+  function pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio=1){
+    const n=Number(order);
+    if(n!==2&&n!==3)throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 and 3x3.');
     const dpr=Math.max(.25,Number(devicePixelRatio)||1);
     const availableWidth=Math.max(1,Math.floor((Number(boxWidth)||1)*dpr));
     const availableHeight=Math.max(1,Math.floor((Number(boxHeight)||1)*dpr));
     const stickerGap=1;
     const facePadding=1;
-    const maximumSticker=Math.max(1,Math.floor(Math.min(availableWidth/12,availableHeight/9)));
+    const maximumSticker=Math.max(1,Math.floor(Math.min(availableWidth/(4*n),availableHeight/(3*n))));
 
     for(let stickerSize=maximumSticker;stickerSize>=1;stickerSize--){
       const faceGap=Math.max(1,Math.round(stickerSize/3));
       const outerPadding=Math.max(1,Math.round(stickerSize/10));
-      const faceSize=(stickerSize*3)+(stickerGap*2)+(facePadding*2);
+      const faceSize=(stickerSize*n)+(stickerGap*(n-1))+(facePadding*2);
       const step=faceSize+faceGap;
       const width=(faceSize*4)+(faceGap*3)+(outerPadding*2);
       const height=(faceSize*3)+(faceGap*2)+(outerPadding*2);
       if(width<=availableWidth&&height<=availableHeight){
         return Object.freeze({
-          n:3,dpr,availableWidth,availableHeight,stickerSize,stickerGap,
+          n,dpr,availableWidth,availableHeight,stickerSize,stickerGap,
           facePadding,faceGap,outerPadding,faceSize,step,width,height
         });
       }
     }
 
-    throw new RangeError('The preview card is too small for a 3x3 pixel grid.');
+    throw new RangeError(`The preview card is too small for a ${n}x${n} pixel grid.`);
+  }
+
+  function pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio=1){
+    return pixelPerfectCubeGeometry(3,boxWidth,boxHeight,devicePixelRatio);
   }
 
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
@@ -183,9 +204,10 @@
     svg.appendChild(group);
   }
 
-  function fitThreeByThreeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
-    if(!svg||svg.getAttribute?.('data-cube-order')!=='3')return null;
-    const geometry=pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio);
+  function fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
+    const order=Number(svg?.getAttribute?.('data-cube-order'));
+    if(order!==2&&order!==3)return null;
+    const geometry=pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio);
     svg.setAttribute('viewBox',`0 0 ${geometry.width} ${geometry.height}`);
     svg.setAttribute('preserveAspectRatio','xMinYMin meet');
     svg.setAttribute('shape-rendering','crispEdges');
@@ -222,6 +244,11 @@
     return geometry;
   }
 
+  function fitThreeByThreeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
+    if(!svg||svg.getAttribute?.('data-cube-order')!=='3')return null;
+    return fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio);
+  }
+
   function renderState(container,state,{colors,idPrefix}={}){
     if(!(container instanceof Element))throw new TypeError('SSCSvgCubeRenderer.renderState() requires a DOM container.');
     if(!state?.faces||!state?.order)throw new TypeError('SSCSvgCubeRenderer.renderState() requires an SSC NxN state.');
@@ -252,7 +279,8 @@
     container.dataset.previewRenderer='ssc-svg-v1';
     container.dataset.cubeOrder=String(order);
     container.dataset.previewLayout=geometry.layoutStyle;
-    container.classList.remove('ssc-preview-cstimer-3x3');
+    container.classList.remove('ssc-preview-cstimer-2x2','ssc-preview-cstimer-3x3');
+    if(order===2)container.classList.add('ssc-preview-cstimer-2x2');
     if(order===3)container.classList.add('ssc-preview-cstimer-3x3');
     container.classList.add('ssc-native-svg-preview');
     return svg;
@@ -280,9 +308,12 @@
     DEFAULT_COLORS,
     FACE_POSITIONS,
     GEOMETRY,
+    CSTIMER_2X2_GEOMETRY,
     CSTIMER_3X3_GEOMETRY,
     geometryFor,
+    pixelPerfectCubeGeometry,
     pixelPerfect3x3Geometry,
+    fitPixelPerfectCubeToBox,
     fitThreeByThreeToBox,
     render,
     renderState,
