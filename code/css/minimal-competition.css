@@ -209,26 +209,37 @@ body{
   box-shadow:none!important;
 }
 
-/* Main two-column workspace */
-.workspace.cstimer-layout,
-html[dir="rtl"] .workspace.cstimer-layout,
-html[dir="ltr"] .workspace.cstimer-layout{
-  grid-template-columns:var(--mc-sidebar) minmax(0,1fr)!important;
+/* Main two-column workspace. Keep the grid geometry physical so language
+   direction cannot reverse the tracks implicitly. */
+.workspace.cstimer-layout{
+  direction:ltr!important;
   background:var(--bg)!important;
 }
-.flat-panel,
-html[dir="rtl"] .flat-panel,
-html[dir="ltr"] .flat-panel{
+html[dir="ltr"] .workspace.cstimer-layout{
+  grid-template-columns:var(--mc-sidebar) minmax(0,1fr)!important;
+}
+html[dir="rtl"] .workspace.cstimer-layout{
+  grid-template-columns:minmax(0,1fr) var(--mc-sidebar)!important;
+}
+.flat-panel{
   width:var(--mc-sidebar)!important;
   background:var(--card)!important;
+}
+html[dir="ltr"] .flat-panel{
+  grid-column:1!important;
   border-right:1px solid var(--border)!important;
   border-left:0!important;
 }
-.flat-timer,
-html[dir="rtl"] .flat-timer,
-html[dir="ltr"] .flat-timer{
+html[dir="rtl"] .flat-panel{
+  grid-column:2!important;
+  border-right:0!important;
+  border-left:1px solid var(--border)!important;
+}
+.flat-timer{
   background:var(--bg)!important;
 }
+html[dir="ltr"] .flat-timer{grid-column:2!important}
+html[dir="rtl"] .flat-timer{grid-column:1!important}
 
 /* Sidebar */
 .stats-section{
@@ -423,6 +434,7 @@ html[data-theme="oled"] .puzzle-btn.active{
     grid-row:2!important;
     width:100%!important;
     border-right:0!important;
+    border-left:0!important;
     border-top:1px solid var(--border)!important;
   }
   #timer{font-size:clamp(76px,22vw,150px)!important}

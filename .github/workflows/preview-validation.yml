@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'code/css/minimal-competition.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
       - 'code/js/preview-sizing.js'
@@ -23,6 +24,7 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'code/css/minimal-competition.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
       - 'code/js/preview-sizing.js'
