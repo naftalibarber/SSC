@@ -152,6 +152,7 @@ const sizingSource=fs.readFileSync('code/js/preview-sizing.js','utf8');
 const settingsSource=fs.readFileSync('code/js/settings.js','utf8');
 const legacyPreviewSource=fs.readFileSync('code/js/cube-preview.js','utf8');
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
+const competitionStyles=fs.readFileSync('code/css/minimal-competition.css','utf8');
 assert.match(sizingSource,/const MIN_SIZE=150;/);
 assert.match(sizingSource,/const MAX_SIZE=500;/);
 assert.match(sizingSource,/const STEP=5;/);
@@ -166,6 +167,13 @@ assert.match(sizingSource,/previewStickerDevicePixels/,'Pixel-perfect fits must 
 assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
 assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
 assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[\s\S]*R:'#ff0000',[\s\S]*L:'#ffaa00'/);
+assert.match(competitionStyles,/\.workspace\.cstimer-layout\s*\{[\s\S]*?direction:ltr!important;/,'Workspace geometry must stay physical instead of inheriting RTL grid placement.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:var\(--mc-sidebar\) minmax\(0,1fr\)!important;/,'English must reserve the left column for statistics.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.workspace\.cstimer-layout\s*\{\s*grid-template-columns:minmax\(0,1fr\) var\(--mc-sidebar\)!important;/,'Hebrew must reserve the right column for statistics.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*grid-column:1!important;/,'English statistics must occupy the left column.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*grid-column:2!important;/,'Hebrew statistics must occupy the right column.');
+assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-timer\s*\{grid-column:2!important\}/,'English timer must occupy the right column.');
+assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-timer\s*\{grid-column:1!important\}/,'Hebrew timer must occupy the left column.');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
@@ -197,5 +205,6 @@ console.log(JSON.stringify({
   colorApiWired:true,
   defaultPreviewSize:200,
   savedPreviewSizePreserved:true,
-  cstimerDefaultPalette:true
+  cstimerDefaultPalette:true,
+  languageAwareStatisticsSide:true
 },null,2));
