@@ -10,7 +10,8 @@ SSC's native cube preview infrastructure. The state engine and SVG renderer are 
 - Deterministic semantic sticker IDs such as `U1`, `U2`, `F9`.
 - Generic mathematical SVG net renderer shared by 2x2-7x7.
 - Order-specific 3x3 presentation profile modeled on csTimer: contiguous square stickers, thin black outlines, one-third-sticker face gaps, and compact outer margins. State mapping remains shared and unchanged.
-- Palette is applied only in the renderer and comes from SSC's existing `sscCubeColorsV1` settings.
+- The default palette matches csTimer's familiar cube colors: white `#ffffff`, yellow `#ffff00`, green `#00dd00`, blue `#0000ff`, red `#ff0000`, and orange `#ffaa00`. Existing colors in `sscCubeColorsV1` remain authoritative.
+- The default preview size is 200%; the existing 150%-500% range, 5% step, viewport clamping, and saved `sscCubePreviewSizeV1` values remain unchanged.
 - `cubing.js` reference validation for every NxN order from 2x2 through 7x7.
 - Production routing for `222`, `333`, `444`, `555`, `666` and `777` behind one feature flag.
 - Legacy preview fallback remains installed for render failures and for non-routed/non-NxN events.

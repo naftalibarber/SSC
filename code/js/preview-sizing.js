@@ -5,7 +5,7 @@
   const MIN_SIZE=150;
   const MAX_SIZE=500;
   const STEP=5;
-  const DEFAULT_SIZE=150;
+  const DEFAULT_SIZE=200;
   const BASE_CARD_WIDTH=116;
   const BASE_CARD_HEIGHT=88;
   const BASE_NET_GAP=6;

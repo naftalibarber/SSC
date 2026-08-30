@@ -70,6 +70,7 @@ await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
 
 const sizes=[150,200,300,400];
+const CSTIMER_COLORS={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
 const cases={
   2:['',"R U2 F' R2 U' F2 R U'"],
   3:['',"R U2 F' L2 D B2 R2 U' F D2 L' B U2"],
@@ -79,6 +80,13 @@ const cases={
   7:['',"3Rw U2 Fw' L2 D B2 Rw2 U' 3Fw D2 3Lw' B Uw2 R2 Fw D' 3Bw2 Lw U2"]
 };
 const EVENT_BY_ORDER={2:'222',3:'333',4:'444',5:'555',6:'666',7:'777'};
+
+assert.deepEqual(globalThis.SSCSvgCubeRenderer.DEFAULT_COLORS,CSTIMER_COLORS);
+assert.deepEqual(globalThis.SSCPreviewV1.getColors(),CSTIMER_COLORS);
+const savedPalette={U:'#123456',D:'#234567',F:'#345678',B:'#456789',R:'#56789a',L:'#6789ab'};
+storage.set('sscCubeColorsV1',JSON.stringify(savedPalette));
+assert.deepEqual(globalThis.SSCPreviewV1.getColors(),savedPalette,'Existing custom cube colors must load unchanged.');
+storage.delete('sscCubeColorsV1');
 
 function descendants(root,predicate){
   const values=[];
@@ -166,7 +174,7 @@ for(const sticker of colorStickers){
   assert.equal(sticker.getAttribute('fill'),changed[sticker.dataset.layer]);
 }
 const reset=globalThis.SSCPreviewV1.resetColors();
-assert.equal(reset.U,globalThis.SSCSvgCubeRenderer.DEFAULT_COLORS.U);
+assert.deepEqual(reset,CSTIMER_COLORS);
 for(const sticker of colorStickers){
   assert.equal(sticker.getAttribute('fill'),reset[sticker.dataset.layer]);
 }
@@ -203,6 +211,8 @@ console.log(JSON.stringify({
   sizes,
   semanticIdsStable:true,
   colorUpdates:true,
+  cstimerDefaultPalette:true,
+  savedPalettePreserved:true,
   scrambleUpdates:true,
   cstimer3x3Profile:true,
   otherOrdersUnchanged:true,

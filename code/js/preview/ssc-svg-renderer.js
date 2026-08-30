@@ -4,11 +4,11 @@
   const SVG_NS='http://www.w3.org/2000/svg';
   const DEFAULT_COLORS=Object.freeze({
     U:'#ffffff',
-    D:'#ffd500',
-    F:'#16a34a',
-    B:'#2563eb',
-    R:'#ef4444',
-    L:'#f97316'
+    D:'#ffff00',
+    F:'#00dd00',
+    B:'#0000ff',
+    R:'#ff0000',
+    L:'#ffaa00'
   });
   const FACE_POSITIONS=Object.freeze({
     U:Object.freeze([1,0]),

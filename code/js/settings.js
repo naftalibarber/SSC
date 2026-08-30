@@ -7,7 +7,7 @@
   const PREVIEW_MIN=150;
   const PREVIEW_MAX=500;
   const PREVIEW_STEP=5;
-  const PREVIEW_DEFAULT=150;
+  const PREVIEW_DEFAULT=200;
   const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb',competitionMode:false,competitionInspection:true};
 
   const modal=document.getElementById('generalSettingsModal');
