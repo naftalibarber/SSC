@@ -168,7 +168,7 @@ assert.match(sizingSource,/data-cube-order="4"/,'4x4 SVG must be routed through 
 assert.match(sizingSource,/previewStickerDevicePixels/,'Pixel-perfect fits must expose their physical sticker size for diagnostics.');
 assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
 assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
-assert.match(legacyPreviewSource,/const cubeHref='\.\/code\/css\/cube-preview\.css\?v=20260830-language-layout-1';/,'The preview fallback stylesheet must match the current language-layout release.');
+assert.match(legacyPreviewSource,/const cubeHref='\.\/code\/css\/cube-preview\.css\?v=20260830-language-preview-side-1';/,'The preview fallback stylesheet must match the current language-placement release.');
 assert.doesNotMatch(legacyPreviewSource,/if\(existing\)existing\.href=cubeHref/,'Runtime setup must not replace the stylesheet version declared by index.html.');
 assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[\s\S]*R:'#ff0000',[\s\S]*L:'#ffaa00'/);
 assert.match(competitionStyles,/\.workspace\.cstimer-layout\s*\{[\s\S]*?direction:ltr!important;/,'Workspace geometry must stay physical instead of inheriting RTL grid placement.');
@@ -178,16 +178,17 @@ assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-panel\s*\{\s*width:var\
 assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-panel\s*\{\s*width:var\(--mc-sidebar\)!important;\s*grid-column:2!important;\s*grid-row:1!important;/,'Hebrew statistics must occupy and fit the right sidebar column in the first row.');
 assert.match(competitionStyles,/html\[dir="ltr"\] \.flat-timer\s*\{grid-column:2!important;grid-row:1!important\}/,'English timer must share the first row with statistics.');
 assert.match(competitionStyles,/html\[dir="rtl"\] \.flat-timer\s*\{grid-column:1!important;grid-row:1!important\}/,'Hebrew timer must share the first row with statistics.');
-assert.match(cubePreviewStyles,/right:calc\(var\(--ssc-preview-right-offset\) \+ env\(safe-area-inset-right,0px\)\)!important;/,'The cube preview must use one physical right anchor in both languages.');
-assert.match(cubePreviewStyles,/html\[dir="rtl"\] \.cube-preview-card\s*\{\s*--ssc-preview-right-offset:calc\(var\(--mc-sidebar,320px\) \+ var\(--ssc-preview-safe-margin,18px\)\);\s*\}/,'Hebrew must reserve the right statistics sidebar while keeping the preview inside the timer area.');
-assert.doesNotMatch(cubePreviewStyles,/Hebrew = bottom-left/,'The preview must not be mirrored to the bottom-left in Hebrew.');
+assert.match(cubePreviewStyles,/html\[lang="en"\] \.cube-preview-card\s*\{\s*right:calc\(var\(--ssc-preview-safe-margin,18px\) \+ env\(safe-area-inset-right,0px\)\)!important;\s*left:auto!important;\s*\}/,'English must keep the cube preview at the physical bottom-right.');
+assert.match(cubePreviewStyles,/html\[lang="he"\] \.cube-preview-card\s*\{\s*right:auto!important;\s*left:calc\(var\(--ssc-preview-safe-margin,18px\) \+ env\(safe-area-inset-left,0px\)\)!important;\s*\}/,'Hebrew must place the cube preview at the physical bottom-left.');
+assert.doesNotMatch(cubePreviewStyles,/--ssc-preview-right-offset/,'Language placement must not retain the obsolete Hebrew sidebar offset.');
 assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
 assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
 assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The session selector must use the localized built-in session name.');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
-assert.match(index,/code\/js\/cube-preview\.js\?v=20260830-language-layout-1/);
+assert.match(index,/code\/css\/cube-preview\.css\?v=20260830-language-preview-side-1/);
+assert.match(index,/code\/js\/cube-preview\.js\?v=20260830-language-preview-side-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
 assert.match(index,/code\/js\/puzzle-3d\.js/);
@@ -218,5 +219,6 @@ console.log(JSON.stringify({
   savedPreviewSizePreserved:true,
   cstimerDefaultPalette:true,
   languageAwareStatisticsSide:true,
-  languageLayoutParity:true
+  languageLayoutParity:true,
+  languageAwarePreviewSide:true
 },null,2));

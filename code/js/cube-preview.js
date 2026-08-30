@@ -20,7 +20,7 @@
   let lastRender=null;
 
   function ensureStyles(){
-    const cubeHref='./code/css/cube-preview.css?v=20260830-language-layout-1';
+    const cubeHref='./code/css/cube-preview.css?v=20260830-language-preview-side-1';
     const wcaHref='./code/css/wca-previews.css?v=20260827-444-native-dom';
     const existing=document.querySelector('link[data-ssc-cube-preview-style]');
     if(!existing){
