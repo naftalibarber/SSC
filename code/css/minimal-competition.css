@@ -228,20 +228,22 @@ html[dir="rtl"] .workspace.cstimer-layout{
 html[dir="ltr"] .flat-panel{
   width:var(--mc-sidebar)!important;
   grid-column:1!important;
+  grid-row:1!important;
   border-right:1px solid var(--border)!important;
   border-left:0!important;
 }
 html[dir="rtl"] .flat-panel{
   width:var(--mc-sidebar)!important;
   grid-column:2!important;
+  grid-row:1!important;
   border-right:0!important;
   border-left:1px solid var(--border)!important;
 }
 .flat-timer{
   background:var(--bg)!important;
 }
-html[dir="ltr"] .flat-timer{grid-column:2!important}
-html[dir="rtl"] .flat-timer{grid-column:1!important}
+html[dir="ltr"] .flat-timer{grid-column:2!important;grid-row:1!important}
+html[dir="rtl"] .flat-timer{grid-column:1!important;grid-row:1!important}
 
 /* Sidebar */
 .stats-section{

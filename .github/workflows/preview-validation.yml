@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
+      - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
       - 'code/js/preview-sizing.js'
@@ -25,6 +26,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
+      - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
       - 'code/js/preview-sizing.js'

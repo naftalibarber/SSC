@@ -4,8 +4,11 @@
 .cube-preview-card{
   --ssc-preview-padding:6px;
   --ssc-preview-badge-space:0px;
+  --ssc-preview-right-offset:var(--ssc-preview-safe-margin,18px);
   position:fixed!important;
   bottom:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-bottom,0px))!important;
+  right:calc(var(--ssc-preview-right-offset) + env(safe-area-inset-right,0px))!important;
+  left:auto!important;
   z-index:80!important;
   isolation:isolate!important;
   box-sizing:border-box!important;
@@ -28,14 +31,14 @@
   transition:width .14s ease,height .14s ease,border-color .18s ease!important;
 }
 
-/* Hebrew = bottom-left, English = bottom-right. */
+/* Keep the preview at the physical bottom-right of the timer area in both
+   languages. In Hebrew the statistics sidebar occupies the viewport's right
+   edge, so reserve its width without mirroring the preview to the left. */
 html[dir="rtl"] .cube-preview-card{
-  left:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-left,0px))!important;
-  right:auto!important;
+  --ssc-preview-right-offset:calc(var(--mc-sidebar,320px) + var(--ssc-preview-safe-margin,18px));
 }
-html[dir="ltr"] .cube-preview-card{
-  right:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-right,0px))!important;
-  left:auto!important;
+html[dir="rtl"][data-focus-mode="on"] .cube-preview-card{
+  --ssc-preview-right-offset:var(--ssc-preview-safe-margin,18px);
 }
 
 /* The preview remains detached from the scramble navigation layout. */
@@ -124,6 +127,7 @@ html[data-theme="oled"] .cube-preview-card{
 @media(max-width:900px){
   .scramble-bar{grid-template-columns:36px minmax(0,1fr) 36px!important}
   .scramble-side{width:36px!important;min-width:36px!important}
+  html[dir="rtl"] .cube-preview-card{--ssc-preview-right-offset:var(--ssc-preview-safe-margin,18px)}
 }
 
 @media(max-width:560px){

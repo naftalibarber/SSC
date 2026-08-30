@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="./code/css/button-accent-overrides.css?v=20260824-4">
   <link rel="stylesheet" href="./code/css/layout-fix.css?v=20260825-logo-1">
   <link rel="stylesheet" href="./code/css/hebrew-ui-fixes.css?v=20260824-4">
-  <link rel="stylesheet" href="./code/css/minimal-competition.css?v=20260830-language-side-2">
-  <link data-ssc-cube-preview-style rel="stylesheet" href="./code/css/cube-preview.css?v=20260827-234-shared-dom">
+  <link rel="stylesheet" href="./code/css/minimal-competition.css?v=20260830-language-layout-3">
+  <link data-ssc-cube-preview-style rel="stylesheet" href="./code/css/cube-preview.css?v=20260830-language-layout-1">
   <link rel="stylesheet" href="./code/css/wca-previews.css?v=20260827-444-native-dom">
   <link rel="stylesheet" href="./code/css/ssc-preview-v1.css?v=20260830-integer-cells-234-1">
   <link rel="stylesheet" href="./code/css/puzzle-3d.css?v=20260824-3">
@@ -73,8 +73,8 @@
       <aside class="history-panel flat-panel">
         <section class="stats-section"><div class="section-title">STATISTICS</div><div id="statsGrid" class="stats-grid"></div></section>
         <section class="times-section"><div class="history-section-head"><span>TIMES</span><strong id="solveCount">0</strong></div><div id="emptyHistory" class="empty-history"></div><div id="historyList" class="history-list" hidden></div></section>
-        <button id="historySettingsButton" class="history-settings-link" type="button">הגדרות היסטוריה</button>
-        <div id="historySettings" class="history-settings" hidden><div class="settings-title"></div><div id="historyMetricOptions" class="metric-options"></div><div class="custom-ao-row"><label for="customAoInput">Ao</label><input id="customAoInput" type="number" min="3" max="100000"><button id="addCustomAo" class="small-btn" type="button">הוסף</button></div><button id="clearHistory" class="clear-history-flat" type="button">מחק היסטוריה</button></div>
+        <button id="historySettingsButton" class="history-settings-link" type="button" data-i18n="historySettings">הגדרות היסטוריה</button>
+        <div id="historySettings" class="history-settings" hidden><div class="settings-title" data-i18n="historySettingsTitle"></div><div id="historyMetricOptions" class="metric-options"></div><div class="custom-ao-row"><label for="customAoInput" data-i18n="customAo">Ao מותאם אישית</label><input id="customAoInput" type="number" min="3" max="100000"><button id="addCustomAo" class="small-btn" type="button" data-i18n="add">הוסף</button></div><button id="clearHistory" class="clear-history-flat" type="button" data-i18n="clearHistory">מחק היסטוריה</button></div>
       </aside>
       <section class="timer-card flat-timer"><div class="timer-wrap"><div><div id="timer">0.000</div><div id="status"></div><div class="quick-stats"><div><span>AO5</span><strong id="quickAo5">—</strong></div><div><span>AO12</span><strong id="quickAo12">—</strong></div></div></div></div><button id="touchTimer" class="btn" type="button"></button></section>
     </div>
@@ -116,7 +116,7 @@
   <script src="./code/js/scramble-generators.js?v=20260824-2"></script>
   <script src="./code/js/training-data.js?v=20260825-1"></script>
   <script src="./code/js/training.js?v=20260825-keyboard-shortcuts-1"></script>
-  <script src="./code/js/app.js?v=20260827-language-shortcut-1"></script>
+  <script src="./code/js/app.js?v=20260830-language-layout-2"></script>
   <script src="./code/js/scramble-history.js?v=20260825-quality-1"></script>
   <script src="./code/js/settings.js?v=20260830-preview-defaults-1"></script>
   <script src="./code/js/import-export.js?v=20260825-quality-1"></script>

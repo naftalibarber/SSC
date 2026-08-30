@@ -291,8 +291,13 @@
     const generalGrid=document.querySelector('.general-settings-grid');if(generalGrid&&!document.getElementById('keyboardShortcutsButton')){const row=document.createElement('div');row.className='general-setting-row';row.innerHTML='<span data-shortcuts-setting-label></span><button id="keyboardShortcutsButton" class="settings-inline-button" type="button">?</button>';generalGrid.appendChild(row);}
   }
 
+  function sessionDisplayName(session){
+    const name=String(session?.name||'');
+    if(session?.id==='session-1'&&(name===I18N.he.defaultSession||name===I18N.en.defaultSession))return t('defaultSession');
+    return name;
+  }
   function renderSessionSelect(){
-    els.sessionSelect.innerHTML='';sessions.forEach(session=>{const option=document.createElement('option');option.value=session.id;option.textContent=session.name;option.selected=session.id===currentSessionId;els.sessionSelect.appendChild(option);});
+    els.sessionSelect.innerHTML='';sessions.forEach(session=>{const option=document.createElement('option');option.value=session.id;option.textContent=sessionDisplayName(session);option.selected=session.id===currentSessionId;els.sessionSelect.appendChild(option);});
   }
   function sessionSummary(session){
     const history=sessionHistory(currentEvent,session.id);const stats=fixedStatsFor(history,`${historyRevision}:${currentEvent}:${session.id}`);return{count:history.length,mean:stats.mean,best:stats.bestSingle,last:session.updatedAt||session.createdAt};
@@ -302,7 +307,7 @@
   }
   function renderSessionMenu(){
     const menu=document.getElementById('sessionMenu');if(!menu)return;menu.innerHTML='';const head=document.createElement('div');head.className='session-menu-head';head.textContent=t('sessionMenu');menu.appendChild(head);
-    sessions.forEach(session=>{const summary=sessionSummary(session);const row=document.createElement('button');row.type='button';row.className=`session-menu-row${session.id===currentSessionId?' active':''}`;row.dataset.sessionId=session.id;row.innerHTML=`<strong></strong><span>${eventFor(currentEvent)?.label||currentEvent.toUpperCase()} · ${summary.count} ${t('solves')}</span><span>${t('mean')}: ${valueText(summary.mean)} · ${t('best')}: ${valueText(summary.best)}</span><small>${t('lastActivity')}: ${formatDate(summary.last)}</small>`;row.querySelector('strong').textContent=session.name;row.addEventListener('click',()=>{switchSession(session.id);menu.hidden=true;});menu.appendChild(row);});
+    sessions.forEach(session=>{const summary=sessionSummary(session);const row=document.createElement('button');row.type='button';row.className=`session-menu-row${session.id===currentSessionId?' active':''}`;row.dataset.sessionId=session.id;row.innerHTML=`<strong></strong><span>${eventFor(currentEvent)?.label||currentEvent.toUpperCase()} · ${summary.count} ${t('solves')}</span><span>${t('mean')}: ${valueText(summary.mean)} · ${t('best')}: ${valueText(summary.best)}</span><small>${t('lastActivity')}: ${formatDate(summary.last)}</small>`;row.querySelector('strong').textContent=sessionDisplayName(session);row.addEventListener('click',()=>{switchSession(session.id);menu.hidden=true;});menu.appendChild(row);});
     const actions=document.createElement('div');actions.className='session-menu-actions';actions.innerHTML='<button type="button" data-session-new></button><button type="button" data-session-rename></button><button type="button" data-session-delete></button>';actions.querySelector('[data-session-new]').textContent=`+ ${t('addSession')}`;actions.querySelector('[data-session-rename]').textContent=t('renameSession');actions.querySelector('[data-session-delete]').textContent=t('deleteSession');actions.querySelector('[data-session-new]').addEventListener('click',()=>document.getElementById('addSession').click());actions.querySelector('[data-session-rename]').addEventListener('click',()=>{renameCurrentSession();menu.hidden=true;});actions.querySelector('[data-session-delete]').addEventListener('click',()=>{deleteCurrentSession();menu.hidden=true;});menu.appendChild(actions);
   }
 
