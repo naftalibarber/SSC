@@ -172,6 +172,23 @@
     return pixelPerfectCubeGeometry(3,boxWidth,boxHeight,devicePixelRatio);
   }
 
+  function centerPixelPerfectGeometry(geometry){
+    if(!geometry||![
+      geometry.availableWidth,geometry.availableHeight,geometry.width,geometry.height
+    ].every(Number.isInteger))throw new TypeError('Pixel-perfect centering requires integer device-pixel geometry.');
+    const remainingWidth=Math.max(0,geometry.availableWidth-geometry.width);
+    const remainingHeight=Math.max(0,geometry.availableHeight-geometry.height);
+    const widthCorrection=remainingWidth%2;
+    const heightCorrection=remainingHeight%2;
+    const availableWidth=geometry.availableWidth-widthCorrection;
+    const availableHeight=geometry.availableHeight-heightCorrection;
+    return Object.freeze({
+      widthCorrection,heightCorrection,availableWidth,availableHeight,
+      offsetX:(availableWidth-geometry.width)/2,
+      offsetY:(availableHeight-geometry.height)/2
+    });
+  }
+
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
     const [faceX,faceY]=faceOrigin(face,geometry);
     const group=svgElement('g',{
@@ -334,6 +351,7 @@
     geometryFor,
     pixelPerfectCubeGeometry,
     pixelPerfect3x3Geometry,
+    centerPixelPerfectGeometry,
     fitPixelPerfectCubeToBox,
     fitThreeByThreeToBox,
     render,

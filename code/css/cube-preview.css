@@ -4,6 +4,8 @@
 .cube-preview-card{
   --ssc-preview-padding:6px;
   --ssc-preview-badge-space:0px;
+  --ssc-preview-card-width-correction:0px;
+  --ssc-preview-card-height-correction:0px;
   position:fixed!important;
   bottom:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-bottom,0px))!important;
   right:calc(var(--ssc-preview-safe-margin,18px) + env(safe-area-inset-right,0px))!important;
@@ -11,10 +13,10 @@
   z-index:80!important;
   isolation:isolate!important;
   box-sizing:border-box!important;
-  width:var(--ssc-preview-card-width,174px)!important;
-  min-width:var(--ssc-preview-card-width,174px)!important;
-  height:var(--ssc-preview-card-height,132px)!important;
-  min-height:var(--ssc-preview-card-height,132px)!important;
+  width:calc(var(--ssc-preview-card-width,174px) - var(--ssc-preview-card-width-correction))!important;
+  min-width:calc(var(--ssc-preview-card-width,174px) - var(--ssc-preview-card-width-correction))!important;
+  height:calc(var(--ssc-preview-card-height,132px) - var(--ssc-preview-card-height-correction))!important;
+  min-height:calc(var(--ssc-preview-card-height,132px) - var(--ssc-preview-card-height-correction))!important;
   max-width:calc(100vw - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
   max-height:calc(100vh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
   max-height:calc(100dvh - var(--ssc-preview-safe-margin,18px) - var(--ssc-preview-safe-margin,18px))!important;
@@ -27,7 +29,7 @@
   background:#fff!important;
   box-shadow:none!important;
   contain:layout paint style;
-  transition:width .14s ease,height .14s ease,border-color .18s ease!important;
+  transition:border-color .18s ease!important;
 }
 
 /* Preview placement follows the selected interface language explicitly:

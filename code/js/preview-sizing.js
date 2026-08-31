@@ -90,8 +90,49 @@
 
   function readCardContentBox(container){
     const style=getComputedStyle(container);
-    const left=parseFloat(style.paddingLeft)||0,right=parseFloat(style.paddingRight)||0,top=parseFloat(style.paddingTop)||0,bottom=parseFloat(style.paddingBottom)||0;
-    return{width:Math.max(1,container.clientWidth-left-right),height:Math.max(1,container.clientHeight-top-bottom)};
+    const rect=container.getBoundingClientRect();
+    const left=(parseFloat(style.borderLeftWidth)||0)+(parseFloat(style.paddingLeft)||0);
+    const right=(parseFloat(style.borderRightWidth)||0)+(parseFloat(style.paddingRight)||0);
+    const top=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.paddingTop)||0);
+    const bottom=(parseFloat(style.borderBottomWidth)||0)+(parseFloat(style.paddingBottom)||0);
+    return{width:Math.max(1,rect.width-left-right),height:Math.max(1,rect.height-top-bottom)};
+  }
+
+  function clearPixelPerfectCardCorrection(container){
+    container.style.setProperty('--ssc-preview-card-width-correction','0px');
+    container.style.setProperty('--ssc-preview-card-height-correction','0px');
+    delete container.dataset.previewCardWidthCorrectionDevicePixels;
+    delete container.dataset.previewCardHeightCorrectionDevicePixels;
+  }
+
+  function applyPixelPerfectCardCorrection(container,geometry,dpr){
+    const centering=window.SSCSvgCubeRenderer?.centerPixelPerfectGeometry?.(geometry);
+    if(!centering)return{centering:null,box:readCardContentBox(container)};
+    container.style.setProperty('--ssc-preview-card-width-correction',`${centering.widthCorrection/dpr}px`);
+    container.style.setProperty('--ssc-preview-card-height-correction',`${centering.heightCorrection/dpr}px`);
+    container.dataset.previewCardWidthCorrectionDevicePixels=String(centering.widthCorrection);
+    container.dataset.previewCardHeightCorrectionDevicePixels=String(centering.heightCorrection);
+    return{centering,box:readCardContentBox(container)};
+  }
+
+  function domCubeGeometry(net,box,actualScale,dpr){
+    const n=Math.max(2,Number(net.dataset.cubeOrder)||3);
+    const availableWidth=Math.max(1,Math.floor(box.width*dpr));
+    const availableHeight=Math.max(1,Math.floor(box.height*dpr));
+    const netGap=Math.max(1,Math.round(BASE_NET_GAP*actualScale*dpr));
+    const separator=Math.max(1,Math.round(dpr));
+    const padding=separator;
+    const fixed=(padding*2)+(separator*(n-1));
+    const maximumFace=Math.max(fixed+n,Math.floor(Math.min(
+      (availableWidth-(netGap*3))/4,
+      (availableHeight-(netGap*2))/3
+    )));
+    const sticker=Math.max(1,Math.floor((maximumFace-fixed)/n));
+    const face=(sticker*n)+fixed;
+    return Object.freeze({
+      n,dpr,availableWidth,availableHeight,sticker,separator,padding,face,netGap,
+      width:(face*4)+(netGap*3),height:(face*3)+(netGap*2)
+    });
   }
 
   function debugDomGeometry(net,n,dpr){
@@ -118,25 +159,23 @@
     });
   }
 
-  function fitDomCube(net,box,actualScale){
-    const n=Math.max(2,Number(net.dataset.cubeOrder)||3);
-    const dpr=Math.max(1,Number(window.devicePixelRatio)||1);
-    const requestedNetGap=Math.max(.5,BASE_NET_GAP*actualScale);
-    const netGapDevice=Math.max(1,Math.round(requestedNetGap*dpr));
-    const netGap=netGapDevice/dpr;
-    const maxFace=Math.max(1,Math.min((box.width-netGap*3)/4,(box.height-netGap*2)/3));
-
-    const separatorDevice=Math.max(1,Math.round(dpr));
-    const paddingDevice=separatorDevice;
-    const fixedDevice=(paddingDevice*2)+(separatorDevice*(n-1));
-    const maxFaceDevice=Math.max(fixedDevice+n,Math.floor(maxFace*dpr));
-    const stickerDevice=Math.max(1,Math.floor((maxFaceDevice-fixedDevice)/n));
-    const faceDevice=(stickerDevice*n)+fixedDevice;
-
-    const sticker=stickerDevice/dpr,separator=separatorDevice/dpr,padding=paddingDevice/dpr,face=faceDevice/dpr;
+  function fitDomCube(container,net,box,actualScale,dpr){
+    const geometry=domCubeGeometry(net,box,actualScale,dpr);
+    const {box:correctedBox}=applyPixelPerfectCardCorrection(container,geometry,dpr);
+    const n=geometry.n;
+    const sticker=geometry.sticker/dpr,separator=geometry.separator/dpr,padding=geometry.padding/dpr;
+    const face=geometry.face/dpr,netGap=geometry.netGap/dpr;
+    const width=geometry.width/dpr,height=geometry.height/dpr;
     net.style.setProperty('--ssc-preview-face',`${face}px`);
     net.style.setProperty('--ssc-preview-net-gap',`${netGap}px`);
     net.style.setProperty('--ssc-preview-detail-scale',String(actualScale));
+    net.style.setProperty('width',`${width}px`,'important');
+    net.style.setProperty('height',`${height}px`,'important');
+    net.style.setProperty('margin','0','important');
+    net.style.setProperty('margin-left',`${Math.max(0,(correctedBox.width-width)/2)}px`,'important');
+    net.style.setProperty('margin-top',`${Math.max(0,(correctedBox.height-height)/2)}px`,'important');
+    net.style.setProperty('justify-self','left','important');
+    net.style.setProperty('align-self','start','important');
 
     net.querySelectorAll(':scope > .ssc-preview-dom-face').forEach(faceEl=>{
       faceEl.style.setProperty('width',`${face}px`,'important');
@@ -159,12 +198,18 @@
       });
     });
 
+    net.dataset.previewNetDeviceWidth=String(geometry.width);
+    net.dataset.previewNetDeviceHeight=String(geometry.height);
+    net.dataset.previewStickerDevicePixels=String(geometry.sticker);
+    net.dataset.previewSeparatorDevicePixels=String(geometry.separator);
     debugDomGeometry(net,n,dpr);
     return true;
   }
 
   function fitNativeCube(container){
+    clearPixelPerfectCardCorrection(container);
     const box=readCardContentBox(container),actualScale=computeLayout().actualScale;
+    const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
     const pixelPerfectSvg=container.querySelector([
       ':scope > .ssc-native-preview-svg[data-cube-order="2"]',
       ':scope > .ssc-native-preview-svg[data-cube-order="3"]',
@@ -174,31 +219,34 @@
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]'
     ].join(','));
     if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
-      const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
       const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(pixelPerfectSvg,box.width,box.height,dpr);
       if(geometry){
-        const offsetX=Math.max(0,Math.floor((geometry.availableWidth-geometry.width)/2));
-        const offsetY=Math.max(0,Math.floor((geometry.availableHeight-geometry.height)/2));
-        pixelPerfectSvg.style.width=`${geometry.width/dpr}px`;
-        pixelPerfectSvg.style.height=`${geometry.height/dpr}px`;
+        const {centering,box:correctedBox}=applyPixelPerfectCardCorrection(container,geometry,dpr);
+        const width=geometry.width/dpr,height=geometry.height/dpr;
+        const offsetX=Math.max(0,(correctedBox.width-width)/2);
+        const offsetY=Math.max(0,(correctedBox.height-height)/2);
+        pixelPerfectSvg.style.width=`${width}px`;
+        pixelPerfectSvg.style.height=`${height}px`;
         pixelPerfectSvg.style.maxWidth='none';
         pixelPerfectSvg.style.maxHeight='none';
         pixelPerfectSvg.style.margin='0';
-        pixelPerfectSvg.style.marginLeft=`${offsetX/dpr}px`;
-        pixelPerfectSvg.style.marginTop=`${offsetY/dpr}px`;
+        pixelPerfectSvg.style.marginLeft=`${offsetX}px`;
+        pixelPerfectSvg.style.marginTop=`${offsetY}px`;
         pixelPerfectSvg.style.justifySelf='left';
         pixelPerfectSvg.style.alignSelf='start';
         pixelPerfectSvg.style.display='block';
         pixelPerfectSvg.style.overflow='hidden';
         container.dataset.previewStickerDevicePixels=String(geometry.stickerSize);
         container.dataset.previewSeparatorDevicePixels=String(geometry.stickerGap);
+        container.dataset.previewCenteredDeviceWidth=String(centering?.availableWidth??geometry.availableWidth);
+        container.dataset.previewCenteredDeviceHeight=String(centering?.availableHeight??geometry.availableHeight);
         return true;
       }
     }
 
     const net=container.querySelector(':scope > .cube-preview-net, :scope > .ssc-preview-content > .cube-preview-net');
     if(!net)return false;
-    if(net.classList.contains('ssc-preview-dom-net'))return fitDomCube(net,box,actualScale);
+    if(net.classList.contains('ssc-preview-dom-net'))return fitDomCube(container,net,box,actualScale,dpr);
     const gap=Math.max(.5,BASE_NET_GAP*actualScale);
     const face=Math.max(1,Math.min((box.width-gap*3)/4,(box.height-gap*2)/3));
     net.style.setProperty('--ssc-preview-face',`${face.toFixed(3)}px`);
