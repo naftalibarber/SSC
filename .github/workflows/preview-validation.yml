@@ -16,11 +16,13 @@ on:
       - 'code/js/scramble-generators.js'
       - 'code/js/scramble2x2.js'
       - 'code/js/app.js'
+      - 'code/js/advanced-features.js'
       - 'code/js/settings.js'
       - 'code/js/training.js'
       - 'code/js/scramble-history.js'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
+      - 'tests/ui-*.mjs'
       - '.github/workflows/preview-validation.yml'
   pull_request:
     paths:
@@ -36,11 +38,13 @@ on:
       - 'code/js/scramble-generators.js'
       - 'code/js/scramble2x2.js'
       - 'code/js/app.js'
+      - 'code/js/advanced-features.js'
       - 'code/js/settings.js'
       - 'code/js/training.js'
       - 'code/js/scramble-history.js'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
+      - 'tests/ui-*.mjs'
       - '.github/workflows/preview-validation.yml'
 
 jobs:
@@ -72,3 +76,5 @@ jobs:
         run: node tests/preview-line-width.mjs
       - name: Validate production integration and fallback
         run: node tests/preview-integration.mjs
+      - name: Validate toolbar icons and labels
+        run: node tests/ui-icons.mjs

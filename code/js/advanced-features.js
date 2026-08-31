@@ -12,6 +12,7 @@
   let selectedSolveId=null;
   let analyticsFilter='50';
   let selectedTags=[];
+  let languageObserver=null;
 
   const isHebrew=()=>localStorage.getItem(LANGUAGE_KEY)!=='en';
   const txt=(he,en)=>isHebrew()?he:en;
@@ -78,9 +79,18 @@
     return out.slice(0,3);
   }
 
+  function updateAnalyticsButtonLanguage(){
+    const button=document.getElementById('analyticsButton');if(!button)return;
+    const label=txt('ניתוח התקדמות','Progress Analytics');
+    button.title=label;button.setAttribute('aria-label',label);
+    const text=button.querySelector('span');if(text)text.textContent=isHebrew()?'ניתוח':'ANALYTICS';
+  }
+
   function ensureUi(){
     if(!document.getElementById('sscAdvancedFeaturesStyle')){const link=document.createElement('link');link.id='sscAdvancedFeaturesStyle';link.rel='stylesheet';link.href='./code/css/advanced-features.css?v=20260825-1';document.head.appendChild(link);}
-    const toolbar=document.querySelector('.topbar-start');if(toolbar&&!document.getElementById('analyticsButton')){const b=document.createElement('button');b.id='analyticsButton';b.className='toolbar-button';b.type='button';b.innerHTML='<span>ANALYTICS</span>';toolbar.appendChild(b);b.addEventListener('click',openAnalytics);}
+    const toolbar=document.querySelector('.topbar-start');if(toolbar&&!document.getElementById('analyticsButton')){const b=document.createElement('button');b.id='analyticsButton';b.className='toolbar-button';b.type='button';b.innerHTML='<svg data-toolbar-icon="progress-chart" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3 17 6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg><span>ANALYTICS</span>';toolbar.appendChild(b);b.addEventListener('click',openAnalytics);}
+    updateAnalyticsButtonLanguage();
+    if(!languageObserver){languageObserver=new MutationObserver(updateAnalyticsButtonLanguage);languageObserver.observe(document.documentElement,{attributes:true,attributeFilter:['lang']});}
     if(!document.getElementById('analyticsModal')){const modal=document.createElement('div');modal.id='analyticsModal';modal.className='settings-modal analytics-modal';modal.hidden=true;modal.innerHTML=`<div class="settings-backdrop" data-analytics-close></div><section class="settings-dialog analytics-dialog"><div class="settings-dialog-head"><h2 data-analytics-title></h2><button class="modal-close" data-analytics-close type="button">×</button></div><div class="analytics-toolbar"><div class="analytics-ranges"><button data-range="25">25</button><button data-range="50">50</button><button data-range="100">100</button><button data-range="all">All</button></div><select id="analyticsTagFilter" multiple aria-label="Tag filter"></select></div><div id="analyticsGraph" class="analytics-graph"></div><div id="analyticsMetrics" class="analytics-metrics"></div><div id="sessionSummaryCard" class="session-summary-card"></div><div id="analyticsInsights" class="analytics-insights"></div></section>`;document.body.appendChild(modal);modal.querySelectorAll('[data-analytics-close]').forEach(el=>el.addEventListener('click',()=>modal.hidden=true));modal.querySelectorAll('[data-range]').forEach(btn=>btn.addEventListener('click',()=>{analyticsFilter=btn.dataset.range;renderAnalytics();}));modal.querySelector('#analyticsTagFilter').addEventListener('change',e=>{selectedTags=[...e.target.selectedOptions].map(o=>o.value);renderAnalytics();});}
     enhanceSolveDetails();
     window.addEventListener('ssc-event-change',()=>{if(!document.getElementById('analyticsModal')?.hidden)renderAnalytics();});
