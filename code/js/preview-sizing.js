@@ -9,6 +9,10 @@
   const BASE_CARD_WIDTH=116;
   const BASE_CARD_HEIGHT=88;
   const BASE_NET_GAP=6;
+  const GENERAL_SETTINGS_KEY='sscGeneralSettingsV1';
+  const DEFAULT_CUBE_LINE_WIDTH=1;
+  const MIN_CUBE_LINE_WIDTH=1;
+  const MAX_CUBE_LINE_WIDTH=4;
   const DEBUG_GEOMETRY=false;
   const FIT_PROFILES=Object.freeze({
     cube:{desktop:6,mobile:4},
@@ -95,7 +99,49 @@
     const right=(parseFloat(style.borderRightWidth)||0)+(parseFloat(style.paddingRight)||0);
     const top=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.paddingTop)||0);
     const bottom=(parseFloat(style.borderBottomWidth)||0)+(parseFloat(style.paddingBottom)||0);
-    return{width:Math.max(1,rect.width-left-right),height:Math.max(1,rect.height-top-bottom)};
+    const width=Math.max(1,rect.width-left-right),height=Math.max(1,rect.height-top-bottom);
+    return{
+      left:rect.left+left,
+      top:rect.top+top,
+      right:rect.left+left+width,
+      bottom:rect.top+top+height,
+      width,height
+    };
+  }
+
+  function clampCubeLineWidth(value){
+    const width=Number(value);
+    if(!Number.isFinite(width))return DEFAULT_CUBE_LINE_WIDTH;
+    return Math.min(MAX_CUBE_LINE_WIDTH,Math.max(MIN_CUBE_LINE_WIDTH,Math.round(width)));
+  }
+
+  function getCubeLineWidth(){
+    const root=document.documentElement;
+    const inline=root.style.getPropertyValue('--ssc-cube-line-width');
+    const computed=inline||getComputedStyle(root).getPropertyValue('--ssc-cube-line-width');
+    if(computed.trim()!=='')return clampCubeLineWidth(parseFloat(computed));
+    try{
+      const saved=JSON.parse(localStorage.getItem(GENERAL_SETTINGS_KEY));
+      return clampCubeLineWidth(saved?.cubeLineWidth);
+    }catch{
+      return DEFAULT_CUBE_LINE_WIDTH;
+    }
+  }
+
+  function snapPixelPerfectPlacement(box,geometry,dpr=geometry?.dpr||1){
+    const ratio=Math.max(.25,Number(dpr)||1);
+    const cssWidth=geometry.width/ratio,cssHeight=geometry.height/ratio;
+    const targetLeft=box.left+((box.width-cssWidth)/2);
+    const targetTop=box.top+((box.height-cssHeight)/2);
+    const snappedLeft=Math.round(targetLeft*ratio)/ratio;
+    const snappedTop=Math.round(targetTop*ratio)/ratio;
+    return Object.freeze({
+      cssWidth,cssHeight,targetLeft,targetTop,snappedLeft,snappedTop,
+      offsetX:snappedLeft-box.left,
+      offsetY:snappedTop-box.top,
+      centerErrorXDevicePixels:(snappedLeft-targetLeft)*ratio,
+      centerErrorYDevicePixels:(snappedTop-targetTop)*ratio
+    });
   }
 
   function clearPixelPerfectCardCorrection(container){
@@ -108,10 +154,13 @@
   function applyPixelPerfectCardCorrection(container,geometry,dpr){
     const centering=window.SSCSvgCubeRenderer?.centerPixelPerfectGeometry?.(geometry);
     if(!centering)return{centering:null,box:readCardContentBox(container)};
-    container.style.setProperty('--ssc-preview-card-width-correction',`${centering.widthCorrection/dpr}px`);
-    container.style.setProperty('--ssc-preview-card-height-correction',`${centering.heightCorrection/dpr}px`);
-    container.dataset.previewCardWidthCorrectionDevicePixels=String(centering.widthCorrection);
-    container.dataset.previewCardHeightCorrectionDevicePixels=String(centering.heightCorrection);
+    const box=readCardContentBox(container);
+    const widthCorrection=Math.max(0,box.width-(centering.availableWidth/dpr));
+    const heightCorrection=Math.max(0,box.height-(centering.availableHeight/dpr));
+    container.style.setProperty('--ssc-preview-card-width-correction',`${widthCorrection}px`);
+    container.style.setProperty('--ssc-preview-card-height-correction',`${heightCorrection}px`);
+    container.dataset.previewCardWidthCorrectionDevicePixels=String(widthCorrection*dpr);
+    container.dataset.previewCardHeightCorrectionDevicePixels=String(heightCorrection*dpr);
     return{centering,box:readCardContentBox(container)};
   }
 
@@ -211,6 +260,7 @@
     clearPixelPerfectCardCorrection(container);
     const box=readCardContentBox(container),actualScale=computeLayout().actualScale;
     const dpr=Math.max(.25,Number(window.devicePixelRatio)||1);
+    const selectedLineWidth=getCubeLineWidth();
     const pixelPerfectSvg=container.querySelector([
       ':scope > .ssc-native-preview-svg[data-cube-order="2"]',
       ':scope > .ssc-native-preview-svg[data-cube-order="3"]',
@@ -220,27 +270,34 @@
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]'
     ].join(','));
     if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
-      const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(pixelPerfectSvg,box.width,box.height,dpr);
+      const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(
+        pixelPerfectSvg,box.width,box.height,dpr,selectedLineWidth
+      );
       if(geometry){
         const {centering,box:correctedBox}=applyPixelPerfectCardCorrection(container,geometry,dpr);
-        const width=geometry.width/dpr,height=geometry.height/dpr;
-        const offsetX=Math.max(0,(correctedBox.width-width)/2);
-        const offsetY=Math.max(0,(correctedBox.height-height)/2);
-        pixelPerfectSvg.style.width=`${width}px`;
-        pixelPerfectSvg.style.height=`${height}px`;
+        const placement=snapPixelPerfectPlacement(correctedBox,geometry,dpr);
+        pixelPerfectSvg.style.width=`${placement.cssWidth}px`;
+        pixelPerfectSvg.style.height=`${placement.cssHeight}px`;
         pixelPerfectSvg.style.maxWidth='none';
         pixelPerfectSvg.style.maxHeight='none';
         pixelPerfectSvg.style.margin='0';
-        pixelPerfectSvg.style.marginLeft=`${offsetX}px`;
-        pixelPerfectSvg.style.marginTop=`${offsetY}px`;
+        pixelPerfectSvg.style.marginLeft=`${placement.offsetX}px`;
+        pixelPerfectSvg.style.marginTop=`${placement.offsetY}px`;
         pixelPerfectSvg.style.justifySelf='left';
         pixelPerfectSvg.style.alignSelf='start';
         pixelPerfectSvg.style.display='block';
         pixelPerfectSvg.style.overflow='hidden';
+        pixelPerfectSvg.style.removeProperty('transform');
         container.dataset.previewStickerDevicePixels=String(geometry.stickerSize);
-        container.dataset.previewSeparatorDevicePixels=String(geometry.stickerGap);
+        container.dataset.previewSeparatorDevicePixels=String(geometry.lineWidth);
+        container.dataset.previewLineDevicePixels=String(geometry.lineWidth);
+        container.dataset.previewSelectedLineWidth=String(geometry.selectedLineWidth);
         container.dataset.previewCenteredDeviceWidth=String(centering?.availableWidth??geometry.availableWidth);
         container.dataset.previewCenteredDeviceHeight=String(centering?.availableHeight??geometry.availableHeight);
+        container.dataset.previewSnappedLeft=String(placement.snappedLeft);
+        container.dataset.previewSnappedTop=String(placement.snappedTop);
+        container.dataset.previewCenterErrorXDevicePixels=String(placement.centerErrorXDevicePixels);
+        container.dataset.previewCenterErrorYDevicePixels=String(placement.centerErrorYDevicePixels);
         return true;
       }
     }
@@ -334,7 +391,11 @@
   window.addEventListener('orientationchange',handleViewportChange,{passive:true});
   window.visualViewport?.addEventListener('resize',handleViewportChange,{passive:true});
 
-  window.SSCPreviewSizing=Object.freeze({STORAGE_KEY,MIN_SIZE,MAX_SIZE,STEP,DEFAULT_SIZE,BASE_CARD_WIDTH,BASE_CARD_HEIGHT,FIT_PROFILES,clampSize,getPreviewSize,setPreviewSize,applyPreviewSize,fitPreviewToContainer,scheduleFit,observe});
+  window.SSCPreviewSizing=Object.freeze({
+    STORAGE_KEY,MIN_SIZE,MAX_SIZE,STEP,DEFAULT_SIZE,BASE_CARD_WIDTH,BASE_CARD_HEIGHT,FIT_PROFILES,
+    clampSize,getPreviewSize,setPreviewSize,clampCubeLineWidth,getCubeLineWidth,
+    snapPixelPerfectPlacement,applyPreviewSize,fitPreviewToContainer,scheduleFit,observe
+  });
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',applyPreviewSize,{once:true});
   else applyPreviewSize();
