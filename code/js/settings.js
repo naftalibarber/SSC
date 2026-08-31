@@ -8,7 +8,11 @@
   const PREVIEW_MAX=500;
   const PREVIEW_STEP=5;
   const PREVIEW_DEFAULT=200;
-  const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb',competitionMode:false,competitionInspection:true};
+  const CUBE_LINE_WIDTH_MIN=1;
+  const CUBE_LINE_WIDTH_MAX=4;
+  const CUBE_LINE_WIDTH_STEP=1;
+  const CUBE_LINE_WIDTH_DEFAULT=1;
+  const defaults={textSize:100,font:'Rubik',timerFont:'Orbitron',timePrecision:3,theme:'light',primaryColor:'#2563eb',cubeLineWidth:CUBE_LINE_WIDTH_DEFAULT,competitionMode:false,competitionInspection:true};
 
   const modal=document.getElementById('generalSettingsModal');
   const openButton=document.getElementById('generalSettingsButton');
@@ -113,6 +117,37 @@
     applyPreviewSize();
   }
 
+  function clampCubeLineWidth(value){
+    const width=Number(value);
+    if(!Number.isFinite(width))return CUBE_LINE_WIDTH_DEFAULT;
+    return Math.min(CUBE_LINE_WIDTH_MAX,Math.max(CUBE_LINE_WIDTH_MIN,Math.round(width)));
+  }
+
+  function syncCubeLineWidthControl(){
+    settings.cubeLineWidth=clampCubeLineWidth(settings.cubeLineWidth);
+    const range=document.getElementById('cubeLineWidthRange');
+    const output=document.getElementById('cubeLineWidthValue');
+    if(range)range.value=String(settings.cubeLineWidth);
+    if(output)output.textContent=`${settings.cubeLineWidth} px`;
+  }
+
+  function initCubeLineWidthControl(){
+    if(document.getElementById('cubeLineWidthRange'))return;
+    const cubeColors=document.getElementById('cubeColorsSettingLabel')?.parentElement;
+    if(!cubeColors)return;
+    const row=document.createElement('label');
+    row.className='general-setting-row';
+    row.innerHTML=`<span id="cubeLineWidthSettingLabel">עובי קווי הקובייה</span><div class="range-control"><input id="cubeLineWidthRange" type="range" min="${CUBE_LINE_WIDTH_MIN}" max="${CUBE_LINE_WIDTH_MAX}" step="${CUBE_LINE_WIDTH_STEP}" value="${CUBE_LINE_WIDTH_DEFAULT}"><output id="cubeLineWidthValue">${CUBE_LINE_WIDTH_DEFAULT} px</output></div>`;
+    cubeColors.parentElement.insertBefore(row,cubeColors);
+    const range=row.querySelector('#cubeLineWidthRange');
+    range.addEventListener('input',()=>{
+      settings.cubeLineWidth=clampCubeLineWidth(range.value);
+      saveSettings();
+      applyAppearance();
+    });
+    syncCubeLineWidthControl();
+  }
+
   function initCompetitionControls(){
     if(document.getElementById('competitionModeToggle')){
       competitionModeToggle=document.getElementById('competitionModeToggle');
@@ -158,6 +193,7 @@
       if(!FONT_OPTIONS.some(([value])=>value===merged.font))merged.font=defaults.font;
       if(!TIMER_FONT_OPTIONS.some(([value])=>value===merged.timerFont))merged.timerFont=defaults.timerFont;
       if(![2,3].includes(Number(merged.timePrecision)))merged.timePrecision=3;
+      merged.cubeLineWidth=clampCubeLineWidth(merged.cubeLineWidth);
       merged.competitionMode=Boolean(merged.competitionMode);
       merged.competitionInspection=merged.competitionInspection!==false;
       return merged;
@@ -211,6 +247,7 @@
     document.documentElement.style.setProperty('--app-font',fontStack(settings.font));
     document.documentElement.style.setProperty('--timer-font',timerFontStack(settings.timerFont));
     document.documentElement.style.setProperty('--accent',settings.primaryColor);
+    document.documentElement.style.setProperty('--ssc-cube-line-width',String(clampCubeLineWidth(settings.cubeLineWidth)));
     themeButtons.forEach(button=>button.classList.toggle('active',button.dataset.themeChoice===theme));
     if(textSizeRange)textSizeRange.value=String(settings.textSize||100);
     if(textSizeValue)textSizeValue.textContent=`${settings.textSize||100}%`;
@@ -221,6 +258,7 @@
     if(primaryColorValue)primaryColorValue.textContent=settings.primaryColor.toUpperCase();
     syncCompetitionControls();
     syncCubeColors();
+    syncCubeLineWidthControl();
     applyPreviewSize();
   }
 
@@ -239,6 +277,7 @@
     set('competitionInspectionSettingLabel','Competition inspection','בדיקת תחרות');
     set('primaryColorSettingLabel','Primary color','צבע ראשי');
     set('cubePreviewSizeSettingLabel','Preview size','גודל התצוגה');
+    set('cubeLineWidthSettingLabel','Cube line thickness','עובי קווי הקובייה');
     set('cubeColorsSettingLabel','Cube colors','צבעי הקובייה');
     set('cubeWhiteLabel','White','לבן');
     set('cubeYellowLabel','Yellow','צהוב');
@@ -277,6 +316,7 @@
 
   injectMobileSettingsFix();
   initPreviewSizeControl();
+  initCubeLineWidthControl();
   initCompetitionControls();
   repairSelectors();
 
