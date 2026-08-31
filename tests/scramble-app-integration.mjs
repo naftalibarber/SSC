@@ -128,6 +128,72 @@ for(const eventId of events){
 }
 assert.ok(allHistory.length>=events.length,'Not all NxN integration solves were saved.');
 
+const historyKey='rubiksCubeTimerHistoryV1';
+const base777=allHistory.find(item=>item.eventId==='777');
+assert.ok(base777,'The full-history regression needs a 7x7 solve in the active session.');
+const unrelatedHistory=allHistory.filter(item=>item.eventId!=='777'||item.sessionId!==base777.sessionId);
+function installActiveSessionSolves(count){
+  const baseTime=Date.parse(base777.createdAt)||Date.now();
+  const solves=Array.from({length:count},(_,index)=>({
+    ...base777,
+    id:`full-history-${index+1}`,
+    rawTimeMs:12000+(index*137),
+    timeMs:12000+(index*137),
+    rawTime:Number(((12000+(index*137))/1000).toFixed(3)),
+    finalTimeMs:12000+(index*137),
+    finalTime:Number(((12000+(index*137))/1000).toFixed(3)),
+    penalty:'OK',
+    scramble:`${base777.scramble} ${index+1}`,
+    createdAt:new Date(baseTime-(index*60000)).toISOString(),
+    date:new Date(baseTime-(index*60000)).toISOString()
+  }));
+  const next=[...solves,...unrelatedHistory];
+  window.localStorage.setItem(historyKey,JSON.stringify(next));
+  window.dispatchEvent(new window.StorageEvent('storage',{key:historyKey,newValue:JSON.stringify(next)}));
+  return solves;
+}
+
+installActiveSessionSolves(11);
+const compactHistory=window.document.getElementById('historyList');
+const fullHistoryNotice=window.document.getElementById('fullHistoryNotice');
+const fullHistoryButton=window.document.getElementById('fullHistoryButton');
+const fullHistoryModal=window.document.getElementById('fullHistoryModal');
+assert.equal(compactHistory.children.length,11,'The compact list must show every solve below its twelve-row limit.');
+assert.equal(fullHistoryNotice.hidden,true,'The full-history notice must stay hidden below twelve solves.');
+
+installActiveSessionSolves(12);
+assert.equal(compactHistory.children.length,12,'The compact list must show exactly twelve rows at the limit.');
+assert.equal(fullHistoryNotice.hidden,false,'The full-history notice must appear at twelve solves.');
+assert.equal(fullHistoryButton.getAttribute('aria-haspopup'),'dialog','The full-history control must identify its dialog behavior.');
+assert.equal(fullHistoryButton.getAttribute('aria-controls'),'fullHistoryModal','The full-history control must identify the dialog it opens.');
+fullHistoryButton.click();
+assert.equal(fullHistoryModal.hidden,false,'The full-history button did not open its dialog.');
+assert.equal(fullHistoryModal.querySelector('[data-full-history-title]').textContent,'כל הפתרונות','The full-history dialog did not use the active Hebrew language.');
+assert.equal(fullHistoryModal.querySelectorAll('.full-history-row').length,12,'The full-history dialog did not render all twelve solves.');
+
+const fifteenSolves=installActiveSessionSolves(15);
+const fullRows=Array.from(fullHistoryModal.querySelectorAll('.full-history-row'));
+assert.equal(compactHistory.children.length,12,'The compact list must remain limited to twelve rows.');
+assert.equal(fullRows.length,15,'The full-history dialog must render every solve in the active session.');
+assert.equal(new Set(fullRows.map(row=>row.dataset.solveId)).size,15,'Every full-history row must retain its unique solve id.');
+assert.match(fullHistoryModal.querySelector('[data-full-history-count]').textContent,/15/,'The full-history dialog count was not updated live.');
+
+const oldestId=fifteenSolves.at(-1).id;
+fullHistoryModal.querySelector(`[data-solve-id="${oldestId}"] [data-penalty="+2"]`).click();
+assert.equal(history().find(item=>item.id===oldestId)?.penalty,'+2','Penalty editing from the full-history dialog was not persisted.');
+assert.equal(fullHistoryModal.querySelectorAll('.full-history-row').length,15,'Editing a solve must not close or truncate full history.');
+
+window.document.getElementById('languageToggle').click();
+assert.equal(window.document.documentElement.lang,'en','The language toggle did not switch to English.');
+assert.equal(fullHistoryButton.textContent,'View all solves','The full-history button did not update to English.');
+assert.equal(fullHistoryModal.querySelector('[data-full-history-title]').textContent,'All solves','The open full-history dialog did not update to English.');
+window.document.getElementById('languageToggle').click();
+assert.equal(window.document.documentElement.lang,'he','The language toggle did not switch back to Hebrew.');
+assert.equal(fullHistoryModal.querySelector('[data-full-history-title]').textContent,'כל הפתרונות','The open full-history dialog did not return to Hebrew.');
+
+window.document.dispatchEvent(new window.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+assert.equal(fullHistoryModal.hidden,true,'Escape must close the full-history dialog.');
+
 console.log('[SSC Scramble CI] App integration regression summary');
 console.log(JSON.stringify({
   ok:true,
@@ -138,6 +204,10 @@ console.log(JSON.stringify({
   saveSolve:true,
   history:true,
   repeatExact:true,
+  compactHistoryLimit:12,
+  fullHistoryCount:15,
+  fullHistoryActions:true,
+  fullHistoryLanguage:true,
   runningScrambleProtected:true,
   promiseLeak:false,
   failures:0

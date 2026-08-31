@@ -13,10 +13,10 @@ assert.match(appSource,/<circle cx="12" cy="12" r="7"\/>/,'The focus crosshair m
 assert.match(appSource,/M12 2v3M12 19v3M2 12h3M19 12h3/,'The focus icon must include four crosshair guides.');
 assert.match(appSource,/focus\.setAttribute\('aria-label',t\('focusMode'\)\)/,'Focus mode must keep a localized accessible name.');
 assert.doesNotMatch(index,/#focusModeButton::before/,'The obsolete CSS-mask focus icon must not render alongside the SVG.');
-assert.match(index,/code\/js\/app\.js\?v=20260831-toolbar-icons-1/);
+assert.match(index,/code\/js\/app\.js\?v=20260831-full-history-1/);
 assert.match(index,/code\/js\/import-export\.js\?v=20260831-toolbar-icons-2/);
 assert.match(index,/code\/js\/advanced-features\.js\?v=20260831-toolbar-icons-2/);
-assert.match(workflow,/node tests\/ui-icons\.mjs/,'CI must execute the toolbar icon regression test.');
+assert.match(workflow,/for test in tests\/ui-\*\.mjs/,'CI must execute the toolbar icon regression test as part of the UI suite.');
 assert.match(workflow,/code\/js\/import-export\.js/,'CI must run when the advanced-features loader changes.');
 
 const indexDom=new JSDOM(index);
