@@ -100,7 +100,8 @@
 
   if(!document.querySelector('link[rel="manifest"]')){const manifest=document.createElement('link');manifest.rel='manifest';manifest.href='./manifest.webmanifest?v=1';document.head.appendChild(manifest);}
   if(!document.querySelector('meta[name="theme-color"]')){const meta=document.createElement('meta');meta.name='theme-color';meta.content='#111827';document.head.appendChild(meta);}
-  if(!document.querySelector('script[data-ssc-advanced]')){const script=document.createElement('script');script.src='./code/js/advanced-features.js?v=20260825-1';script.defer=true;script.dataset.sscAdvanced='1';document.body.appendChild(script);}
+  const ensureAdvancedFeatures=()=>{if(document.querySelector('script[data-ssc-advanced]'))return;const script=document.createElement('script');script.src='./code/js/advanced-features.js?v=20260831-toolbar-icons-2';script.defer=true;script.dataset.sscAdvanced='1';document.body.appendChild(script);};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ensureAdvancedFeatures,{once:true});else ensureAdvancedFeatures();
 
   if('serviceWorker' in navigator){
     window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js',{scope:'./'});registration.addEventListener('updatefound',()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener('statechange',()=>{if(worker.state==='installed'&&navigator.serviceWorker.controller)showUpdate(registration);});});}catch(error){console.warn('[SSC] Service worker registration failed',error);}});
