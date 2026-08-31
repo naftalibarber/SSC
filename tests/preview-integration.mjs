@@ -168,7 +168,7 @@ assert.match(sizingSource,/data-cube-order="4"/,'4x4 SVG must be routed through 
 assert.match(sizingSource,/previewStickerDevicePixels/,'Pixel-perfect fits must expose their physical sticker size for diagnostics.');
 assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
 assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
-assert.match(legacyPreviewSource,/const cubeHref='\.\/code\/css\/cube-preview\.css\?v=20260831-perfect-centering-1';/,'The preview fallback stylesheet must match the current pixel-centering release.');
+assert.match(legacyPreviewSource,/const cubeHref='\.\/code\/css\/cube-preview\.css\?v=20260831-connected-grid-1';/,'The preview fallback stylesheet must match the current connected-grid release.');
 assert.doesNotMatch(legacyPreviewSource,/if\(existing\)existing\.href=cubeHref/,'Runtime setup must not replace the stylesheet version declared by index.html.');
 assert.match(rendererSource,/D:'#ffff00',[\s\S]*F:'#00dd00',[\s\S]*B:'#0000ff',[\s\S]*R:'#ff0000',[\s\S]*L:'#ffaa00'/);
 assert.match(competitionStyles,/\.workspace\.cstimer-layout\s*\{[\s\S]*?direction:ltr!important;/,'Workspace geometry must stay physical instead of inheriting RTL grid placement.');
@@ -186,16 +186,21 @@ assert.match(cubePreviewStyles,/height:calc\(var\(--ssc-preview-card-height,132p
 assert.match(sizingSource,/applyPixelPerfectCardCorrection/,'Pixel-perfect previews must correct odd card dimensions before centering.');
 assert.match(sizingSource,/\(correctedBox\.width-width\)\/2/,'The fitted preview must be centered from the corrected content box without directional rounding.');
 assert.match(rendererSource,/function centerPixelPerfectGeometry\(geometry\)/,'The renderer must expose deterministic device-pixel centering geometry.');
+assert.match(rendererSource,/function connectedGridPath\(geometry\)/,'2x2 through 4x4 must use one continuous grid path.');
+assert.match(rendererSource,/const faceGap=-1;/,'Adjacent SVG faces must overlap by exactly one device pixel.');
+assert.match(cubePreviewStyles,/--ssc-preview-step/,'The DOM fallback must use overlapping face tracks instead of doubled borders.');
+assert.match(cubePreviewStyles,/background:#000!important;/,'The DOM fallback must use a continuous black grid color.');
 assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
 assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
 assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The session selector must use the localized built-in session name.');
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
-assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-perfect-centering-1/);
-assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-perfect-centering-1/);
-assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-perfect-centering-1/);
-assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-perfect-centering-1/);
+assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-connected-grid-1/);
+assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-connected-grid-1/);
+assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-connected-grid-1/);
+assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-connected-grid-1/);
+assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-connected-grid-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
 assert.match(index,/code\/js\/puzzle-3d\.js/);
@@ -228,5 +233,6 @@ console.log(JSON.stringify({
   languageAwareStatisticsSide:true,
   languageLayoutParity:true,
   languageAwarePreviewSide:true,
-  pixelPerfectCentering:true
+  pixelPerfectCentering:true,
+  singleConnectedCubeGrid:true
 },null,2));
