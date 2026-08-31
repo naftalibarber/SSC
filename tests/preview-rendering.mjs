@@ -222,6 +222,15 @@ function validateRender(order,scramble){
         fitted.outerPadding,fitted.faceSize,fitted.step,fitted.width,fitted.height
       ].every(Number.isInteger),`Fitted ${order}x${order} geometry must use integer device pixels.`);
 
+      const centering=globalThis.SSCSvgCubeRenderer.centerPixelPerfectGeometry(fitted);
+      assert.ok([centering.widthCorrection,centering.heightCorrection].every(value=>value===0||value===1));
+      assert.ok(Number.isInteger(centering.offsetX));
+      assert.ok(Number.isInteger(centering.offsetY));
+      assert.equal((centering.offsetX*2)+fitted.width,centering.availableWidth);
+      assert.equal((centering.offsetY*2)+fitted.height,centering.availableHeight);
+      assert.equal(centering.availableWidth,fitted.availableWidth-centering.widthCorrection);
+      assert.equal(centering.availableHeight,fitted.availableHeight-centering.heightCorrection);
+
       for(const sticker of stickers){
         const row=Number(sticker.dataset.row);
         const col=Number(sticker.dataset.col);
@@ -244,9 +253,18 @@ function validateRender(order,scramble){
     }
 
     if(order===3){
+      const defaultGeometry=globalThis.SSCSvgCubeRenderer.pixelPerfectCubeGeometry(3,218,162,1);
+      const defaultCentering=globalThis.SSCSvgCubeRenderer.centerPixelPerfectGeometry(defaultGeometry);
+      assert.equal(defaultGeometry.width,215);
+      assert.equal(defaultGeometry.height,161);
+      assert.deepEqual(
+        defaultCentering,
+        {widthCorrection:1,heightCorrection:1,availableWidth:217,availableHeight:161,offsetX:1,offsetY:0},
+        'The default 200% 3x3 card must remove both odd-pixel centering remainders.'
+      );
       assert.deepEqual(
         globalThis.SSCSvgCubeRenderer.pixelPerfect3x3Geometry(218,162,1),
-        globalThis.SSCSvgCubeRenderer.pixelPerfectCubeGeometry(3,218,162,1),
+        defaultGeometry,
         'The existing 3x3 geometry API must remain unchanged.'
       );
     }
@@ -337,6 +355,7 @@ console.log(JSON.stringify({
   integerDevicePixelOrders:PIXEL_PERFECT_ORDERS,
   filledPixelSeparators:true,
   symmetric2x2Through4x4Axes:true,
+  devicePixelCentering:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
 },null,2));

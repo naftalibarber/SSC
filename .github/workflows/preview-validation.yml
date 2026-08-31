@@ -66,5 +66,7 @@ jobs:
         run: node tests/preview-validation.mjs
       - name: Validate SVG rendering geometry
         run: node tests/preview-rendering.mjs
+      - name: Validate pixel-perfect preview centering
+        run: node tests/preview-centering.mjs
       - name: Validate production integration and fallback
         run: node tests/preview-integration.mjs
