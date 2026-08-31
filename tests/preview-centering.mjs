@@ -26,6 +26,8 @@ function setDpr(value){
 
 function makeCard(baseWidth=232,baseHeight=176,baseLeft=13.37,baseTop=9.23){
   const card=window.document.createElement('div');
+  card.__baseWidth=baseWidth;
+  card.__baseHeight=baseHeight;
   card.className='cube-preview-card';
   card.style.boxSizing='border-box';
   card.style.border='1px solid #d7d7d7';
@@ -35,7 +37,7 @@ function makeCard(baseWidth=232,baseHeight=176,baseLeft=13.37,baseTop=9.23){
   card.getBoundingClientRect=()=>{
     const widthCorrection=parseFloat(card.style.getPropertyValue('--ssc-preview-card-width-correction'))||0;
     const heightCorrection=parseFloat(card.style.getPropertyValue('--ssc-preview-card-height-correction'))||0;
-    const width=baseWidth-widthCorrection,height=baseHeight-heightCorrection;
+    const width=card.__baseWidth-widthCorrection,height=card.__baseHeight-heightCorrection;
     return{x:baseLeft,y:baseTop,left:baseLeft,top:baseTop,width,height,right:baseLeft+width,bottom:baseTop+height};
   };
   window.document.body.appendChild(card);
@@ -50,6 +52,25 @@ function contentBox(card){
   const top=rect.top+(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.paddingTop)||0);
   return{left,top,width:rect.width-horizontal,height:rect.height-vertical};
 }
+
+setDpr(1);
+window.document.documentElement.style.setProperty('--ssc-cube-line-width','4');
+const transientCard=makeCard(74,54);
+const transientSvg=window.document.createElementNS('http://www.w3.org/2000/svg','svg');
+transientSvg.classList.add('ssc-native-preview-svg');
+transientSvg.setAttribute('data-cube-order','4');
+transientCard.appendChild(transientSvg);
+assert.doesNotThrow(
+  ()=>window.SSCPreviewSizing.fitPreviewToContainer(transientCard),
+  'A transient pre-layout card size must defer fitting instead of raising a runtime error.'
+);
+assert.equal(transientCard.dataset.previewFitPending,'true');
+transientCard.__baseWidth=232;
+transientCard.__baseHeight=176;
+window.SSCPreviewSizing.fitPreviewToContainer(transientCard);
+assert.equal(transientCard.dataset.previewFitPending,undefined);
+assert.equal(Number(transientCard.dataset.previewLineDevicePixels),4);
+transientCard.remove();
 
 const cases=[];
 for(const dpr of [1,1.25,1.5,2]){
