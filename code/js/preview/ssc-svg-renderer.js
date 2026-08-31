@@ -28,7 +28,7 @@
     faceRadius:11,
     layoutStyle:'ssc-standard'
   });
-  // The 2x2 through 4x4 profiles use one solid black rectangle per face. The
+  // The 2x2 through 5x5 profiles use one solid black rectangle per face. The
   // colored stickers sit above it, so both the outer frame and every internal
   // separator are parts of the same continuous area rather than SVG strokes.
   const CSTIMER_2X2_GEOMETRY=Object.freeze({
@@ -58,12 +58,22 @@
     faceRadius:0,
     layoutStyle:'cstimer-4x4'
   });
+  const CSTIMER_5X5_GEOMETRY=Object.freeze({
+    stickerSize:18,
+    lineWidth:1,
+    faceGap:6,
+    outerPadding:2,
+    stickerRadius:0,
+    faceRadius:0,
+    layoutStyle:'cstimer-5x5'
+  });
   const CSTIMER_GEOMETRIES=Object.freeze({
     2:CSTIMER_2X2_GEOMETRY,
     3:CSTIMER_3X3_GEOMETRY,
-    4:CSTIMER_4X4_GEOMETRY
+    4:CSTIMER_4X4_GEOMETRY,
+    5:CSTIMER_5X5_GEOMETRY
   });
-  const PIXEL_PERFECT_ORDERS=Object.freeze([2,3,4]);
+  const PIXEL_PERFECT_ORDERS=Object.freeze([2,3,4,5]);
 
   let instanceSequence=0;
   const containerIds=new WeakMap();
@@ -145,7 +155,7 @@
 
   function pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio=1,selectedLineWidth=1){
     const n=Number(order);
-    if(!PIXEL_PERFECT_ORDERS.includes(n))throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 through 4x4.');
+    if(!PIXEL_PERFECT_ORDERS.includes(n))throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 through 5x5.');
     const dpr=Math.max(.25,Number(devicePixelRatio)||1);
     const availableWidth=Math.max(1,Math.floor((Number(boxWidth)||1)*dpr));
     const availableHeight=Math.max(1,Math.floor((Number(boxHeight)||1)*dpr));
@@ -368,6 +378,7 @@
     CSTIMER_2X2_GEOMETRY,
     CSTIMER_3X3_GEOMETRY,
     CSTIMER_4X4_GEOMETRY,
+    CSTIMER_5X5_GEOMETRY,
     PIXEL_PERFECT_ORDERS,
     geometryFor,
     normalizeSelectedLineWidth,

@@ -9,7 +9,7 @@ SSC's native cube preview infrastructure. The state engine and SVG renderer are 
 - Normalized state output using face identities (`U D F B R L`), never colors.
 - Deterministic semantic sticker IDs such as `U1`, `U2`, `F9`.
 - Generic mathematical SVG net renderer shared by 2x2-7x7.
-- Order-specific 2x2 through 4x4 presentation profiles modeled on csTimer: identical integer-device-pixel stickers over one continuous black rectangle per face, adjustable 1–4 CSS-pixel separators converted to whole physical pixels, no SVG grid strokes, one-third-sticker face gaps, compact outer margins, and a physical-pixel-snapped absolute SVG origin. Extra card space is centered within half a physical pixel instead of stretching a row or column. State mapping remains shared and unchanged.
+- Order-specific 2x2 through 5x5 presentation profiles modeled on csTimer: identical integer-device-pixel stickers over one continuous black rectangle per face, adjustable 1–4 CSS-pixel separators converted to whole physical pixels, no SVG grid strokes, one-third-sticker face gaps, compact outer margins, and a physical-pixel-snapped absolute SVG origin. Extra card space is centered within half a physical pixel instead of stretching a row or column. State mapping remains shared and unchanged.
 - The default palette matches csTimer's familiar cube colors: white `#ffffff`, yellow `#ffff00`, green `#00dd00`, blue `#0000ff`, red `#ff0000`, and orange `#ffaa00`. Existing colors in `sscCubeColorsV1` remain authoritative.
 - The default preview size is 200%; the existing 150%-500% range, 5% step, viewport clamping, and saved `sscCubePreviewSizeV1` values remain unchanged.
 - `cubing.js` reference validation for every NxN order from 2x2 through 7x7.
@@ -105,7 +105,7 @@ Current state-validation baseline:
 - 7x7: `200/200` passing (`100` random + `100` deterministic/wide/deep-wide);
 - combined: `1002/1002`, zero sticker mismatches.
 
-Rendering regression checks cover solved/scrambled 2x2 through 7x7; all 48 combinations of 2x2/3x3/4x4, line widths 1–4, and DPR 1/1.25/1.5/2; one continuous background per face; equal frames and internal separators; absolute-origin snapping; unchanged geometry for 5x5 through 7x7; stable semantic IDs; immediate color updates; scramble updates; no mirroring transforms; and 150/200/300/400 px scale calculations. Integration regression verifies V1 routing for `222`/`333`/`444`/`555`/`666`/`777`, preservation of the legacy path for a non-NxN event, the single feature flag, legacy fallback and emergency legacy-2D fallback.
+Rendering regression checks cover solved/scrambled 2x2 through 7x7; all 64 combinations of 2x2/3x3/4x4/5x5, line widths 1–4, and DPR 1/1.25/1.5/2; an additional 80-case 5x5 matrix across preview sizes 150/200/300/400/500%; one continuous background per face; equal frames and internal separators; absolute-origin snapping; unchanged geometry for 6x6 and 7x7; stable semantic IDs; immediate color updates; scramble and wide-move updates; no mirroring transforms; and full-card fit checks. Integration regression verifies V1 routing for `222`/`333`/`444`/`555`/`666`/`777`, preservation of the legacy path for a non-NxN event, the single feature flag, legacy fallback and emergency legacy-2D fallback.
 
 ## Safety rules
 

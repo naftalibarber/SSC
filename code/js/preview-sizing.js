@@ -265,9 +265,11 @@
       ':scope > .ssc-native-preview-svg[data-cube-order="2"]',
       ':scope > .ssc-native-preview-svg[data-cube-order="3"]',
       ':scope > .ssc-native-preview-svg[data-cube-order="4"]',
+      ':scope > .ssc-native-preview-svg[data-cube-order="5"]',
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="2"]',
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="3"]',
-      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]'
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]',
+      ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="5"]'
     ].join(','));
     if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
       let geometry;
