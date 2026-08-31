@@ -26,55 +26,36 @@
     outerPadding:12,
     stickerRadius:7,
     faceRadius:11,
-    stickerStroke:null,
-    stickerStrokeWidth:0,
-    gridStroke:null,
-    gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // The 2x2 through 4x4 profiles use one connected SVG grid path per face.
-  // preview-sizing.js fits these profiles in physical device pixels, keeping
-  // every line and sticker exact while preserving the space between faces.
+  // The 2x2 through 4x4 profiles use one solid black rectangle per face. The
+  // colored stickers sit above it, so both the outer frame and every internal
+  // separator are parts of the same continuous area rather than SVG strokes.
   const CSTIMER_2X2_GEOMETRY=Object.freeze({
     stickerSize:44,
-    stickerGap:1,
-    facePadding:1,
+    lineWidth:1,
     faceGap:15,
     outerPadding:4,
     stickerRadius:0,
     faceRadius:0,
-    stickerStroke:null,
-    stickerStrokeWidth:0,
-    gridStroke:null,
-    gridStrokeWidth:0,
     layoutStyle:'cstimer-2x2'
   });
   const CSTIMER_3X3_GEOMETRY=Object.freeze({
     stickerSize:30,
-    stickerGap:1,
-    facePadding:1,
+    lineWidth:1,
     faceGap:10,
     outerPadding:3,
     stickerRadius:0,
     faceRadius:0,
-    stickerStroke:null,
-    stickerStrokeWidth:0,
-    gridStroke:null,
-    gridStrokeWidth:0,
     layoutStyle:'cstimer-3x3'
   });
   const CSTIMER_4X4_GEOMETRY=Object.freeze({
     stickerSize:22,
-    stickerGap:1,
-    facePadding:1,
+    lineWidth:1,
     faceGap:7,
     outerPadding:2,
     stickerRadius:0,
     faceRadius:0,
-    stickerStroke:null,
-    stickerStrokeWidth:0,
-    gridStroke:null,
-    gridStrokeWidth:0,
     layoutStyle:'cstimer-4x4'
   });
   const CSTIMER_GEOMETRIES=Object.freeze({
@@ -122,6 +103,19 @@
   function geometryFor(order){
     const n=Number(order);
     const profile=CSTIMER_GEOMETRIES[n]||GEOMETRY;
+    if(PIXEL_PERFECT_ORDERS.includes(n)){
+      const {stickerSize,lineWidth=1,faceGap,outerPadding}=profile;
+      const faceSize=(n*stickerSize)+((n+1)*lineWidth);
+      const step=faceSize+faceGap;
+      const width=(4*faceSize)+(3*faceGap)+(outerPadding*2);
+      const height=(3*faceSize)+(2*faceGap)+(outerPadding*2);
+      // stickerGap and facePadding remain read-only aliases for compatibility
+      // with diagnostics that predate the background-based grid.
+      return Object.freeze({
+        n,faceSize,step,width,height,...profile,
+        lineWidth,stickerGap:lineWidth,facePadding:lineWidth
+      });
+    }
     const {stickerSize,stickerGap,facePadding=0,faceGap,outerPadding}=profile;
     const faceSize=(n*stickerSize)+((n-1)*stickerGap)+(facePadding*2);
     const step=faceSize+faceGap;
@@ -138,27 +132,39 @@
     ];
   }
 
-  function pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio=1){
+  function normalizeSelectedLineWidth(value){
+    const width=Number(value);
+    if(!Number.isFinite(width))return 1;
+    return Math.min(4,Math.max(1,Math.round(width)));
+  }
+
+  function lineDevicePixels(selectedLineWidth,devicePixelRatio=1){
+    const dpr=Math.max(.25,Number(devicePixelRatio)||1);
+    return Math.max(1,Math.round(normalizeSelectedLineWidth(selectedLineWidth)*dpr));
+  }
+
+  function pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio=1,selectedLineWidth=1){
     const n=Number(order);
     if(!PIXEL_PERFECT_ORDERS.includes(n))throw new RangeError('Pixel-perfect SVG geometry is available only for 2x2 through 4x4.');
     const dpr=Math.max(.25,Number(devicePixelRatio)||1);
     const availableWidth=Math.max(1,Math.floor((Number(boxWidth)||1)*dpr));
     const availableHeight=Math.max(1,Math.floor((Number(boxHeight)||1)*dpr));
-    const stickerGap=1;
-    const facePadding=1;
+    const normalizedLineWidth=normalizeSelectedLineWidth(selectedLineWidth);
+    const lineWidth=lineDevicePixels(normalizedLineWidth,dpr);
     const maximumSticker=Math.max(1,Math.floor(Math.min(availableWidth/(4*n),availableHeight/(3*n))));
 
     for(let stickerSize=maximumSticker;stickerSize>=1;stickerSize--){
       const faceGap=Math.max(1,Math.round(stickerSize/3));
       const outerPadding=Math.max(1,Math.round(stickerSize/10));
-      const faceSize=(stickerSize*n)+(stickerGap*(n-1))+(facePadding*2);
+      const faceSize=(stickerSize*n)+((n+1)*lineWidth);
       const step=faceSize+faceGap;
       const width=(faceSize*4)+(faceGap*3)+(outerPadding*2);
       const height=(faceSize*3)+(faceGap*2)+(outerPadding*2);
       if(width<=availableWidth&&height<=availableHeight){
         return Object.freeze({
-          n,dpr,availableWidth,availableHeight,stickerSize,stickerGap,
-          facePadding,faceGap,outerPadding,faceSize,step,width,height
+          n,dpr,availableWidth,availableHeight,selectedLineWidth:normalizedLineWidth,
+          lineWidth,stickerGap:lineWidth,facePadding:lineWidth,stickerSize,
+          faceGap,outerPadding,faceSize,step,width,height
         });
       }
     }
@@ -166,8 +172,8 @@
     throw new RangeError(`The preview card is too small for a ${n}x${n} pixel grid.`);
   }
 
-  function pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio=1){
-    return pixelPerfectCubeGeometry(3,boxWidth,boxHeight,devicePixelRatio);
+  function pixelPerfect3x3Geometry(boxWidth,boxHeight,devicePixelRatio=1,selectedLineWidth=1){
+    return pixelPerfectCubeGeometry(3,boxWidth,boxHeight,devicePixelRatio,selectedLineWidth);
   }
 
   function centerPixelPerfectGeometry(geometry){
@@ -187,49 +193,39 @@
     });
   }
 
-  function faceGridPath(order,geometry){
-    const edge=.5;
-    const farEdge=geometry.faceSize-edge;
-    const commands=[
-      `M ${edge} ${edge} H ${farEdge} V ${farEdge} H ${edge} Z`
-    ];
-    for(let index=1;index<order;index++){
-      const line=geometry.facePadding+(index*geometry.stickerSize)+((index-1)*geometry.stickerGap)+(geometry.stickerGap/2);
-      commands.push(`M ${line} ${edge} V ${farEdge}`);
-      commands.push(`M ${edge} ${line} H ${farEdge}`);
-    }
-    return commands.join(' ');
-  }
-
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
     const [faceX,faceY]=faceOrigin(face,geometry);
+    const pixelPerfect=PIXEL_PERFECT_ORDERS.includes(order);
+    const lineWidth=pixelPerfect?geometry.lineWidth:geometry.stickerGap;
     const group=svgElement('g',{
       class:'ssc-svg-face',
       'data-face':face,
       'data-origin-x':faceX,
       'data-origin-y':faceY,
+      'data-line-device-pixels':pixelPerfect?lineWidth:null,
       transform:`translate(${faceX} ${faceY})`
     });
 
-    if(!PIXEL_PERFECT_ORDERS.includes(order)){
-      const background=svgElement('rect',{
-        class:'ssc-svg-face-background',
-        x:0,
-        y:0,
-        width:geometry.faceSize,
-        height:geometry.faceSize,
-        rx:geometry.faceRadius,
-        ry:geometry.faceRadius
-      });
-      group.appendChild(background);
-    }
+    const background=svgElement('rect',{
+      class:'ssc-svg-face-background',
+      x:0,
+      y:0,
+      width:geometry.faceSize,
+      height:geometry.faceSize,
+      rx:geometry.faceRadius,
+      ry:geometry.faceRadius,
+      fill:pixelPerfect?'#000000':null,
+      'data-grid-background':pixelPerfect?'true':null,
+      'aria-hidden':'true'
+    });
+    group.appendChild(background);
 
     for(let row=0;row<order;row++){
       for(let col=0;col<order;col++){
         const semanticId=getCore().stickerId(face,row,col,order);
         const layer=faceMatrix[row][col];
-        const x=geometry.facePadding+col*(geometry.stickerSize+geometry.stickerGap);
-        const y=geometry.facePadding+row*(geometry.stickerSize+geometry.stickerGap);
+        const x=(pixelPerfect?lineWidth:geometry.facePadding)+col*(geometry.stickerSize+lineWidth);
+        const y=(pixelPerfect?lineWidth:geometry.facePadding)+row*(geometry.stickerSize+lineWidth);
         const sticker=svgElement('rect',{
           id:`${prefix}-${semanticId}`,
           class:'ssc-svg-sticker',
@@ -240,8 +236,6 @@
           rx:geometry.stickerRadius,
           ry:geometry.stickerRadius,
           fill:colors[layer]||DEFAULT_COLORS[layer]||'transparent',
-          stroke:geometry.stickerStroke,
-          'stroke-width':geometry.stickerStrokeWidth||null,
           'data-sticker-id':semanticId,
           'data-face':face,
           'data-row':row,
@@ -252,26 +246,19 @@
       }
     }
 
-    if(PIXEL_PERFECT_ORDERS.includes(order)){
-      group.appendChild(svgElement('path',{
-        class:'ssc-svg-face-grid',
-        d:faceGridPath(order,geometry),
-        'stroke-width':geometry.stickerGap,
-        'aria-hidden':'true'
-      }));
-    }
-
     svg.appendChild(group);
   }
 
-  function fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
+  function fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1,selectedLineWidth=1){
     const order=Number(svg?.getAttribute?.('data-cube-order'));
     if(!PIXEL_PERFECT_ORDERS.includes(order))return null;
-    const geometry=pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio);
+    const geometry=pixelPerfectCubeGeometry(order,boxWidth,boxHeight,devicePixelRatio,selectedLineWidth);
     svg.setAttribute('viewBox',`0 0 ${geometry.width} ${geometry.height}`);
     svg.setAttribute('preserveAspectRatio','xMinYMin meet');
     svg.setAttribute('shape-rendering','crispEdges');
     svg.setAttribute('data-pixel-perfect-grid','true');
+    svg.setAttribute('data-line-renderer','face-background');
+    svg.setAttribute('data-line-device-pixels',String(geometry.lineWidth));
 
     svg.querySelectorAll('.ssc-svg-face[data-face]').forEach(group=>{
       const face=group.dataset.face;
@@ -280,33 +267,40 @@
       const faceY=geometry.outerPadding+(gridY*geometry.step);
       group.setAttribute('data-origin-x',String(faceX));
       group.setAttribute('data-origin-y',String(faceY));
+      group.setAttribute('data-line-device-pixels',String(geometry.lineWidth));
       group.setAttribute('transform',`translate(${faceX} ${faceY})`);
+
+      const background=[...group.children].find(node=>node.classList?.contains('ssc-svg-face-background'));
+      if(background){
+        background.setAttribute('x','0');
+        background.setAttribute('y','0');
+        background.setAttribute('width',String(geometry.faceSize));
+        background.setAttribute('height',String(geometry.faceSize));
+        background.setAttribute('fill','#000000');
+        background.setAttribute('data-grid-background','true');
+        background.removeAttribute('stroke');
+        background.removeAttribute('stroke-width');
+      }
 
       [...group.children].filter(node=>node.classList?.contains('ssc-svg-sticker')).forEach(sticker=>{
         const row=Number(sticker.dataset.row);
         const col=Number(sticker.dataset.col);
-        const step=geometry.stickerSize+geometry.stickerGap;
-        sticker.setAttribute('x',String(geometry.facePadding+(col*step)));
-        sticker.setAttribute('y',String(geometry.facePadding+(row*step)));
+        const step=geometry.stickerSize+geometry.lineWidth;
+        sticker.setAttribute('x',String(geometry.lineWidth+(col*step)));
+        sticker.setAttribute('y',String(geometry.lineWidth+(row*step)));
         sticker.setAttribute('width',String(geometry.stickerSize));
         sticker.setAttribute('height',String(geometry.stickerSize));
         sticker.removeAttribute('stroke');
         sticker.removeAttribute('stroke-width');
       });
-
-      const grid=[...group.children].find(node=>node.classList?.contains('ssc-svg-face-grid'));
-      if(grid){
-        grid.setAttribute('d',faceGridPath(order,geometry));
-        grid.setAttribute('stroke-width',String(geometry.stickerGap));
-      }
     });
 
     return geometry;
   }
 
-  function fitThreeByThreeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1){
+  function fitThreeByThreeToBox(svg,boxWidth,boxHeight,devicePixelRatio=1,selectedLineWidth=1){
     if(!svg||svg.getAttribute?.('data-cube-order')!=='3')return null;
-    return fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio);
+    return fitPixelPerfectCubeToBox(svg,boxWidth,boxHeight,devicePixelRatio,selectedLineWidth);
   }
 
   function renderState(container,state,{colors,idPrefix}={}){
@@ -328,7 +322,11 @@
       focusable:'false',
       'data-cube-order':order,
       'data-layout-style':geometry.layoutStyle,
-      'data-preview-engine':'ssc-svg-v1'
+      'data-preview-engine':'ssc-svg-v1',
+      'data-pixel-perfect-grid':PIXEL_PERFECT_ORDERS.includes(order)?'true':null,
+      'data-line-renderer':PIXEL_PERFECT_ORDERS.includes(order)?'face-background':null,
+      'data-line-device-pixels':PIXEL_PERFECT_ORDERS.includes(order)?geometry.lineWidth:null,
+      'shape-rendering':PIXEL_PERFECT_ORDERS.includes(order)?'crispEdges':null
     });
 
     for(const face of getCore().FACE_ORDER){
@@ -372,7 +370,8 @@
     CSTIMER_4X4_GEOMETRY,
     PIXEL_PERFECT_ORDERS,
     geometryFor,
-    faceGridPath,
+    normalizeSelectedLineWidth,
+    lineDevicePixels,
     pixelPerfectCubeGeometry,
     pixelPerfect3x3Geometry,
     centerPixelPerfectGeometry,

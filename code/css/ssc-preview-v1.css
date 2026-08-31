@@ -19,29 +19,16 @@
   fill:#111827;
 }
 
-.ssc-native-preview-svg .ssc-svg-face-grid{
-  fill:none;
-  stroke:#000;
-  stroke-width:var(--ssc-cube-line-width,1);
-  stroke-linecap:butt;
-  stroke-linejoin:miter;
-  pointer-events:none;
-  shape-rendering:crispEdges;
-}
-
 .ssc-native-preview-svg .ssc-svg-sticker{
   shape-rendering:geometricPrecision;
 }
 
 /* 2x2 through 4x4: classic csTimer-style flat nets. Other cube orders retain the
    existing rounded Premium SVG geometry and theme treatment. */
-.ssc-native-preview-svg[data-layout-style^="cstimer-"] .ssc-svg-face-background{
-  fill:#050505;
-  shape-rendering:crispEdges;
-}
-
 .ssc-native-preview-svg[data-layout-style^="cstimer-"] .ssc-svg-sticker{
   stroke:none;
+  border:0;
+  outline:0;
   shape-rendering:crispEdges;
 }
 
@@ -51,6 +38,15 @@ html[data-theme="dark"] .ssc-native-preview-svg .ssc-svg-face-background{
 
 html[data-theme="oled"] .ssc-native-preview-svg .ssc-svg-face-background{
   fill:#050607;
+}
+
+/* 2x2 through 4x4 always use one truly black, uninterrupted rectangle behind
+   each face. This rule follows the theme rules intentionally; larger cubes
+   keep their existing theme-aware face backgrounds. */
+html .ssc-native-preview-svg[data-pixel-perfect-grid="true"] .ssc-svg-face-background{
+  fill:#000;
+  stroke:none;
+  shape-rendering:crispEdges;
 }
 
 @media (prefers-reduced-motion:reduce){

@@ -190,11 +190,16 @@ assert.doesNotMatch(cubePreviewStyles,/--ssc-preview-right-offset/,'Language pla
 assert.match(cubePreviewStyles,/width:calc\(var\(--ssc-preview-card-width,174px\) - var\(--ssc-preview-card-width-correction\)\)!important;/,'The card width must remove an odd device-pixel centering remainder.');
 assert.match(cubePreviewStyles,/height:calc\(var\(--ssc-preview-card-height,132px\) - var\(--ssc-preview-card-height-correction\)\)!important;/,'The card height must remove an odd device-pixel centering remainder.');
 assert.match(sizingSource,/applyPixelPerfectCardCorrection/,'Pixel-perfect previews must correct odd card dimensions before centering.');
-assert.match(sizingSource,/\(correctedBox\.width-width\)\/2/,'The fitted preview must be centered from the corrected content box without directional rounding.');
+assert.match(sizingSource,/function snapPixelPerfectPlacement\(box,geometry,dpr=geometry\?\.dpr\|\|1\)/,'The SVG absolute origin must be snapped to the physical-pixel grid.');
+assert.match(sizingSource,/Math\.round\(targetLeft\*ratio\)\/ratio/,'The absolute left position must be rounded in physical pixels.');
+assert.match(sizingSource,/Math\.round\(targetTop\*ratio\)\/ratio/,'The absolute top position must be rounded in physical pixels.');
 assert.match(rendererSource,/function centerPixelPerfectGeometry\(geometry\)/,'The renderer must expose deterministic device-pixel centering geometry.');
-assert.match(rendererSource,/function faceGridPath\(order,geometry\)/,'2x2 through 4x4 must use one connected grid path per face.');
+assert.match(rendererSource,/function lineDevicePixels\(selectedLineWidth,devicePixelRatio=1\)/,'Line width must be converted to physical device pixels.');
+assert.match(rendererSource,/Math\.max\(1,Math\.round\(normalizeSelectedLineWidth\(selectedLineWidth\)\*dpr\)\)/,'Physical line width must follow the selected width and DPR.');
+assert.match(rendererSource,/class:'ssc-svg-face-background'/,'Every face must use one background rectangle.');
+assert.match(rendererSource,/setAttribute\('data-line-renderer','face-background'\)/,'The renderer must identify the background-based line mechanism.');
+assert.doesNotMatch(rendererSource,/faceGridPath|ssc-svg-face-grid/,'The legacy stroked face-grid path must be removed.');
 assert.doesNotMatch(rendererSource,/const faceGap=-1;/,'The space between separate cube faces must remain intact.');
-assert.match(rendererSource,/class:'ssc-svg-face-grid'/,'Each pixel-perfect face must receive its own grid path.');
 assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
 assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
 assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The session selector must use the localized built-in session name.');
@@ -202,10 +207,10 @@ assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be d
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
 assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-connected-face-grids-1/);
-assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-line-width-control-1/);
+assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-connected-face-grids-1/);
-assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-connected-face-grids-1/);
-assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-connected-face-grids-1/);
+assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-1/);
+assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-physical-face-grid-1/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
@@ -240,6 +245,8 @@ console.log(JSON.stringify({
   languageLayoutParity:true,
   languageAwarePreviewSide:true,
   pixelPerfectCentering:true,
-  connectedGridPathPerFace:true,
+  continuousBackgroundPerFace:true,
+  strokeGridRemoved:true,
+  physicalOriginSnapping:true,
   adjustableCubeLineWidth:true
 },null,2));

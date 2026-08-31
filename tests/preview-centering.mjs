@@ -24,7 +24,7 @@ function setDpr(value){
   Object.defineProperty(window,'devicePixelRatio',{value,configurable:true});
 }
 
-function makeCard(baseWidth=232,baseHeight=176){
+function makeCard(baseWidth=232,baseHeight=176,baseLeft=13.37,baseTop=9.23){
   const card=window.document.createElement('div');
   card.className='cube-preview-card';
   card.style.boxSizing='border-box';
@@ -36,7 +36,7 @@ function makeCard(baseWidth=232,baseHeight=176){
     const widthCorrection=parseFloat(card.style.getPropertyValue('--ssc-preview-card-width-correction'))||0;
     const heightCorrection=parseFloat(card.style.getPropertyValue('--ssc-preview-card-height-correction'))||0;
     const width=baseWidth-widthCorrection,height=baseHeight-heightCorrection;
-    return{x:0,y:0,left:0,top:0,width,height,right:width,bottom:height};
+    return{x:baseLeft,y:baseTop,left:baseLeft,top:baseTop,width,height,right:baseLeft+width,bottom:baseTop+height};
   };
   window.document.body.appendChild(card);
   return card;
@@ -46,38 +46,53 @@ function contentBox(card){
   const style=window.getComputedStyle(card),rect=card.getBoundingClientRect();
   const horizontal=(parseFloat(style.borderLeftWidth)||0)+(parseFloat(style.borderRightWidth)||0)+(parseFloat(style.paddingLeft)||0)+(parseFloat(style.paddingRight)||0);
   const vertical=(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.borderBottomWidth)||0)+(parseFloat(style.paddingTop)||0)+(parseFloat(style.paddingBottom)||0);
-  return{width:rect.width-horizontal,height:rect.height-vertical};
+  const left=rect.left+(parseFloat(style.borderLeftWidth)||0)+(parseFloat(style.paddingLeft)||0);
+  const top=rect.top+(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.paddingTop)||0);
+  return{left,top,width:rect.width-horizontal,height:rect.height-vertical};
 }
 
 const cases=[];
 for(const dpr of [1,1.25,1.5,2]){
   setDpr(dpr);
   for(const order of [2,3,4]){
-    const card=makeCard();
-    const svg=window.document.createElementNS('http://www.w3.org/2000/svg','svg');
-    svg.classList.add('ssc-native-preview-svg');
-    svg.setAttribute('data-cube-order',String(order));
-    card.appendChild(svg);
+    for(const selectedLineWidth of [1,2,3,4]){
+      window.document.documentElement.style.setProperty('--ssc-cube-line-width',String(selectedLineWidth));
+      const card=makeCard();
+      const svg=window.document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.classList.add('ssc-native-preview-svg');
+      svg.setAttribute('data-cube-order',String(order));
+      card.appendChild(svg);
 
-    window.SSCPreviewSizing.fitPreviewToContainer(card);
+      window.SSCPreviewSizing.fitPreviewToContainer(card);
 
-    const box=contentBox(card);
-    const width=parseFloat(svg.style.width),height=parseFloat(svg.style.height);
-    const left=parseFloat(svg.style.marginLeft)||0,top=parseFloat(svg.style.marginTop)||0;
-    const widthCorrection=Number(card.dataset.previewCardWidthCorrectionDevicePixels);
-    const heightCorrection=Number(card.dataset.previewCardHeightCorrectionDevicePixels);
+      const box=contentBox(card);
+      const width=parseFloat(svg.style.width),height=parseFloat(svg.style.height);
+      const left=parseFloat(svg.style.marginLeft)||0,top=parseFloat(svg.style.marginTop)||0;
+      const absoluteLeft=box.left+left,absoluteTop=box.top+top;
+      const targetLeft=box.left+((box.width-width)/2),targetTop=box.top+((box.height-height)/2);
+      const widthCorrection=Number(card.dataset.previewCardWidthCorrectionDevicePixels);
+      const heightCorrection=Number(card.dataset.previewCardHeightCorrectionDevicePixels);
+      const expectedLineWidth=Math.max(1,Math.round(selectedLineWidth*dpr));
 
-    assert.ok([0,1].includes(widthCorrection));
-    assert.ok([0,1].includes(heightCorrection));
-    approx(width*dpr,Math.round(width*dpr),`${order}x${order} device-pixel width at DPR ${dpr}`);
-    approx(height*dpr,Math.round(height*dpr),`${order}x${order} device-pixel height at DPR ${dpr}`);
-    approx((left*2)+width,box.width,`${order}x${order} horizontal center at DPR ${dpr}`);
-    approx((top*2)+height,box.height,`${order}x${order} vertical center at DPR ${dpr}`);
-    assert.ok(Number(card.dataset.previewStickerDevicePixels)>0);
-    assert.equal(Number(card.dataset.previewSeparatorDevicePixels),1);
+      assert.ok(widthCorrection>=0&&widthCorrection<2+1e-6);
+      assert.ok(heightCorrection>=0&&heightCorrection<2+1e-6);
+      approx(width*dpr,Math.round(width*dpr),`${order}x${order} device-pixel width at DPR ${dpr}`);
+      approx(height*dpr,Math.round(height*dpr),`${order}x${order} device-pixel height at DPR ${dpr}`);
+      approx(absoluteLeft*dpr,Math.round(absoluteLeft*dpr),`${order}x${order} snapped absolute left at DPR ${dpr}`);
+      approx(absoluteTop*dpr,Math.round(absoluteTop*dpr),`${order}x${order} snapped absolute top at DPR ${dpr}`);
+      assert.ok(Math.abs((absoluteLeft-targetLeft)*dpr)<=.5+1e-6,'Horizontal centering may deviate by at most half a physical pixel.');
+      assert.ok(Math.abs((absoluteTop-targetTop)*dpr)<=.5+1e-6,'Vertical centering may deviate by at most half a physical pixel.');
+      approx(box.width*dpr,Number(card.dataset.previewCenteredDeviceWidth),`${order}x${order} corrected content width at DPR ${dpr}`);
+      approx(box.height*dpr,Number(card.dataset.previewCenteredDeviceHeight),`${order}x${order} corrected content height at DPR ${dpr}`);
+      assert.ok(Number(card.dataset.previewStickerDevicePixels)>0);
+      assert.equal(Number(card.dataset.previewSeparatorDevicePixels),expectedLineWidth);
+      assert.equal(Number(card.dataset.previewLineDevicePixels),expectedLineWidth);
+      assert.equal(Number(card.dataset.previewSelectedLineWidth),selectedLineWidth);
+      assert.equal(svg.style.transform,'');
 
-    cases.push({order,dpr,widthCorrection,heightCorrection});
-    card.remove();
+      cases.push({order,dpr,selectedLineWidth,expectedLineWidth,widthCorrection,heightCorrection});
+      card.remove();
+    }
   }
 }
 
@@ -116,8 +131,10 @@ console.log(JSON.stringify({
   ok:true,
   cases:cases.length,
   orders:[2,3,4],
+  selectedLineWidths:[1,2,3,4],
   devicePixelRatios:[1,1.25,1.5,2],
-  exactCardCenter:true,
+  absoluteOriginSnapped:true,
+  maximumCenterErrorDevicePixels:.5,
   equalStickerGeometry:true,
   domFallbackCentered:true
 },null,2));
