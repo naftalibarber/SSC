@@ -32,15 +32,14 @@
     gridStrokeWidth:0,
     layoutStyle:'ssc-standard'
   });
-  // The 2x2 through 4x4 profiles use one continuous black grid behind every
-  // sticker. Adjacent faces overlap that grid by one device pixel, so the
-  // shared border is exactly as thick as every internal separator. Keep them
-  // order-specific so every other NxN preview is unchanged.
+  // The 2x2 through 4x4 profiles use one connected SVG grid path per face.
+  // preview-sizing.js fits these profiles in physical device pixels, keeping
+  // every line and sticker exact while preserving the space between faces.
   const CSTIMER_2X2_GEOMETRY=Object.freeze({
     stickerSize:44,
     stickerGap:1,
     facePadding:1,
-    faceGap:-1,
+    faceGap:15,
     outerPadding:4,
     stickerRadius:0,
     faceRadius:0,
@@ -54,7 +53,7 @@
     stickerSize:30,
     stickerGap:1,
     facePadding:1,
-    faceGap:-1,
+    faceGap:10,
     outerPadding:3,
     stickerRadius:0,
     faceRadius:0,
@@ -68,7 +67,7 @@
     stickerSize:22,
     stickerGap:1,
     facePadding:1,
-    faceGap:-1,
+    faceGap:7,
     outerPadding:2,
     stickerRadius:0,
     faceRadius:0,
@@ -150,7 +149,7 @@
     const maximumSticker=Math.max(1,Math.floor(Math.min(availableWidth/(4*n),availableHeight/(3*n))));
 
     for(let stickerSize=maximumSticker;stickerSize>=1;stickerSize--){
-      const faceGap=-1;
+      const faceGap=Math.max(1,Math.round(stickerSize/3));
       const outerPadding=Math.max(1,Math.round(stickerSize/10));
       const faceSize=(stickerSize*n)+(stickerGap*(n-1))+(facePadding*2);
       const step=faceSize+faceGap;
@@ -188,43 +187,18 @@
     });
   }
 
-  function connectedGridPath(geometry){
-    const [upperX,upperY]=faceOrigin('U',geometry);
-    const [leftX,rowY]=faceOrigin('L',geometry);
-    const [,downY]=faceOrigin('D',geometry);
-    const [backX]=faceOrigin('B',geometry);
-    const faceSize=geometry.faceSize;
-    const upperRight=upperX+faceSize;
-    const rowRight=backX+faceSize;
-    const rowBottom=rowY+faceSize;
-    const downBottom=downY+faceSize;
-
-    // A single closed polygon is the exact union of the horizontal and
-    // vertical bars of the cube net. It has no separate face backgrounds and
-    // therefore no doubled or merely touching border segments.
-    return[
-      `M ${upperX} ${upperY}`,
-      `H ${upperRight}`,
-      `V ${rowY}`,
-      `H ${rowRight}`,
-      `V ${rowBottom}`,
-      `H ${upperRight}`,
-      `V ${downBottom}`,
-      `H ${upperX}`,
-      `V ${rowBottom}`,
-      `H ${leftX}`,
-      `V ${rowY}`,
-      `H ${upperX}`,
-      'Z'
-    ].join(' ');
-  }
-
-  function appendConnectedGridBackground(svg,geometry){
-    svg.appendChild(svgElement('path',{
-      class:'ssc-svg-connected-grid-background',
-      d:connectedGridPath(geometry),
-      'aria-hidden':'true'
-    }));
+  function faceGridPath(order,geometry){
+    const edge=.5;
+    const farEdge=geometry.faceSize-edge;
+    const commands=[
+      `M ${edge} ${edge} H ${farEdge} V ${farEdge} H ${edge} Z`
+    ];
+    for(let index=1;index<order;index++){
+      const line=geometry.facePadding+(index*geometry.stickerSize)+((index-1)*geometry.stickerGap)+(geometry.stickerGap/2);
+      commands.push(`M ${line} ${edge} V ${farEdge}`);
+      commands.push(`M ${edge} ${line} H ${farEdge}`);
+    }
+    return commands.join(' ');
   }
 
   function appendFace(svg,face,faceMatrix,order,colors,prefix,geometry){
@@ -278,6 +252,15 @@
       }
     }
 
+    if(PIXEL_PERFECT_ORDERS.includes(order)){
+      group.appendChild(svgElement('path',{
+        class:'ssc-svg-face-grid',
+        d:faceGridPath(order,geometry),
+        'stroke-width':geometry.stickerGap,
+        'aria-hidden':'true'
+      }));
+    }
+
     svg.appendChild(group);
   }
 
@@ -289,9 +272,6 @@
     svg.setAttribute('preserveAspectRatio','xMinYMin meet');
     svg.setAttribute('shape-rendering','crispEdges');
     svg.setAttribute('data-pixel-perfect-grid','true');
-
-    const connectedGrid=svg.querySelectorAll('.ssc-svg-connected-grid-background')[0];
-    if(connectedGrid)connectedGrid.setAttribute('d',connectedGridPath(geometry));
 
     svg.querySelectorAll('.ssc-svg-face[data-face]').forEach(group=>{
       const face=group.dataset.face;
@@ -313,6 +293,12 @@
         sticker.removeAttribute('stroke');
         sticker.removeAttribute('stroke-width');
       });
+
+      const grid=[...group.children].find(node=>node.classList?.contains('ssc-svg-face-grid'));
+      if(grid){
+        grid.setAttribute('d',faceGridPath(order,geometry));
+        grid.setAttribute('stroke-width',String(geometry.stickerGap));
+      }
     });
 
     return geometry;
@@ -344,8 +330,6 @@
       'data-layout-style':geometry.layoutStyle,
       'data-preview-engine':'ssc-svg-v1'
     });
-
-    if(PIXEL_PERFECT_ORDERS.includes(order))appendConnectedGridBackground(svg,geometry);
 
     for(const face of getCore().FACE_ORDER){
       appendFace(svg,face,state.faces[face],order,palette,prefix,geometry);
@@ -388,7 +372,7 @@
     CSTIMER_4X4_GEOMETRY,
     PIXEL_PERFECT_ORDERS,
     geometryFor,
-    connectedGridPath,
+    faceGridPath,
     pixelPerfectCubeGeometry,
     pixelPerfect3x3Geometry,
     centerPixelPerfectGeometry,
