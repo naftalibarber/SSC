@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
+      - 'code/css/training-upgrades.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
@@ -29,6 +30,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
+      - 'code/css/training-upgrades.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
@@ -78,5 +80,5 @@ jobs:
         run: node tests/preview-line-width.mjs
       - name: Validate production integration and fallback
         run: node tests/preview-integration.mjs
-      - name: Validate toolbar icons and labels
-        run: node tests/ui-icons.mjs
+      - name: Validate UI regressions
+        run: for test in tests/ui-*.mjs; do node "$test"; done
