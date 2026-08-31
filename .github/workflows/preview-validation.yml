@@ -68,5 +68,7 @@ jobs:
         run: node tests/preview-rendering.mjs
       - name: Validate pixel-perfect preview centering
         run: node tests/preview-centering.mjs
+      - name: Validate cube line-width settings
+        run: node tests/preview-line-width.mjs
       - name: Validate production integration and fallback
         run: node tests/preview-integration.mjs

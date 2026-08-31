@@ -167,6 +167,12 @@ assert.match(sizingSource,/data-cube-order="3"/,'3x3 SVG must remain routed thro
 assert.match(sizingSource,/data-cube-order="4"/,'4x4 SVG must be routed through the shared pixel-perfect fitter.');
 assert.match(sizingSource,/previewStickerDevicePixels/,'Pixel-perfect fits must expose their physical sticker size for diagnostics.');
 assert.match(settingsSource,/const PREVIEW_DEFAULT=200;/);
+assert.match(settingsSource,/const CUBE_LINE_WIDTH_MIN=1;/);
+assert.match(settingsSource,/const CUBE_LINE_WIDTH_MAX=4;/);
+assert.match(settingsSource,/const CUBE_LINE_WIDTH_DEFAULT=1;/);
+assert.match(settingsSource,/cubeLineWidth:CUBE_LINE_WIDTH_DEFAULT/);
+assert.match(settingsSource,/--ssc-cube-line-width/);
+assert.match(settingsSource,/id="cubeLineWidthRange"/);
 assert.match(legacyPreviewSource,/D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'/);
 assert.match(legacyPreviewSource,/const cubeHref='\.\/code\/css\/cube-preview\.css\?v=20260831-connected-face-grids-1';/,'The preview fallback stylesheet must match the connected-face-grid release.');
 assert.doesNotMatch(legacyPreviewSource,/if\(existing\)existing\.href=cubeHref/,'Runtime setup must not replace the stylesheet version declared by index.html.');
@@ -196,10 +202,11 @@ assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be d
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
 assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-connected-face-grids-1/);
-assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-connected-face-grids-1/);
+assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-connected-face-grids-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-connected-face-grids-1/);
 assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-connected-face-grids-1/);
+assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
 assert.match(index,/code\/js\/puzzle-3d\.js/);
@@ -233,5 +240,6 @@ console.log(JSON.stringify({
   languageLayoutParity:true,
   languageAwarePreviewSide:true,
   pixelPerfectCentering:true,
-  connectedGridPathPerFace:true
+  connectedGridPathPerFace:true,
+  adjustableCubeLineWidth:true
 },null,2));

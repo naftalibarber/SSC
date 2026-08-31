@@ -360,6 +360,7 @@ assert.doesNotMatch(cssSource,/non-scaling-stroke/i);
 assert.match(cssSource,/width:\s*100%/);
 assert.match(cssSource,/height:\s*100%/);
 assert.match(cssSource,/\.ssc-svg-face-grid\s*\{[\s\S]*?stroke:#000;/);
+assert.match(cssSource,/stroke-width:var\(--ssc-cube-line-width,1\);/);
 
 console.log('[SSC Preview CI] Rendering summary');
 console.log(JSON.stringify({
