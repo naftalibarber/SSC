@@ -19,6 +19,13 @@
   fill:#111827;
 }
 
+.ssc-native-preview-svg .ssc-svg-connected-grid-background{
+  fill:#000;
+  stroke:none;
+  pointer-events:none;
+  shape-rendering:crispEdges;
+}
+
 .ssc-native-preview-svg .ssc-svg-sticker{
   shape-rendering:geometricPrecision;
 }

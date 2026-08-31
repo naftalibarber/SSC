@@ -61,8 +61,8 @@ html[lang="he"] .cube-preview-card{
   position:relative!important;
   z-index:1!important;
   display:grid!important;
-  grid-template-columns:repeat(4,var(--ssc-preview-face))!important;
-  grid-template-rows:repeat(3,var(--ssc-preview-face))!important;
+  grid-template-columns:repeat(3,var(--ssc-preview-step,var(--ssc-preview-face))) var(--ssc-preview-face)!important;
+  grid-template-rows:repeat(2,var(--ssc-preview-step,var(--ssc-preview-face))) var(--ssc-preview-face)!important;
   gap:var(--ssc-preview-net-gap)!important;
   width:max-content!important;
   height:max-content!important;
@@ -74,7 +74,7 @@ html[lang="he"] .cube-preview-card{
   filter:none!important;
 }
 
-/* One background + one uniform gap prevents doubled borders. */
+/* DOM fallback faces overlap by one device pixel, creating one shared border. */
 .cube-preview-face{
   width:var(--ssc-preview-face)!important;
   height:var(--ssc-preview-face)!important;
@@ -90,7 +90,7 @@ html[lang="he"] .cube-preview-card{
   overflow:hidden!important;
   border:0!important;
   border-radius:0!important;
-  background:#222!important;
+  background:#000!important;
   box-shadow:none!important;
 }
 

@@ -119,8 +119,8 @@
     const n=Math.max(2,Number(net.dataset.cubeOrder)||3);
     const availableWidth=Math.max(1,Math.floor(box.width*dpr));
     const availableHeight=Math.max(1,Math.floor(box.height*dpr));
-    const netGap=Math.max(1,Math.round(BASE_NET_GAP*actualScale*dpr));
-    const separator=Math.max(1,Math.round(dpr));
+    const separator=1;
+    const netGap=-separator;
     const padding=separator;
     const fixed=(padding*2)+(separator*(n-1));
     const maximumFace=Math.max(fixed+n,Math.floor(Math.min(
@@ -131,6 +131,7 @@
     const face=(sticker*n)+fixed;
     return Object.freeze({
       n,dpr,availableWidth,availableHeight,sticker,separator,padding,face,netGap,
+      step:face+netGap,
       width:(face*4)+(netGap*3),height:(face*3)+(netGap*2)
     });
   }
@@ -164,10 +165,11 @@
     const {box:correctedBox}=applyPixelPerfectCardCorrection(container,geometry,dpr);
     const n=geometry.n;
     const sticker=geometry.sticker/dpr,separator=geometry.separator/dpr,padding=geometry.padding/dpr;
-    const face=geometry.face/dpr,netGap=geometry.netGap/dpr;
+    const face=geometry.face/dpr,step=geometry.step/dpr;
     const width=geometry.width/dpr,height=geometry.height/dpr;
     net.style.setProperty('--ssc-preview-face',`${face}px`);
-    net.style.setProperty('--ssc-preview-net-gap',`${netGap}px`);
+    net.style.setProperty('--ssc-preview-step',`${step}px`);
+    net.style.setProperty('--ssc-preview-net-gap','0px');
     net.style.setProperty('--ssc-preview-detail-scale',String(actualScale));
     net.style.setProperty('width',`${width}px`,'important');
     net.style.setProperty('height',`${height}px`,'important');
