@@ -43,10 +43,18 @@
     return clamped;
   }
 
+  function smallestViewportLength(fallback,...values){
+    const valid=values.map(Number).filter(value=>Number.isFinite(value)&&value>0);
+    return Math.max(1,Math.floor(valid.length?Math.min(...valid):fallback));
+  }
+
   function viewportMetrics(){
-    const viewport=window.visualViewport;
-    const viewportWidth=Math.max(1,Math.floor(viewport?.width||window.innerWidth||document.documentElement.clientWidth||BASE_CARD_WIDTH));
-    const viewportHeight=Math.max(1,Math.floor(viewport?.height||window.innerHeight||document.documentElement.clientHeight||BASE_CARD_HEIGHT));
+    const viewport=window.visualViewport,root=document.documentElement;
+    // During browser zoom and mobile chrome transitions visualViewport can
+    // briefly lag behind the layout viewport. The smaller live measurement is
+    // the only one that guarantees the fixed preview remains fully visible.
+    const viewportWidth=smallestViewportLength(BASE_CARD_WIDTH,viewport?.width,window.innerWidth,root.clientWidth);
+    const viewportHeight=smallestViewportLength(BASE_CARD_HEIGHT,viewport?.height,window.innerHeight,root.clientHeight);
     const mobile=viewportWidth<=560;
     return{viewportWidth,viewportHeight,mobile,safeMargin:mobile?16:18};
   }

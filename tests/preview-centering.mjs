@@ -24,6 +24,15 @@ function setDpr(value){
   Object.defineProperty(window,'devicePixelRatio',{value,configurable:true});
 }
 
+function setViewport(width,height,visualWidth=width,visualHeight=height){
+  Object.defineProperty(window,'innerWidth',{value:width,configurable:true});
+  Object.defineProperty(window,'innerHeight',{value:height,configurable:true});
+  Object.defineProperty(window,'visualViewport',{
+    value:{width:visualWidth,height:visualHeight},
+    configurable:true
+  });
+}
+
 function makeCard(baseWidth=232,baseHeight=176,baseLeft=13.37,baseTop=9.23){
   const card=window.document.createElement('div');
   card.__baseWidth=baseWidth;
@@ -52,6 +61,40 @@ function contentBox(card){
   const top=rect.top+(parseFloat(style.borderTopWidth)||0)+(parseFloat(style.paddingTop)||0);
   return{left,top,width:rect.width-horizontal,height:rect.height-vertical};
 }
+
+
+const previewCss=fs.readFileSync('code/css/cube-preview.css','utf8');
+const previewCardRule=previewCss.match(/\.cube-preview-card\{([\s\S]*?)\n\}/)?.[1]||'';
+assert.match(previewCardRule,/min-width:0!important;/,'The card minimum width must not defeat its viewport maximum.');
+assert.match(previewCardRule,/min-height:0!important;/,'The card minimum height must not defeat its viewport maximum.');
+assert.doesNotMatch(previewCardRule,/min-width:calc\(var\(--ssc-preview-card-width/);
+assert.doesNotMatch(previewCardRule,/min-height:calc\(var\(--ssc-preview-card-height/);
+assert.match(previewCardRule,/max-width:calc\(100dvw/,'Dynamic viewport width must have an explicit safety cap.');
+
+const viewportCases=[
+  {width:367,height:259,visualWidth:390,visualHeight:287},
+  {width:540,height:320,visualWidth:720,visualHeight:480},
+  {width:800,height:420,visualWidth:1200,visualHeight:900}
+];
+for(const viewportCase of viewportCases){
+  const {width,height,visualWidth,visualHeight}=viewportCase;
+  setViewport(width,height,visualWidth,visualHeight);
+  const safeMargin=width<=560?16:18;
+  for(const previewSize of [150,200,300,400,500]){
+    window.SSCPreviewSizing.setPreviewSize(previewSize);
+    const rootStyle=window.document.documentElement.style;
+    const cardWidth=parseFloat(rootStyle.getPropertyValue('--ssc-preview-card-width'));
+    const cardHeight=parseFloat(rootStyle.getPropertyValue('--ssc-preview-card-height'));
+    assert.ok(cardWidth<=width-(safeMargin*2)+1e-6,'Preview width must stay inside both safe margins.');
+    assert.ok(cardHeight<=height-(safeMargin*2)+1e-6,'Preview height must stay inside both safe margins.');
+    assert.ok((width-cardWidth)/2>=safeMargin-1e-6,'Both horizontal sides must retain a safe margin.');
+    assert.ok((height-cardHeight)/2>=safeMargin-1e-6,'Both vertical sides must retain a safe margin.');
+    assert.ok(Math.abs((cardWidth/116)-(cardHeight/88))<.0002,'Viewport fitting must preserve the card aspect ratio.');
+    assert.equal(rootStyle.getPropertyValue('--ssc-preview-safe-margin'),`${safeMargin}px`);
+  }
+}
+setViewport(1024,768);
+window.SSCPreviewSizing.setPreviewSize(200);
 
 setDpr(1);
 window.document.documentElement.style.setProperty('--ssc-cube-line-width','4');
@@ -170,7 +213,9 @@ console.log(JSON.stringify({
   absoluteOriginSnapped:true,
   maximumCenterErrorDevicePixels:.5,
   equalStickerGeometry:true,
-  domFallbackCentered:true
+  domFallbackCentered:true,
+  viewportClippingProtected:true,
+  viewportCases
 },null,2));
 
 dom.window.close();
