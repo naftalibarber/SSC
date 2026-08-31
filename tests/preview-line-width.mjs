@@ -42,8 +42,8 @@ assert.equal(range.value,'1');
 assert.equal(output.textContent,'1 px');
 assert.equal(window.document.documentElement.style.getPropertyValue('--ssc-cube-line-width'),'1');
 
-const stateSentinel={order:3,faces:{U:[['U']]}};
-const scrambleSentinel="R U R' U'";
+const stateSentinel={order:5,faces:{U:[['U']]}};
+const scrambleSentinel="Rw U2 Fw' L D2";
 const stateBefore=JSON.stringify(stateSentinel);
 const updatesBeforeInput=liveGeometryUpdates;
 range.value='3';
@@ -53,7 +53,7 @@ assert.equal(window.document.documentElement.style.getPropertyValue('--ssc-cube-
 assert.equal(JSON.parse(window.localStorage.getItem('sscGeneralSettingsV1')).cubeLineWidth,3);
 assert.ok(liveGeometryUpdates>updatesBeforeInput,'The slider input must synchronously request a fresh preview fit.');
 assert.equal(JSON.stringify(stateSentinel),stateBefore,'Line-width input must not mutate cube state.');
-assert.equal(scrambleSentinel,"R U R' U'",'Line-width input must not mutate the current scramble.');
+assert.equal(scrambleSentinel,"Rw U2 Fw' L D2",'Line-width input must not mutate the current 5x5 scramble.');
 
 range.value='4';
 range.dispatchEvent(new window.Event('input',{bubbles:true}));

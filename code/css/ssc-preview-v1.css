@@ -23,7 +23,7 @@
   shape-rendering:geometricPrecision;
 }
 
-/* 2x2 through 4x4: classic csTimer-style flat nets. Other cube orders retain the
+/* 2x2 through 5x5: classic csTimer-style flat nets. Other cube orders retain the
    existing rounded Premium SVG geometry and theme treatment. */
 .ssc-native-preview-svg[data-layout-style^="cstimer-"] .ssc-svg-sticker{
   stroke:none;
@@ -40,7 +40,7 @@ html[data-theme="oled"] .ssc-native-preview-svg .ssc-svg-face-background{
   fill:#050607;
 }
 
-/* 2x2 through 4x4 always use one truly black, uninterrupted rectangle behind
+/* 2x2 through 5x5 always use one truly black, uninterrupted rectangle behind
    each face. This rule follows the theme rules intentionally; larger cubes
    keep their existing theme-aware face backgrounds. */
 html .ssc-native-preview-svg[data-pixel-perfect-grid="true"] .ssc-svg-face-background{

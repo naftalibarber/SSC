@@ -78,8 +78,8 @@ await load('code/js/preview/ssc-nxn-state.js');
 await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
 
-const sizes=[150,200,300,400];
-const PIXEL_PERFECT_ORDERS=[2,3,4];
+const sizes=[150,200,300,400,500];
+const PIXEL_PERFECT_ORDERS=[2,3,4,5];
 const CSTIMER_COLORS={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
 const cases={
   2:['',"R U2 F' R2 U' F2 R U'"],
@@ -324,8 +324,8 @@ function validateRender(order,scramble){
     assert.equal(geometry.stickerGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerGap);
     assert.equal(geometry.faceGap,globalThis.SSCSvgCubeRenderer.GEOMETRY.faceGap);
     assert.equal(geometry.stickerRadius,globalThis.SSCSvgCubeRenderer.GEOMETRY.stickerRadius);
-    assert.equal(faceGrids.length,0,'5x5 and larger must retain their existing renderer geometry.');
-    assert.equal(faceBackgrounds.length,6,'5x5 and larger must retain one background per face.');
+    assert.equal(faceGrids.length,0,'6x6 and larger must retain their existing renderer geometry.');
+    assert.equal(faceBackgrounds.length,6,'6x6 and larger must retain one background per face.');
   }
   return{container,svg,stickers,ids:stickers.map(sticker=>sticker.dataset.stickerId),layers:stickers.map(sticker=>sticker.dataset.layer)};
 }
@@ -339,6 +339,33 @@ for(const [orderText,scrambles] of Object.entries(cases)){
   assert.deepEqual(scrambled.ids,solved.ids,`${order}x${order} semantic sticker IDs changed after scramble.`);
   assert.notDeepEqual(scrambled.layers,solved.layers,`${order}x${order} scramble did not change rendered sticker identities.`);
 }
+
+const fiveMoveCases=['R',"U'",'F2','Rw',"Uw'",'Fw2'];
+const fiveMoveContainer=new FakeElement('div');
+fiveMoveContainer.id='five-move-preview';
+const solvedFive=globalThis.SSCPreviewV1.render(fiveMoveContainer,'','555',{strict:true});
+const solvedFiveLayers=descendants(solvedFive.svg,node=>node.classList.contains('ssc-svg-sticker')).map(node=>node.dataset.layer);
+for(const scramble of fiveMoveCases){
+  const movedFive=globalThis.SSCPreviewV1.render(fiveMoveContainer,scramble,'555',{strict:true});
+  const movedStickers=descendants(movedFive.svg,node=>node.classList.contains('ssc-svg-sticker'));
+  assert.equal(movedStickers.length,150);
+  assert.notDeepEqual(
+    movedStickers.map(node=>node.dataset.layer),
+    solvedFiveLayers,
+    `5x5 move ${scramble} must produce a non-solved sticker state.`
+  );
+}
+
+const languageContainer=new FakeElement('div');
+languageContainer.id='five-language-preview';
+document.documentElement.lang='he';
+const hebrewFive=globalThis.SSCPreviewV1.render(languageContainer,"Rw U2 Fw' L D2",'555',{strict:true});
+const hebrewFiveState=descendants(hebrewFive.svg,node=>node.classList.contains('ssc-svg-sticker')).map(node=>({id:node.dataset.stickerId,layer:node.dataset.layer}));
+document.documentElement.lang='en';
+const englishFive=globalThis.SSCPreviewV1.render(languageContainer,"Rw U2 Fw' L D2",'555',{strict:true});
+const englishFiveState=descendants(englishFive.svg,node=>node.classList.contains('ssc-svg-sticker')).map(node=>({id:node.dataset.stickerId,layer:node.dataset.layer}));
+assert.deepEqual(englishFiveState,hebrewFiveState,'Changing language must not change the 5x5 cube state.');
+document.documentElement.lang='he';
 
 const colorContainer=new FakeElement('div');
 colorContainer.id='color-preview';
@@ -382,6 +409,12 @@ globalThis.SSCPreviewV1.render(reusedContainer,'','555',{strict:true});
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-2x2'),false,'2x2-only style leaked into 5x5.');
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-3x3'),false,'3x3-only style leaked into 5x5.');
 assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-4x4'),false,'4x4-only style leaked into 5x5.');
+assert.equal(reusedContainer.classList.contains('ssc-preview-cstimer-5x5'),true);
+assert.equal(reusedContainer.dataset.previewLayout,'cstimer-5x5');
+globalThis.SSCPreviewV1.render(reusedContainer,'','666',{strict:true});
+for(const profileOrder of PIXEL_PERFECT_ORDERS){
+  assert.equal(reusedContainer.classList.contains(`ssc-preview-cstimer-${profileOrder}x${profileOrder}`),false,`${profileOrder}x${profileOrder} style leaked into 6x6.`);
+}
 assert.equal(reusedContainer.dataset.previewLayout,'ssc-standard');
 
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
@@ -402,7 +435,7 @@ assert.match(cssSource,/data-pixel-perfect-grid="true"[\s\S]*?fill:#000;/);
 console.log('[SSC Preview CI] Rendering summary');
 console.log(JSON.stringify({
   ok:true,
-  renderedStates:rendered+2,
+  renderedStates:rendered+fiveMoveCases.length+4,
   orders:[2,3,4,5,6,7],
   sizes,
   semanticIdsStable:true,
@@ -410,13 +443,14 @@ console.log(JSON.stringify({
   cstimerDefaultPalette:true,
   savedPalettePreserved:true,
   scrambleUpdates:true,
-  cstimer2x2Through4x4Profiles:true,
+  cstimer2x2Through5x5Profiles:true,
+  fiveByFiveMoveCases:fiveMoveCases,
   integerDevicePixelOrders:PIXEL_PERFECT_ORDERS,
   geometryCombinationCount,
   continuousBackgroundPerFace:true,
   svgStrokeGridRemoved:true,
   faceSpacingPreserved:true,
-  symmetric2x2Through4x4Axes:true,
+  symmetric2x2Through5x5Axes:true,
   devicePixelCentering:true,
   otherOrdersUnchanged:true,
   mirroringHacks:false
