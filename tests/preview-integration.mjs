@@ -210,7 +210,7 @@ assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-connected-face-grid
 assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-connected-face-grids-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-1/);
-assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-physical-face-grid-1/);
+assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-physical-face-grid-2/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);

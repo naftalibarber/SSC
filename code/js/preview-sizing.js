@@ -270,10 +270,18 @@
       ':scope > .ssc-preview-content > .ssc-native-preview-svg[data-cube-order="4"]'
     ].join(','));
     if(pixelPerfectSvg&&window.SSCSvgCubeRenderer?.fitPixelPerfectCubeToBox){
-      const geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(
-        pixelPerfectSvg,box.width,box.height,dpr,selectedLineWidth
-      );
+      let geometry;
+      try{
+        geometry=window.SSCSvgCubeRenderer.fitPixelPerfectCubeToBox(
+          pixelPerfectSvg,box.width,box.height,dpr,selectedLineWidth
+        );
+      }catch(error){
+        if(!(error instanceof RangeError))throw error;
+        container.dataset.previewFitPending='true';
+        return false;
+      }
       if(geometry){
+        delete container.dataset.previewFitPending;
         const {centering,box:correctedBox}=applyPixelPerfectCardCorrection(container,geometry,dpr);
         const placement=snapPixelPerfectPlacement(correctedBox,geometry,dpr);
         pixelPerfectSvg.style.width=`${placement.cssWidth}px`;
