@@ -1,7 +1,10 @@
 (() => {
   'use strict';
 
-  const V1_EVENTS=new Set(['222','333','444','555','666','777']);
+  const V1_EVENTS=new Set([
+    '222','333','444','555','666','777',
+    '333bf','333fm','333oh'
+  ]);
   const LEGACY_3D_DIMENSIONS=[
     'display','width','min-width','height','min-height','--ssc-3d-width','--ssc-3d-height'
   ];
