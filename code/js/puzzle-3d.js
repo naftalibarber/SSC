@@ -2,8 +2,13 @@
   'use strict';
 
   const LEGACY_3D=window.SSCPuzzle3D||null;
-  const NATIVE_EVENT_IDS=new Set(['333','333bf','333fm','333oh','333mbf']);
+  const NATIVE_EVENT_ORDERS=new Map([
+    ['222',2],
+    ['333',3],['333bf',3],['333fm',3],['333oh',3],['333mbf',3]
+  ]);
+  const NATIVE_EVENT_IDS=new Set(NATIVE_EVENT_ORDERS.keys());
   const EVENT_ALIASES=Object.freeze({
+    '2x2':'222','2×2':'222','222':'222',
     '3x3':'333','3×3':'333','333':'333',
     '3bld':'333bf','333bf':'333bf','3x3bf':'333bf',
     'fmc':'333fm','333fm':'333fm',
@@ -24,13 +29,33 @@
     return EVENT_ALIASES[raw]||raw;
   }
 
+  function nativeOrder(value){return NATIVE_EVENT_ORDERS.get(normalizeEventId(value))||null;}
   function isNativeEvent(value){return NATIVE_EVENT_IDS.has(normalizeEventId(value));}
   function supportsEvent(value){return isNativeEvent(value)||Boolean(LEGACY_3D?.supportsEvent?.(value));}
   function getEvent(value){
     const id=normalizeEventId(value);
     if(isNativeEvent(id)){
-      const legacy=LEGACY_3D?.getEvent?.(id);
-      return legacy||{id,label:id==='333'?'3×3':id.toUpperCase(),name:'3x3x3 Cube',family:'cube',puzzle:'3x3x3'};
+      const order=nativeOrder(id);
+      const twoByTwo=order===2;
+      const fallback={
+        id,
+        label:twoByTwo?'2×2':id==='333'?'3×3':id.toUpperCase(),
+        name:twoByTwo?'2x2x2 Cube':'3x3x3 Cube',
+        family:'cube',
+        puzzle:twoByTwo?'2x2x2':'3x3x3',
+        order
+      };
+      const legacy=LEGACY_3D?.getEvent?.(id)||null;
+      return Object.freeze({
+        ...fallback,
+        ...(legacy||{}),
+        id,
+        order,
+        puzzle:fallback.puzzle,
+        label:twoByTwo?'2×2':legacy?.label||fallback.label,
+        name:legacy?.name||fallback.name,
+        family:legacy?.family||fallback.family
+      });
     }
     return LEGACY_3D?.getEvent?.(value)||null;
   }
@@ -41,6 +66,7 @@
     style.id='sscNativeCube3DStyles';
     style.textContent=`
       .ssc-native-cube3d-root{
+        --ssc-native-order:3;
         --ssc-native-cube-size:150px;
         --ssc-native-cube-half:75px;
         position:relative;
@@ -81,8 +107,8 @@
         position:absolute;inset:0;
         box-sizing:border-box;
         display:grid;
-        grid-template-columns:repeat(3,minmax(0,1fr));
-        grid-template-rows:repeat(3,minmax(0,1fr));
+        grid-template-columns:repeat(var(--ssc-native-order),minmax(0,1fr));
+        grid-template-rows:repeat(var(--ssc-native-order),minmax(0,1fr));
         gap:2.4%;
         padding:3.6%;
         border:1px solid rgba(0,0,0,.88);
@@ -187,7 +213,7 @@
       if(className.startsWith('wca-family-')||className.startsWith('wca-event-'))container.classList.remove(className);
     });
     container.classList.remove('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','ssc-preview-3d-static','ssc-preview-3d-unavailable','wca-preview-ready');
-    for(const key of ['previewReady','previewEngine','previewMode','wcaEvent','wcaPuzzle'])delete container.dataset[key];
+    for(const key of ['previewReady','previewEngine','previewMode','wcaEvent','wcaPuzzle','puzzle'])delete container.dataset[key];
   }
 
   function disposeNative(container,{clear=true}={}){
@@ -198,12 +224,12 @@
     if(clear)container.replaceChildren();
   }
 
-  function createFace(side,faces,colors){
+  function createFace(side,faces,colors,order){
     const face=document.createElement('div');
     face.className='ssc-native-cube3d-face';
     face.dataset.side=side;
-    for(let row=0;row<3;row++){
-      for(let col=0;col<3;col++){
+    for(let row=0;row<order;row++){
+      for(let col=0;col<order;col++){
         const identity=faces?.[side]?.[row]?.[col]||side;
         const sticker=document.createElement('span');
         sticker.className='ssc-native-cube3d-sticker';
@@ -223,7 +249,11 @@
     const rect=state.root.getBoundingClientRect();
     const shortSide=Math.max(120,Math.min(rect.width||0,rect.height||0));
     const modal=Boolean(state.root.closest('.ssc-preview-3d-viewer'));
-    const cubeSize=Math.max(modal?190:92,Math.min(modal?430:166,shortSide*(modal?.60:.68)));
+    const isTwoByTwo=state.order===2;
+    const factor=isTwoByTwo?(modal?.66:.76):(modal?.60:.68);
+    const minSize=modal?(isTwoByTwo?205:190):(isTwoByTwo?98:92);
+    const maxSize=modal?(isTwoByTwo?455:430):(isTwoByTwo?172:166);
+    const cubeSize=Math.max(minSize,Math.min(maxSize,shortSide*factor));
     state.root.style.setProperty('--ssc-native-cube-size',`${cubeSize}px`);
     state.root.style.setProperty('--ssc-native-cube-half',`${cubeSize/2}px`);
   }
@@ -244,8 +274,8 @@
     container.dataset.previewEngine='ssc-native-css3d-solid';
     container.dataset.previewReady='true';
     container.dataset.wcaEvent=event.id;
-    container.dataset.wcaPuzzle='3x3x3';
-    container.dataset.puzzle=event.label||'3×3';
+    container.dataset.wcaPuzzle=event.puzzle;
+    container.dataset.puzzle=event.label;
   }
 
   function renderNative(container,scramble,eventValue){
@@ -255,25 +285,29 @@
     disposeNative(container);
     LEGACY_3D?.dispose?.(container);
 
-    const event=getEvent(eventValue)||{id:'333',label:'3×3',name:'3x3x3 Cube'};
-    const cubeState=window.SSCNxNState.buildState(scramble,3,{strict:true});
+    const event=getEvent(eventValue)||getEvent('333');
+    const order=nativeOrder(event?.id)||event?.order||3;
+    const cubeState=window.SSCNxNState.buildState(scramble,order,{strict:true});
     const colors=palette();
     const root=document.createElement('div');
     root.className='ssc-native-cube3d-root ssc-puzzle-3d-player';
+    root.dataset.cubeOrder=String(order);
+    root.style.setProperty('--ssc-native-order',String(order));
     root.tabIndex=interactiveEnabled?0:-1;
     root.setAttribute('role','img');
-    root.setAttribute('aria-label',document.documentElement.lang==='en'?'Interactive 3D 3x3 scramble preview':'תצוגת ערבוב תלת־ממדית אינטראקטיבית של 3x3');
+    const sizeLabel=`${order}x${order}`;
+    root.setAttribute('aria-label',document.documentElement.lang==='en'?`Interactive 3D ${sizeLabel} scramble preview`:`תצוגת ערבוב תלת־ממדית אינטראקטיבית של ${sizeLabel}`);
 
     const stage=document.createElement('div');
     stage.className='ssc-native-cube3d-stage';
     const cube=document.createElement('div');
     cube.className='ssc-native-cube3d-cube';
-    FACE_ORDER.forEach(side=>cube.appendChild(createFace(side,cubeState.faces,colors)));
+    FACE_ORDER.forEach(side=>cube.appendChild(createFace(side,cubeState.faces,colors,order)));
     stage.appendChild(cube);
     root.appendChild(stage);
     container.replaceChildren(root);
 
-    const state={root,cube,cubeState,event,camera:{...INITIAL_CAMERA},listeners:null,resizeObserver:null};
+    const state={root,cube,cubeState,event,order,camera:{...INITIAL_CAMERA},listeners:null,resizeObserver:null};
     states.set(container,state);
     activeContainers.add(container);
     bindInteraction(root,state);
@@ -290,7 +324,7 @@
     const fallback=document.createElement('div');
     fallback.className='ssc-puzzle-3d-fallback';
     fallback.setAttribute('role','status');
-    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 3x3 only':'תצוגת 3D אמיתית זמינה כרגע ל־3x3 בלבד';
+    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 2x2 and 3x3 cube events':'תצוגת 3D אמיתית זמינה כרגע למקצי 2x2 ו־3x3';
     container.classList.add('ssc-preview-3d-unavailable');
     container.dataset.previewEngine='native-3d-unavailable';
     container.replaceChildren(fallback);
