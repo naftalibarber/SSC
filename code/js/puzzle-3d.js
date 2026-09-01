@@ -172,13 +172,19 @@
     root.removeEventListener('wheel',listeners.wheel);
   }
 
+  function clearMetadata(container){
+    [...container.classList].forEach(className=>{
+      if(className.startsWith('wca-family-')||className.startsWith('wca-event-'))container.classList.remove(className);
+    });
+    container.classList.remove('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','ssc-preview-3d-static','ssc-preview-3d-unavailable','wca-preview-ready');
+    for(const key of ['previewReady','previewEngine','previewMode','wcaEvent','wcaPuzzle'])delete container.dataset[key];
+  }
+
   function disposeNative(container,{clear=true}={}){
     const state=states.get(container);
     if(state){unbindInteraction(state);state.resizeObserver?.disconnect();states.delete(container);}
     activeContainers.delete(container);
-    container.classList.remove('ssc-native-cube3d-host','ssc-preview-3d-ready');
-    delete container.dataset.previewReady;
-    delete container.dataset.previewEngine;
+    clearMetadata(container);
     if(clear)container.replaceChildren();
   }
 
@@ -229,6 +235,7 @@
   }
 
   function applyMetadata(container,event){
+    clearMetadata(container);
     container.classList.add('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','wca-preview-ready','wca-family-cube',`wca-event-${event.id}`);
     container.classList.remove('ssc-preview-mode-2d','ssc-preview-3d-unavailable');
     container.dataset.previewMode='3d';
@@ -270,8 +277,16 @@
 
   async function render(container,scramble,eventValue='333'){
     if(isNativeEvent(eventValue))return renderNative(container,scramble,eventValue);
-    disposeNative(container,{clear:false});
-    return LEGACY_3D?.render?.(container,scramble,eventValue)??null;
+    disposeNative(container);
+    if(LEGACY_3D?.render)return LEGACY_3D.render(container,scramble,eventValue);
+    const fallback=document.createElement('div');
+    fallback.className='ssc-puzzle-3d-fallback';
+    fallback.setAttribute('role','status');
+    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 3x3 only':'תצוגת 3D אמיתית זמינה כרגע ל־3x3 בלבד';
+    container.classList.add('ssc-preview-3d-unavailable');
+    container.dataset.previewEngine='native-3d-unavailable';
+    container.replaceChildren(fallback);
+    return null;
   }
 
   function resetCamera(container){
