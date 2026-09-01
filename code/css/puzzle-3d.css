@@ -34,8 +34,14 @@ html body .cube-preview-card.ssc-preview-mode-3d:hover{
 /* Native CSS-3D cube faces must remain square at their outside perimeter.
    Rounded face corners expose the page background where three planes meet and
    look like holes in the physical cube. A thin black outer skin also hides
-   sub-pixel seams caused by perspective anti-aliasing. */
+   sub-pixel seams caused by perspective anti-aliasing.
+
+   Cube face geometry is physical, not language-directional. In Hebrew the
+   modal is appended under an RTL body; without an explicit LTR direction CSS
+   Grid auto-placement reverses every sticker row. Keep every face grid LTR so
+   thumbnail and modal use identical row/column coordinates. */
 html body .ssc-native-cube3d-face{
+  direction:ltr!important;
   border-radius:0!important;
   overflow:hidden!important;
   background:linear-gradient(145deg,#24272c,#07080a 76%)!important;

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const source=fs.readFileSync(new URL('../code/js/preview-visibility-hotfix.js',import.meta.url),'utf8');
+const puzzle3dStyles=fs.readFileSync(new URL('../code/css/puzzle-3d.css',import.meta.url),'utf8');
 
 assert.match(source,/lockSmall3D/,'visibility guard must explicitly lock the small 3D preview');
 assert.match(source,/pointer-events','none','important'/,'small 3D preview must not receive pointer input');
@@ -21,4 +22,15 @@ assert.match(source,/contentObserver\.observe\(card,\{childList:true,subtree:tru
 assert.match(source,/classObserver\.observe\(card,\{attributes:true,attributeFilter:\['class'\]\}\)/,'class observation must be limited to the preview card itself');
 assert.doesNotMatch(source,/attributes:true,attributeFilter:\['class'\],childList:true,subtree:true/,'must not observe descendant class mutations while mutating renderer classes');
 
-console.log('3D thumbnail/modal interaction and card-snapshot regression checks passed.');
+assert.match(
+  puzzle3dStyles,
+  /html body \.ssc-native-cube3d-face\s*\{[\s\S]*?direction:ltr!important;/,
+  '3D sticker grids must be forced LTR so Hebrew RTL cannot mirror face columns in the modal'
+);
+assert.doesNotMatch(
+  puzzle3dStyles,
+  /\.ssc-native-cube3d-face\s*\{[^}]*direction:rtl/i,
+  'cube face geometry must never inherit an RTL sticker order'
+);
+
+console.log('3D thumbnail/modal, card-snapshot and RTL face-grid regression checks passed.');
