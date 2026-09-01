@@ -22,6 +22,19 @@
     return featureEnabled()&&V1_EVENTS.has(normalizeEventId(eventId));
   }
 
+  function preferredMode(container){
+    const settingsMode=window.SSCPreviewSettings?.getMode?.();
+    if(settingsMode==='2d'||settingsMode==='3d')return settingsMode;
+    const containerMode=container?.dataset?.previewModePreference;
+    if(containerMode==='2d'||containerMode==='3d')return containerMode;
+    return'2d';
+  }
+
+  function shouldUseConnected3D(container,eventId){
+    if(preferredMode(container)!=='3d')return false;
+    return Boolean(window.SSCPuzzle3D?.supportsEvent?.(normalizeEventId(eventId)));
+  }
+
   function prepare2DContainer(container){
     if(!(container instanceof Element))return;
 
@@ -84,6 +97,12 @@
 
     window.SSCPreviewSettings?.syncLastRender?.(container,scramble,eventId);
 
+    // Preview V1 owns the 2D path, but native 3D-capable events must keep the
+    // connected 3D route. 3BLD/FMC/OH are all 3x3-derived native 3D events.
+    if(shouldUseConnected3D(container,eventId)){
+      return legacyRender?.(container,scramble,eventId)??null;
+    }
+
     try{
       if(!window.SSCPreviewV1?.render)throw new Error('SSCPreviewV1 is unavailable.');
       prepare2DContainer(container);
@@ -130,6 +149,8 @@
   window.SSCPreviewV1Integration=Object.freeze({
     featureEnabled,
     shouldUseV1,
+    preferredMode,
+    shouldUseConnected3D,
     prepare2DContainer,
     render,
     legacyFallback
