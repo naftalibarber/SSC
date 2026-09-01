@@ -78,7 +78,7 @@ jobs:
         run: node tests/preview-high-order-integration.mjs
       - name: Validate FMC, 3BLD and OH 3x3 preview routing
         run: node tests/preview-333-derived-events.mjs
-      - name: Validate real 3BLD scrambles in native preview
+      - name: Validate real oriented 3BLD scrambles and wide moves
         run: node tests/preview-3bld-production.mjs
       - name: Validate native 3D includes 3BLD
         run: node tests/cube-3d-native.mjs
