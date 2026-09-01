@@ -2,7 +2,7 @@
   'use strict';
 
   const PREVIEW_ID='cubePreview2D';
-  const PROFESSIONAL_PREVIEW_MIGRATION_KEY='sscTwistyProfessionalPreviewV1';
+  const NATIVE_3D_THUMBNAIL_MIGRATION_KEY='sscNative3DThumbnailV2';
   const THUMBNAIL_DIMENSIONS=['display','width','min-width','height','min-height'];
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
@@ -10,7 +10,7 @@
   let viewportListenersBound=false;
 
   function migrateToProfessionalTwistyPreview(){
-    if(localStorage.getItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY)==='1')return;
+    if(localStorage.getItem(NATIVE_3D_THUMBNAIL_MIGRATION_KEY)==='1')return;
 
     const settings=window.SSCPreviewSettings;
     if(!settings)return;
@@ -19,7 +19,7 @@
       const modeResult=settings.setMode?.('3d',{rerender:false});
       if(modeResult&&typeof modeResult.catch==='function')modeResult.catch(error=>console.warn('[SSC preview] Could not switch default preview to 3D.',error));
       settings.setInteractive?.(true);
-      localStorage.setItem(PROFESSIONAL_PREVIEW_MIGRATION_KEY,'1');
+      localStorage.setItem(NATIVE_3D_THUMBNAIL_MIGRATION_KEY,'1');
     }catch(error){
       console.warn('[SSC preview] Professional 3D migration failed.',error);
     }
@@ -27,13 +27,13 @@
 
   function lockSmall3D(card){
     if(!(card instanceof HTMLElement)||!card.classList.contains('ssc-preview-mode-3d'))return;
-    card.classList.add('ssc-preview-thumbnail-3d');
+    if(!card.classList.contains('ssc-preview-thumbnail-3d'))card.classList.add('ssc-preview-thumbnail-3d');
     const root=card.querySelector('.ssc-native-cube3d-root,.ssc-puzzle-3d-player');
     if(!(root instanceof HTMLElement))return;
     root.style.setProperty('pointer-events','none','important');
     root.style.setProperty('touch-action','auto','important');
     root.tabIndex=-1;
-    root.classList.add('ssc-native-cube3d-static');
+    if(!root.classList.contains('ssc-native-cube3d-static'))root.classList.add('ssc-native-cube3d-static');
     root.setAttribute('aria-hidden','true');
   }
 
@@ -62,7 +62,9 @@
 
   function openFromCard(event){
     const card=event.currentTarget;
-    if(!(card instanceof HTMLElement)||!card.classList.contains('ssc-preview-mode-3d'))return;
+    if(!(card instanceof HTMLElement))return;
+    const eventId=card.dataset.wcaEvent||'333';
+    if(!card.classList.contains('ssc-preview-mode-3d')&&!window.SSCPuzzle3D?.supportsEvent?.(eventId))return;
     if(event.type==='keydown'&&event.key!=='Enter'&&event.key!==' ')return;
     if(event.type==='keydown')event.preventDefault();
     event.stopImmediatePropagation();
@@ -121,11 +123,18 @@
     watchedCards.add(card);
     card.addEventListener('click',openFromCard,true);
     card.addEventListener('keydown',openFromCard,true);
-    const observer=new MutationObserver(()=>{
+
+    const refreshStatic3D=()=>{
       forceVisible(card);
       lockSmall3D(card);
-    });
-    observer.observe(card,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+    };
+
+    const contentObserver=new MutationObserver(refreshStatic3D);
+    contentObserver.observe(card,{childList:true,subtree:true});
+
+    const classObserver=new MutationObserver(refreshStatic3D);
+    classObserver.observe(card,{attributes:true,attributeFilter:['class']});
+
     bindViewportListeners();
   }
 
