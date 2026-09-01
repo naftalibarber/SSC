@@ -95,7 +95,10 @@
     const face=rawFace.toUpperCase();
     const layerDepth=depthPrefix?Number(depthPrefix):(lowerCaseWide||explicitWide?2:1);
     if(!FACE_NORMALS[face]||!Number.isInteger(layerDepth)||layerDepth<1||layerDepth>n)return null;
-    if(layerDepth>1&&n<4)return null;
+    // 3BLD oriented scrambles from cubing.js legitimately use 3x3 wide
+    // turns such as Fw/Rw/Uw. A two-layer wide turn is therefore valid
+    // from order 3 upward; keep it unavailable only on 2x2.
+    if(layerDepth>1&&n<3)return null;
 
     return Object.freeze({
       token,
@@ -263,7 +266,7 @@
         tests.push({name:`${move}x4`,ok:faceSignature(four.faces)===solved});
       }
 
-      if(n>=4){
+      if(n>=3){
         for(const move of ['Rw','Uw','Fw']){
           const inverse=inverseMove(move,n);
           const state=buildState(`${move} ${inverse}`,n,{strict:true});
