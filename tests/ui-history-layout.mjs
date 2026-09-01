@@ -22,7 +22,7 @@ assert.match(compactEnhancementCss,/\.full-history-list\{[^}]*overflow-y:auto/,'
 assert.match(compactEnhancementCss,/\.full-history-list\.full-history-row\{[^}]*grid-template-columns:44pxminmax\(0,1fr\)!important/,'Full-history rows must reserve a stable index column.');
 assert.match(index,/code\/css\/minimal-competition\.css\?v=20260831-history-scroll-1/,'The history layout fix must bypass cached CSS.');
 assert.match(index,/code\/css\/app-enhancements\.css\?v=20260901-fullscreen-1/,'The full-history dialog styles must bypass cached CSS.');
-assert.match(index,/code\/js\/app\.js\?v=20260901-fullscreen-1/,'The full-history behavior must bypass cached JavaScript.');
+assert.match(index,/code\/js\/app\.js\?v=20260901-focus-controls-1/,'The app behavior must bypass cached JavaScript.');
 assert.match(workflow,/tests\/ui-\*\.mjs/,'CI must execute UI regression tests.');
 assert.match(workflow,/code\/css\/minimal-competition\.css/,'CI must run when the history layout stylesheet changes.');
 assert.match(workflow,/code\/css\/app-enhancements\.css/,'CI must run when the full-history stylesheet changes.');
