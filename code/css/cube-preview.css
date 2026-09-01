@@ -119,12 +119,13 @@ html[lang="he"] .cube-preview-card{
 .face-b{grid-column:4;grid-row:2}
 .face-d{grid-column:2;grid-row:3}
 
+/* Keep the 2D preview surface consistent with the selected application theme. */
 html[data-theme="dark"] .cube-preview-card{
-  background:#f8f8f8!important;
+  background:var(--card-solid,#171a1f)!important;
   border-color:#60646b!important;
 }
 html[data-theme="oled"] .cube-preview-card{
-  background:#f8f8f8!important;
+  background:#030405!important;
   border-color:#555!important;
 }
 
