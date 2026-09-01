@@ -6,6 +6,7 @@
   const THUMBNAIL_DIMENSIONS=['display','width','min-width','height','min-height'];
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
+  const cardSnapshots=new WeakMap();
   let verificationSequence=0;
   let viewportListenersBound=false;
 
@@ -63,12 +64,21 @@
   function openFromCard(event){
     const card=event.currentTarget;
     if(!(card instanceof HTMLElement))return;
-    const eventId=card.dataset.wcaEvent||'333';
+    const snapshot=cardSnapshots.get(card)||null;
+    const eventId=snapshot?.eventId||card.dataset.wcaEvent||'333';
     if(!card.classList.contains('ssc-preview-mode-3d')&&!window.SSCPuzzle3D?.supportsEvent?.(eventId))return;
     if(event.type==='keydown'&&event.key!=='Enter'&&event.key!==' ')return;
     if(event.type==='keydown')event.preventDefault();
     event.stopImmediatePropagation();
     lockSmall3D(card);
+
+    // The modal integration keeps a global lastRender snapshot. Refresh it from
+    // the exact card that was clicked so the large 3D view cannot open with a
+    // stale scramble/event while the thumbnail shows the current cube state.
+    if(snapshot){
+      window.SSCPreviewSettings?.syncLastRender?.(card,snapshot.scramble,snapshot.eventId);
+    }
+
     const openResult=window.SSCPreviewSettings?.open?.(card);
     if(openResult&&typeof openResult.catch==='function'){
       openResult.catch(error=>console.error('[SSC preview] Could not open interactive 3D modal.',error));
@@ -94,6 +104,7 @@
         const player=await guardedRender(container,scramble,eventId);
         if(!isCurrentVerification(container,token))return player;
 
+        if(container instanceof Element)cardSnapshots.set(container,{scramble,eventId});
         forceVisible(container);
         lockSmall3D(container);
         window.SSCPreviewSizing?.scheduleFit?.(container);
