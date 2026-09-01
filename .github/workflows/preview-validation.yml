@@ -21,6 +21,7 @@ on:
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
       - 'code/js/scramble-history.js'
+      - 'tests/cube-*.mjs'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
       - 'tests/ui-*.mjs'
@@ -44,6 +45,7 @@ on:
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
       - 'code/js/scramble-history.js'
+      - 'tests/cube-*.mjs'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
       - 'tests/ui-*.mjs'
@@ -78,6 +80,8 @@ jobs:
         run: node tests/preview-333-derived-events.mjs
       - name: Validate real 3BLD scrambles in native preview
         run: node tests/preview-3bld-production.mjs
+      - name: Validate native 3D includes 3BLD
+        run: node tests/cube-3d-native.mjs
       - name: Validate pixel-perfect preview centering
         run: node tests/preview-centering.mjs
       - name: Validate cube line-width settings
