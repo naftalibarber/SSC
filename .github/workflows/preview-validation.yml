@@ -6,7 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
-      - 'code/css/training-upgrades.css'
+      - 'code/css/app-enhancements.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
@@ -20,7 +20,6 @@ on:
       - 'code/js/advanced-features.js'
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
-      - 'code/js/training.js'
       - 'code/js/scramble-history.js'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
@@ -30,7 +29,7 @@ on:
     paths:
       - 'index.html'
       - 'code/css/minimal-competition.css'
-      - 'code/css/training-upgrades.css'
+      - 'code/css/app-enhancements.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
       - 'code/js/preview/**'
@@ -44,7 +43,6 @@ on:
       - 'code/js/advanced-features.js'
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
-      - 'code/js/training.js'
       - 'code/js/scramble-history.js'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
