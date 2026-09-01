@@ -46,14 +46,15 @@ globalThis.localStorage={
   removeItem(key){storage.delete(key);}
 };
 globalThis.SSCPreviewSizing={scheduleFit(){}};
-globalThis.SSCPreviewSettings={syncLastRender(){}};
+let previewMode='2d';
+globalThis.SSCPreviewSettings={syncLastRender(){},getMode(){return previewMode;}};
 globalThis.SSC_FEATURES={previewV1:true};
 globalThis.__SSC_SCRAMBLE_MODULE_LOADER__=()=>import('cubing/scramble');
 
 async function load(path){await import(pathToFileURL(resolve(path)).href);}
 
 await load('code/js/wca-previews.js');
-const legacyPreview=globalThis.SSCCubePreview;
+const registryPreview=globalThis.SSCCubePreview;
 await load('code/js/preview/ssc-nxn-state.js');
 await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
@@ -80,9 +81,26 @@ for(let index=0;index<samples;index+=1){
   assert.equal(container.children.length,1);
 }
 
-// Install the production integration around the real legacy preview and confirm
-// the public render entry point routes 3BLD to V1 rather than scramble-display.
-globalThis.SSCCubePreview=legacyPreview;
+let connected3DCalls=0;
+globalThis.SSCPuzzle3D={
+  supportsEvent(eventId){return ['333','333bf','333fm','333oh'].includes(String(eventId));},
+  dispose(){},
+  getEvent(eventId){return registryPreview.getEvent?.(eventId)||null;}
+};
+// Simulate the connected renderer installed by preview-integration.js before
+// ssc-preview-v1-integration.js wraps the public preview API.
+globalThis.SSCCubePreview={
+  ...registryPreview,
+  async render(container,_scramble,eventId){
+    connected3DCalls+=1;
+    container.dataset.previewMode='3d';
+    container.dataset.previewEngine='ssc-native-3d';
+    container.dataset.wcaEvent=eventId;
+    container.childElementCount=1;
+    return{engine:'ssc-native-3d',eventId};
+  }
+};
+
 let v1Calls=0;
 const nativeRender=globalThis.SSCPreviewV1.render.bind(globalThis.SSCPreviewV1);
 globalThis.SSCPreviewV1={...globalThis.SSCPreviewV1,render(...args){v1Calls+=1;return nativeRender(...args);}};
@@ -91,10 +109,22 @@ assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('333bf'),true);
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('3bld'),true);
 
 const productionScramble=await globalThis.SSCScrambleProvider.generate('333bf');
-const productionContainer=new FakeElement();
-await globalThis.SSCCubePreview.render(productionContainer,productionScramble,'333bf');
-assert.equal(v1Calls,1,'Production SSCCubePreview.render must call native V1 for 3BLD.');
-assert.equal(productionContainer.dataset.previewEngine,'ssc-native-v1');
-assert.equal(productionContainer.dataset.wcaEvent,'333bf');
 
-console.log(JSON.stringify({ok:true,event:'333bf',samples,productionRoute:'ssc-native-v1'},null,2));
+previewMode='2d';
+const twoDContainer=new FakeElement();
+await globalThis.SSCCubePreview.render(twoDContainer,productionScramble,'333bf');
+assert.equal(v1Calls,1,'2D 3BLD must call the native 3x3 V1 renderer.');
+assert.equal(connected3DCalls,0,'2D 3BLD must not use the 3D connected renderer.');
+assert.equal(twoDContainer.dataset.previewEngine,'ssc-native-v1');
+assert.equal(twoDContainer.dataset.wcaEvent,'333bf');
+
+previewMode='3d';
+const threeDContainer=new FakeElement();
+await globalThis.SSCCubePreview.render(threeDContainer,productionScramble,'333bf');
+assert.equal(v1Calls,1,'3D 3BLD must not be forced back through the 2D V1 renderer.');
+assert.equal(connected3DCalls,1,'3D 3BLD must use the same connected 3D route as 3x3.');
+assert.equal(threeDContainer.dataset.previewEngine,'ssc-native-3d');
+assert.equal(threeDContainer.dataset.wcaEvent,'333bf');
+assert.equal(globalThis.SSCPreviewV1Integration.shouldUseConnected3D(threeDContainer,'333bf'),true);
+
+console.log(JSON.stringify({ok:true,event:'333bf',samples,twoD:'ssc-native-v1',threeD:'ssc-native-3d'},null,2));
