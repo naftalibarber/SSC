@@ -2,6 +2,7 @@
   'use strict';
 
   const V1_EVENTS=new Set(['222','333','444','555','666','777']);
+  const LEGACY_3D_DIMENSIONS=['display','width','min-width','height','min-height'];
   const legacyPreview=window.SSCCubePreview||null;
   const legacyRender=legacyPreview?.render?.bind(legacyPreview)||null;
   const managerRender=window.SSCPreviewManager?.render?.bind(window.SSCPreviewManager)||null;
@@ -14,6 +15,24 @@
 
   function shouldUseV1(eventId){
     return featureEnabled()&&V1_EVENTS.has(normalizeEventId(eventId));
+  }
+
+  function prepare2DContainer(container){
+    if(!(container instanceof Element))return;
+
+    try{window.SSCPuzzle3D?.dispose?.(container);}catch(error){
+      console.warn('[SSC Preview V1] Could not dispose the previous 3D preview.',error);
+    }
+
+    container.classList.remove(
+      'ssc-preview-mode-3d',
+      'ssc-preview-mode-single-face',
+      'ssc-preview-thumbnail-3d'
+    );
+    container.classList.add('ssc-preview-mode-2d');
+    LEGACY_3D_DIMENSIONS.forEach(property=>container.style.removeProperty(property));
+    container.dataset.previewMode='2d';
+    container.dataset.previewModePreference='2d';
   }
 
   async function legacyFallback(container,scramble,eventId,originalError){
@@ -50,9 +69,8 @@
 
     try{
       if(!window.SSCPreviewV1?.render)throw new Error('SSCPreviewV1 is unavailable.');
+      prepare2DContainer(container);
       const result=window.SSCPreviewV1.render(container,scramble,eventId,{strict:true});
-      container.dataset.previewMode='2d';
-      container.dataset.previewModePreference='2d';
       window.SSCPreviewSizing?.scheduleFit?.(container);
       return result.svg;
     }catch(error){
@@ -95,6 +113,7 @@
   window.SSCPreviewV1Integration=Object.freeze({
     featureEnabled,
     shouldUseV1,
+    prepare2DContainer,
     render,
     legacyFallback
   });

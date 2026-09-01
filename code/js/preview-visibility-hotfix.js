@@ -3,6 +3,7 @@
 
   const PREVIEW_ID='cubePreview2D';
   const PROFESSIONAL_PREVIEW_MIGRATION_KEY='sscTwistyProfessionalPreviewV1';
+  const THUMBNAIL_DIMENSIONS=['display','width','min-width','height','min-height'];
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
   let verificationSequence=0;
@@ -41,6 +42,8 @@
       container.style.setProperty('min-width',`${side}px`,'important');
       container.style.setProperty('height',`${side}px`,'important');
       container.style.setProperty('min-height',`${side}px`,'important');
+    }else{
+      THUMBNAIL_DIMENSIONS.forEach(property=>container.style.removeProperty(property));
     }
   }
 
