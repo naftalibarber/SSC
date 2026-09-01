@@ -2,7 +2,9 @@
   'use strict';
 
   const V1_EVENTS=new Set(['222','333','444','555','666','777']);
-  const LEGACY_3D_DIMENSIONS=['display','width','min-width','height','min-height'];
+  const LEGACY_3D_DIMENSIONS=[
+    'display','width','min-width','height','min-height','--ssc-3d-width','--ssc-3d-height'
+  ];
   const legacyPreview=window.SSCCubePreview||null;
   const legacyRender=legacyPreview?.render?.bind(legacyPreview)||null;
   const managerRender=window.SSCPreviewManager?.render?.bind(window.SSCPreviewManager)||null;
@@ -24,15 +26,25 @@
       console.warn('[SSC Preview V1] Could not dispose the previous 3D preview.',error);
     }
 
+    [...container.classList].forEach(className=>{
+      if(className==='wca-preview-ready'||className.startsWith('wca-family-')||className.startsWith('wca-event-')){
+        container.classList.remove(className);
+      }
+    });
     container.classList.remove(
       'ssc-preview-mode-3d',
       'ssc-preview-mode-single-face',
-      'ssc-preview-thumbnail-3d'
+      'ssc-preview-thumbnail-3d',
+      'ssc-preview-3d-ready',
+      'ssc-preview-3d-static',
+      'ssc-preview-3d-unavailable'
     );
     container.classList.add('ssc-preview-mode-2d');
     LEGACY_3D_DIMENSIONS.forEach(property=>container.style.removeProperty(property));
     container.dataset.previewMode='2d';
     container.dataset.previewModePreference='2d';
+    delete container.dataset.wcaPuzzle;
+    delete container.dataset.previewReady;
   }
 
   async function legacyFallback(container,scramble,eventId,originalError){

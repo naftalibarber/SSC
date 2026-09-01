@@ -9,6 +9,7 @@ class FakeClassList{
   add(...names){names.forEach(name=>this.values.add(name));}
   remove(...names){names.forEach(name=>this.values.delete(name));}
   contains(name){return this.values.has(name);}
+  [Symbol.iterator](){return this.values[Symbol.iterator]();}
 }
 
 class FakeStyle{
@@ -117,10 +118,21 @@ const sixResult=await globalThis.SSCCubePreview.render(sixContainer,"3Rw U2 Fw' 
 assert.equal(sixResult.engine,'v1');
 
 const sevenContainer=new FakeElement();
-sevenContainer.classList.add('ssc-preview-mode-3d','ssc-preview-thumbnail-3d');
+sevenContainer.classList.add(
+  'ssc-preview-mode-3d',
+  'ssc-preview-thumbnail-3d',
+  'ssc-preview-3d-ready',
+  'wca-preview-ready',
+  'wca-family-clock',
+  'wca-event-clock'
+);
+sevenContainer.dataset.wcaPuzzle='clock';
+sevenContainer.dataset.previewReady='true';
 for(const property of ['display','width','min-width','height','min-height']){
   sevenContainer.style.setProperty(property,property==='display'?'block':'348px','important');
 }
+sevenContainer.style.setProperty('--ssc-3d-width','348px');
+sevenContainer.style.setProperty('--ssc-3d-height','348px');
 const sevenResult=await globalThis.SSCCubePreview.render(sevenContainer,"3Rw U2 Fw' 3Lw D2",'777');
 assert.equal(sevenResult.engine,'v1');
 assert.equal(v1Calls,6);
@@ -130,7 +142,13 @@ assert.equal(sevenContainer.dataset.previewModePreference,'2d');
 assert.equal(sevenContainer.classList.contains('ssc-preview-mode-2d'),true);
 assert.equal(sevenContainer.classList.contains('ssc-preview-mode-3d'),false);
 assert.equal(sevenContainer.classList.contains('ssc-preview-thumbnail-3d'),false);
-for(const property of ['display','width','min-width','height','min-height']){
+assert.equal(sevenContainer.classList.contains('ssc-preview-3d-ready'),false);
+assert.equal(sevenContainer.classList.contains('wca-preview-ready'),false);
+assert.equal(sevenContainer.classList.contains('wca-family-clock'),false);
+assert.equal(sevenContainer.classList.contains('wca-event-clock'),false);
+assert.equal('wcaPuzzle' in sevenContainer.dataset,false);
+assert.equal('previewReady' in sevenContainer.dataset,false);
+for(const property of ['display','width','min-width','height','min-height','--ssc-3d-width','--ssc-3d-height']){
   assert.equal(sevenContainer.style.getPropertyValue(property),'',`Stale 3D ${property} must be removed before rendering 2D.`);
 }
 
@@ -246,7 +264,7 @@ assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-5x5-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-5x5-1/);
-assert.match(index,/code\/js\/preview\/ssc-preview-v1-integration\.js\?v=20260901-2d-card-reset-1/);
+assert.match(index,/code\/js\/preview\/ssc-preview-v1-integration\.js\?v=20260901-2d-card-reset-2/);
 assert.match(index,/code\/js\/preview-visibility-hotfix\.js\?v=20260901-2d-card-reset-1/);
 assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
@@ -314,5 +332,6 @@ console.log(JSON.stringify({
   strokeGridRemoved:true,
   physicalOriginSnapping:true,
   adjustableCubeLineWidth:true,
-  stale3DCardStateCleared:true
+  stale3DCardStateCleared:true,
+  stalePuzzleProfileCleared:true
 },null,2));
