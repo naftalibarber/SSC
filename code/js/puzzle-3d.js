@@ -4,12 +4,14 @@
   const LEGACY_3D=window.SSCPuzzle3D||null;
   const NATIVE_EVENT_ORDERS=new Map([
     ['222',2],
-    ['333',3],['333bf',3],['333fm',3],['333oh',3],['333mbf',3]
+    ['333',3],['333bf',3],['333fm',3],['333oh',3],['333mbf',3],
+    ['444',4]
   ]);
   const NATIVE_EVENT_IDS=new Set(NATIVE_EVENT_ORDERS.keys());
   const EVENT_ALIASES=Object.freeze({
     '2x2':'222','2×2':'222','222':'222',
     '3x3':'333','3×3':'333','333':'333',
+    '4x4':'444','4×4':'444','444':'444',
     '3bld':'333bf','333bf':'333bf','3x3bf':'333bf',
     'fmc':'333fm','333fm':'333fm',
     'oh':'333oh','333oh':'333oh','3x3oh':'333oh',
@@ -36,13 +38,15 @@
     const id=normalizeEventId(value);
     if(isNativeEvent(id)){
       const order=nativeOrder(id);
-      const twoByTwo=order===2;
+      const dimensionLabel=`${order}×${order}`;
+      const puzzle=`${order}x${order}x${order}`;
+      const primaryCubeEvent=id==='222'||id==='333'||id==='444';
       const fallback={
         id,
-        label:twoByTwo?'2×2':id==='333'?'3×3':id.toUpperCase(),
-        name:twoByTwo?'2x2x2 Cube':'3x3x3 Cube',
+        label:primaryCubeEvent?dimensionLabel:id.toUpperCase(),
+        name:`${puzzle} Cube`,
         family:'cube',
-        puzzle:twoByTwo?'2x2x2':'3x3x3',
+        puzzle,
         order
       };
       const legacy=LEGACY_3D?.getEvent?.(id)||null;
@@ -52,7 +56,7 @@
         id,
         order,
         puzzle:fallback.puzzle,
-        label:twoByTwo?'2×2':legacy?.label||fallback.label,
+        label:primaryCubeEvent?dimensionLabel:legacy?.label||fallback.label,
         name:legacy?.name||fallback.name,
         family:legacy?.family||fallback.family
       });
@@ -324,7 +328,7 @@
     const fallback=document.createElement('div');
     fallback.className='ssc-puzzle-3d-fallback';
     fallback.setAttribute('role','status');
-    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 2x2 and 3x3 cube events':'תצוגת 3D אמיתית זמינה כרגע למקצי 2x2 ו־3x3';
+    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 2x2, 3x3 and 4x4 cube events':'תצוגת 3D אמיתית זמינה כרגע למקצי 2x2, 3x3 ו־4x4';
     container.classList.add('ssc-preview-3d-unavailable');
     container.dataset.previewEngine='native-3d-unavailable';
     container.replaceChildren(fallback);
