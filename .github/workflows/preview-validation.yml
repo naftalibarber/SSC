@@ -72,6 +72,8 @@ jobs:
         run: node tests/preview-validation.mjs
       - name: Validate SVG rendering geometry
         run: node tests/preview-rendering.mjs
+      - name: Validate 6x6 and 7x7 preview bridge
+        run: node tests/preview-high-order-integration.mjs
       - name: Validate pixel-perfect preview centering
         run: node tests/preview-centering.mjs
       - name: Validate cube line-width settings
