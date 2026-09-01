@@ -10,7 +10,6 @@
   let enabled=localStorage.getItem(ENABLED_KEY)==='true';
   let selectedFaces=loadFaces();
   let lastRender=null;
-  let colorLabelObserver=null;
 
   function isEnglish(){
     return document.documentElement.lang==='en'||document.documentElement.dir==='ltr';
@@ -54,7 +53,9 @@
         padding:3px;
       }
       .ssc-selected-face{
-        width:100%;
+        height:100%;
+        width:auto;
+        max-width:100%;
         max-height:100%;
         aspect-ratio:1;
         box-sizing:border-box;
@@ -69,7 +70,8 @@
         box-shadow:0 1px 4px rgba(0,0,0,.22);
       }
       .ssc-selected-faces-preview[data-count="1"] .ssc-selected-face{
-        width:min(88%,220px);
+        height:min(88%,220px);
+        width:auto;
       }
       .ssc-selected-face-sticker{
         min-width:0;min-height:0;
@@ -191,10 +193,8 @@
   async function connectedRender(container,scramble,eventId='333'){
     if(!enabled)return underlyingRender?.(container,scramble,eventId)??null;
 
-    // Keep the existing preview integration path alive first. Besides preserving
-    // its fallback behavior, this refreshes the exact card snapshot used by the
-    // existing 3D modal click handler. The selected-face DOM then replaces only
-    // the thumbnail's visual representation.
+    // Preserve the existing integration pipeline first so its exact card
+    // snapshot (used by the 3D modal) stays synchronized with this scramble.
     if(underlyingRender){
       try{await underlyingRender(container,scramble,eventId);}catch(error){
         console.warn('[SSC selected faces] Base preview bridge failed before face render.',error);
@@ -236,17 +236,11 @@
       const label=item.querySelector('span');
       if(label&&FACE_SET.has(face)&&label.textContent!==face)label.textContent=face;
     });
+    const target=FACE_ORDER.filter(face=>items.has(face));
+    const current=[...control.querySelectorAll(':scope > .cube-color-item')].map(item=>String(item.querySelector('[data-cube-face]')?.dataset?.cubeFace||'').toUpperCase());
+    if(current.join(',')!==target.join(','))target.forEach(face=>control.appendChild(items.get(face)));
     const reset=document.getElementById('resetCubeColors');
-    FACE_ORDER.forEach(face=>{const item=items.get(face);if(item)control.appendChild(item);});
-    if(reset)control.appendChild(reset);
-  }
-
-  function watchColorLabels(){
-    const control=document.getElementById('cubeColorsControl');
-    if(!(control instanceof Element)||colorLabelObserver)return;
-    applyFaceColorLabels();
-    colorLabelObserver=new MutationObserver(()=>applyFaceColorLabels());
-    colorLabelObserver.observe(control,{subtree:true,childList:true,characterData:true});
+    if(reset&&control.lastElementChild!==reset)control.appendChild(reset);
   }
 
   function ensureFaceOption(){
@@ -362,7 +356,7 @@
   function refreshLabelsAndControls(){
     ensureFaceOption();
     ensureFaceControls();
-    watchColorLabels();
+    applyFaceColorLabels();
     syncControls();
   }
 
@@ -375,15 +369,13 @@
   injectStyles();
   installPreviewWrapper();
   bindControls();
-  watchColorLabels();
+  applyFaceColorLabels();
   observeLanguage();
   document.getElementById('generalSettingsButton')?.addEventListener('click',()=>queueMicrotask(refreshLabelsAndControls),true);
   window.addEventListener('ssc-preview-interaction-change',()=>queueMicrotask(syncControls));
   window.addEventListener('ssc-preview-mode-change',()=>queueMicrotask(syncControls));
 
-  if(enabled){
-    queueMicrotask(()=>window.SSCPreviewSettings?.rerender?.());
-  }
+  if(enabled)queueMicrotask(()=>window.SSCPreviewSettings?.rerender?.());
 
   window.SSCSelectedFacesPreview=Object.freeze({
     ENABLED_KEY,
