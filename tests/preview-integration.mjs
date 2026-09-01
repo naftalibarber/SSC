@@ -275,7 +275,7 @@ assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The 
 assert.equal((index.match(/SSC_FEATURES/g)||[]).length,1,'Feature flag must be defined once.');
 assert.match(index,/window\.SSC_FEATURES=\{previewV1:true\}/);
 assert.match(index,/code\/js\/cube-preview\.js/);
-assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-viewport-fit-1/);
+assert.match(index,/code\/css\/cube-preview\.css\?v=20260901-theme-bg-1/);
 assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-5x5-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-5x5-1/);
@@ -286,7 +286,7 @@ assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
 assert.match(index,/cdn\.cubing\.net\/v0\/js\/scramble-display/);
-assert.match(index,/code\/js\/puzzle-3d\.js/);
+assert.match(index,/code\/js\/puzzle-3d\.js\?v=20260901-native-222-1/);
 
 const positions={
   legacy:index.indexOf('code/js/preview-integration.js'),
