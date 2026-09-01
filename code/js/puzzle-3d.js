@@ -12,7 +12,9 @@
   });
   const DEFAULT_COLORS=Object.freeze({U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'});
   const FACE_ORDER=Object.freeze(['F','B','R','L','U','D']);
-  const INITIAL_CAMERA=Object.freeze({x:-24,y:-36,scale:1});
+  // Standard cubing orientation: U (white) on top, F (green) on the left/front,
+  // and R (red) on the right. The same camera is used for thumbnail and modal reset.
+  const INITIAL_CAMERA=Object.freeze({x:-28,y:-38,scale:1});
   const states=new WeakMap();
   const activeContainers=new Set();
   let interactiveEnabled=true;
