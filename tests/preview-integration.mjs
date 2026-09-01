@@ -2,9 +2,29 @@ import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {pathToFileURL} from 'node:url';
 import {resolve} from 'node:path';
+import {JSDOM} from 'jsdom';
+
+class FakeClassList{
+  constructor(){this.values=new Set();}
+  add(...names){names.forEach(name=>this.values.add(name));}
+  remove(...names){names.forEach(name=>this.values.delete(name));}
+  contains(name){return this.values.has(name);}
+}
+
+class FakeStyle{
+  constructor(){this.values=new Map();}
+  setProperty(name,value){this.values.set(name,String(value));}
+  removeProperty(name){const value=this.values.get(name)||'';this.values.delete(name);return value;}
+  getPropertyValue(name){return this.values.get(name)||'';}
+}
 
 class FakeElement{
-  constructor(){this.dataset={};this.childElementCount=0;}
+  constructor(){
+    this.dataset={};
+    this.childElementCount=0;
+    this.classList=new FakeClassList();
+    this.style=new FakeStyle();
+  }
 }
 
 globalThis.window=globalThis;
@@ -97,11 +117,22 @@ const sixResult=await globalThis.SSCCubePreview.render(sixContainer,"3Rw U2 Fw' 
 assert.equal(sixResult.engine,'v1');
 
 const sevenContainer=new FakeElement();
+sevenContainer.classList.add('ssc-preview-mode-3d','ssc-preview-thumbnail-3d');
+for(const property of ['display','width','min-width','height','min-height']){
+  sevenContainer.style.setProperty(property,property==='display'?'block':'348px','important');
+}
 const sevenResult=await globalThis.SSCCubePreview.render(sevenContainer,"3Rw U2 Fw' 3Lw D2",'777');
 assert.equal(sevenResult.engine,'v1');
 assert.equal(v1Calls,6);
 assert.equal(legacyCalls,0);
 assert.equal(sevenContainer.dataset.previewMode,'2d');
+assert.equal(sevenContainer.dataset.previewModePreference,'2d');
+assert.equal(sevenContainer.classList.contains('ssc-preview-mode-2d'),true);
+assert.equal(sevenContainer.classList.contains('ssc-preview-mode-3d'),false);
+assert.equal(sevenContainer.classList.contains('ssc-preview-thumbnail-3d'),false);
+for(const property of ['display','width','min-width','height','min-height']){
+  assert.equal(sevenContainer.style.getPropertyValue(property),'',`Stale 3D ${property} must be removed before rendering 2D.`);
+}
 
 const legacyContainer=new FakeElement();
 const legacyResult=await globalThis.SSCCubePreview.render(legacyContainer,'R++ D--','minx');
@@ -152,6 +183,8 @@ const sizingSource=fs.readFileSync('code/js/preview-sizing.js','utf8');
 const settingsSource=fs.readFileSync('code/js/settings.js','utf8');
 const legacyPreviewSource=fs.readFileSync('code/js/cube-preview.js','utf8');
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
+const v1IntegrationSource=fs.readFileSync('code/js/preview/ssc-preview-v1-integration.js','utf8');
+const visibilityHotfixSource=fs.readFileSync('code/js/preview-visibility-hotfix.js','utf8');
 const competitionStyles=fs.readFileSync('code/css/minimal-competition.css','utf8');
 const cubePreviewStyles=fs.readFileSync('code/css/cube-preview.css','utf8');
 const appSource=fs.readFileSync('code/js/app.js','utf8');
@@ -201,6 +234,8 @@ assert.match(rendererSource,/class:'ssc-svg-face-background'/,'Every face must u
 assert.match(rendererSource,/setAttribute\('data-line-renderer','face-background'\)/,'The renderer must identify the background-based line mechanism.');
 assert.doesNotMatch(rendererSource,/faceGridPath|ssc-svg-face-grid/,'The legacy stroked face-grid path must be removed.');
 assert.doesNotMatch(rendererSource,/const faceGap=-1;/,'The space between separate cube faces must remain intact.');
+assert.match(v1IntegrationSource,/function prepare2DContainer\(container\)/,'The native SVG bridge must normalize stale preview mode state.');
+assert.match(visibilityHotfixSource,/THUMBNAIL_DIMENSIONS\.forEach\(property=>container\.style\.removeProperty\(property\)\)/,'The visibility guard must release its square 3D dimensions in 2D mode.');
 assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
 assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
 assert.match(appSource,/option\.textContent=sessionDisplayName\(session\)/,'The session selector must use the localized built-in session name.');
@@ -211,6 +246,8 @@ assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-5x5-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-5x5-1/);
+assert.match(index,/code\/js\/preview\/ssc-preview-v1-integration\.js\?v=20260901-2d-card-reset-1/);
+assert.match(index,/code\/js\/preview-visibility-hotfix\.js\?v=20260901-2d-card-reset-1/);
 assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
 assert.match(index,/code\/js\/wca-previews\.js/);
@@ -229,6 +266,33 @@ const positions={
 for(const [name,position] of Object.entries(positions))assert.ok(position>=0,`${name} script is missing from index.html.`);
 assert.ok(positions.state<positions.v1&&positions.renderer<positions.v1&&positions.validation<positions.v1);
 assert.ok(positions.legacy<positions.bridge&&positions.bridge<positions.app);
+
+{
+  const dom=new JSDOM('<!doctype html><html><body><div id="cubePreview2D" class="cube-preview-card ssc-preview-mode-3d"></div></body></html>',{
+    runScripts:'outside-only',
+    url:'https://example.test/'
+  });
+  const browserWindow=dom.window;
+  browserWindow.MutationObserver=class{observe(){} disconnect(){}};
+  browserWindow.SSCPreviewSizing={scheduleFit(){}};
+  browserWindow.SSCCubePreview={
+    async render(container){
+      container.classList.remove('ssc-preview-mode-3d');
+      container.classList.add('ssc-preview-mode-2d');
+      return{engine:'2d'};
+    }
+  };
+  browserWindow.eval(visibilityHotfixSource);
+  const card=browserWindow.document.getElementById('cubePreview2D');
+  assert.equal(card.style.width,'174px','The 3D visibility guard must initially create a square thumbnail.');
+  const transitionResult=await browserWindow.SSCCubePreview.render(card,'','333');
+  assert.equal(transitionResult.engine,'2d');
+  assert.equal(card.classList.contains('ssc-preview-mode-2d'),true);
+  for(const property of ['display','width','min-width','height','min-height']){
+    assert.equal(card.style.getPropertyValue(property),'',`The visibility guard must release ${property} after a 3D to 2D transition.`);
+  }
+  dom.window.close();
+}
 
 console.log('[SSC Preview CI] Integration summary');
 console.log(JSON.stringify({
@@ -249,5 +313,6 @@ console.log(JSON.stringify({
   continuousBackgroundPerFace:true,
   strokeGridRemoved:true,
   physicalOriginSnapping:true,
-  adjustableCubeLineWidth:true
+  adjustableCubeLineWidth:true,
+  stale3DCardStateCleared:true
 },null,2));
