@@ -18,10 +18,11 @@ assert.match(appSource,/data-toolbar-icon="fullscreen-enter"/,'The fullscreen to
 assert.match(appSource,/data-toolbar-icon="fullscreen-exit"/,'The fullscreen toggle must include a restore icon.');
 assert.match(appSource,/toolbarButton\.setAttribute\('aria-pressed',fullscreen\?'true':'false'\)/,'The fullscreen toggle must expose its current state.');
 assert.match(appSource,/document\.getElementById\('fullscreenButton'\)\.addEventListener\('click',toggleFullscreen\)/,'The toolbar button must use the existing fullscreen function.');
+assert.doesNotMatch(appSource,/data-focus-fullscreen/,'Focus Mode must not render a duplicate fullscreen button.');
 assert.match(enhancementCss,/#fullscreenButton\[aria-pressed="true"\] \[data-toolbar-icon="fullscreen-enter"\]/,'The maximize icon must hide after entering fullscreen.');
 assert.match(enhancementCss,/#fullscreenButton\[aria-pressed="true"\] \[data-toolbar-icon="fullscreen-exit"\]/,'The restore icon must appear after entering fullscreen.');
 assert.doesNotMatch(index,/#focusModeButton::before/,'The obsolete CSS-mask focus icon must not render alongside the SVG.');
-assert.match(index,/code\/js\/app\.js\?v=20260901-fullscreen-1/);
+assert.match(index,/code\/js\/app\.js\?v=20260901-focus-controls-1/);
 assert.match(index,/code\/css\/app-enhancements\.css\?v=20260901-fullscreen-1/);
 assert.match(index,/code\/js\/import-export\.js\?v=20260831-toolbar-icons-2/);
 assert.match(index,/code\/js\/advanced-features\.js\?v=20260831-toolbar-icons-2/);
@@ -89,6 +90,7 @@ console.log(JSON.stringify({
   ok:true,
   focusIcon:'crosshair',
   fullscreenIcons:['maximize','restore'],
+  duplicateFocusFullscreen:false,
   trainingRemoved:true,
   analyticsIcon:'progress-chart',
   localizedLabels:['he','en'],

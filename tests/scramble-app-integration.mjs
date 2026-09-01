@@ -63,6 +63,15 @@ assert.equal(typeof window.SSCTimerEvents?.repeatScramble,'function','Repeat-scr
 assert.equal(window.SSCTraining,undefined,'The removed Training system must not initialize.');
 assert.equal(window.document.getElementById('trainingButton'),null,'The removed Training button must not render.');
 assert.equal(window.document.getElementById('trainingModal'),null,'The removed Training dialog must not render.');
+const focusControls=window.document.getElementById('focusControls');
+assert.ok(focusControls,'Focus Mode controls must render.');
+assert.equal(focusControls.querySelectorAll('button').length,1,'Focus Mode must contain only the exit button.');
+assert.ok(focusControls.querySelector('[data-focus-exit]'),'Focus Mode must keep its exit button.');
+assert.equal(focusControls.querySelector('[data-focus-fullscreen]'),null,'Focus Mode must not contain the duplicate fullscreen button.');
+window.document.getElementById('focusModeButton').click();
+assert.equal(window.document.documentElement.dataset.focusMode,'on','Focus Mode did not open.');
+focusControls.querySelector('[data-focus-exit]').click();
+assert.equal(window.document.documentElement.dataset.focusMode,'off','The remaining Focus Mode exit button did not close Focus Mode.');
 
 const scrambleElement=window.document.getElementById('scramble');
 const previewElement=window.document.getElementById('cubePreview2D');
