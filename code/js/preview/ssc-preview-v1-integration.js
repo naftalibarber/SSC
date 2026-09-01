@@ -79,6 +79,8 @@
       return legacyRender?.(container,scramble,eventId)??null;
     }
 
+    window.SSCPreviewSettings?.syncLastRender?.(container,scramble,eventId);
+
     try{
       if(!window.SSCPreviewV1?.render)throw new Error('SSCPreviewV1 is unavailable.');
       prepare2DContainer(container);

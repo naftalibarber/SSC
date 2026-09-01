@@ -258,9 +258,15 @@
     });
   }
 
+  function syncLastRender(container,scramble,eventId='333'){
+    if(!(container instanceof Element))return false;
+    lastRender={container,scramble,eventId};
+    return true;
+  }
+
   async function connectedRender(container,scramble,eventId='333'){
     if(!(container instanceof Element))return null;
-    lastRender={container,scramble,eventId};
+    syncLastRender(container,scramble,eventId);
     container.dataset.previewModePreference=currentMode;
     container.classList.remove('ssc-preview-thumbnail-3d');
     configureCardAsButton(container,eventId);
@@ -297,7 +303,10 @@
     const snapshot=lastRender;
     if(!snapshot?.container?.isConnected)return null;
     const token=++rerenderToken;
-    const result=await connectedRender(snapshot.container,snapshot.scramble,snapshot.eventId);
+    const activeRender=window.SSCCubePreview?.render;
+    const result=typeof activeRender==='function'&&activeRender!==connectedRender
+      ?await activeRender.call(window.SSCCubePreview,snapshot.container,snapshot.scramble,snapshot.eventId)
+      :await connectedRender(snapshot.container,snapshot.scramble,snapshot.eventId);
     if(token!==rerenderToken)return null;
     return result;
   }
@@ -565,6 +574,7 @@
     open:openModal,
     close:closeModal,
     isOpen:()=>modalOpen,
+    syncLastRender,
     rerender:rerenderLast
   });
 })();

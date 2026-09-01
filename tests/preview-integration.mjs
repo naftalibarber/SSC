@@ -40,6 +40,8 @@ let managerCalls=0;
 let v1Calls=0;
 let v1Mode='ok';
 let fitCalls=0;
+let snapshotCalls=0;
+let latestSnapshot=null;
 let colors={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
 
 const legacyPreview={
@@ -63,6 +65,13 @@ globalThis.SSCPreviewManager={
   }
 };
 globalThis.SSCPreviewSizing={scheduleFit(){fitCalls++;}};
+globalThis.SSCPreviewSettings={
+  syncLastRender(container,scramble,eventId){
+    snapshotCalls++;
+    latestSnapshot={container,scramble,eventId};
+    return true;
+  }
+};
 globalThis.SSCPreviewV1={
   normalizeEventId(eventId){
     const raw=String(eventId).toLowerCase();
@@ -137,6 +146,8 @@ const sevenResult=await globalThis.SSCCubePreview.render(sevenContainer,"3Rw U2 
 assert.equal(sevenResult.engine,'v1');
 assert.equal(v1Calls,6);
 assert.equal(legacyCalls,0);
+assert.equal(snapshotCalls,6);
+assert.deepEqual(latestSnapshot,{container:sevenContainer,scramble:"3Rw U2 Fw' 3Lw D2",eventId:'777'});
 assert.equal(sevenContainer.dataset.previewMode,'2d');
 assert.equal(sevenContainer.dataset.previewModePreference,'2d');
 assert.equal(sevenContainer.classList.contains('ssc-preview-mode-2d'),true);
@@ -201,6 +212,7 @@ const sizingSource=fs.readFileSync('code/js/preview-sizing.js','utf8');
 const settingsSource=fs.readFileSync('code/js/settings.js','utf8');
 const legacyPreviewSource=fs.readFileSync('code/js/cube-preview.js','utf8');
 const rendererSource=fs.readFileSync('code/js/preview/ssc-svg-renderer.js','utf8');
+const previewIntegrationSource=fs.readFileSync('code/js/preview-integration.js','utf8');
 const v1IntegrationSource=fs.readFileSync('code/js/preview/ssc-preview-v1-integration.js','utf8');
 const visibilityHotfixSource=fs.readFileSync('code/js/preview-visibility-hotfix.js','utf8');
 const competitionStyles=fs.readFileSync('code/css/minimal-competition.css','utf8');
@@ -253,6 +265,9 @@ assert.match(rendererSource,/setAttribute\('data-line-renderer','face-background
 assert.doesNotMatch(rendererSource,/faceGridPath|ssc-svg-face-grid/,'The legacy stroked face-grid path must be removed.');
 assert.doesNotMatch(rendererSource,/const faceGap=-1;/,'The space between separate cube faces must remain intact.');
 assert.match(v1IntegrationSource,/function prepare2DContainer\(container\)/,'The native SVG bridge must normalize stale preview mode state.');
+assert.match(v1IntegrationSource,/SSCPreviewSettings\?\.syncLastRender\?\.\(container,scramble,eventId\)/,'The native SVG bridge must synchronize the connected renderer snapshot.');
+assert.match(previewIntegrationSource,/function syncLastRender\(container,scramble,eventId='333'\)/,'The connected renderer must accept current snapshots from later integration layers.');
+assert.match(previewIntegrationSource,/activeRender\.call\(window\.SSCCubePreview,snapshot\.container,snapshot\.scramble,snapshot\.eventId\)/,'A settings-driven rerender must route through the active renderer.');
 assert.match(visibilityHotfixSource,/THUMBNAIL_DIMENSIONS\.forEach\(property=>container\.style\.removeProperty\(property\)\)/,'The visibility guard must release its square 3D dimensions in 2D mode.');
 assert.match(index,/id="historySettingsButton"[^>]*data-i18n="historySettings"/,'The visible history settings button must translate with the interface language.');
 assert.match(appSource,/function sessionDisplayName\(session\)[\s\S]*?return t\('defaultSession'\);/,'Built-in default session names must be displayed in the active language.');
@@ -264,7 +279,8 @@ assert.match(index,/code\/css\/cube-preview\.css\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/css\/ssc-preview-v1\.css\?v=20260831-physical-face-grid-5x5-1/);
 assert.match(index,/code\/js\/cube-preview\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/preview\/ssc-svg-renderer\.js\?v=20260831-physical-face-grid-5x5-1/);
-assert.match(index,/code\/js\/preview\/ssc-preview-v1-integration\.js\?v=20260901-2d-card-reset-2/);
+assert.match(index,/code\/js\/preview-integration\.js\?v=20260901-render-snapshot-1/);
+assert.match(index,/code\/js\/preview\/ssc-preview-v1-integration\.js\?v=20260901-2d-card-reset-3/);
 assert.match(index,/code\/js\/preview-visibility-hotfix\.js\?v=20260901-2d-card-reset-1/);
 assert.match(index,/code\/js\/preview-sizing\.js\?v=20260831-viewport-fit-1/);
 assert.match(index,/code\/js\/settings\.js\?v=20260831-line-width-control-1/);
@@ -284,6 +300,47 @@ const positions={
 for(const [name,position] of Object.entries(positions))assert.ok(position>=0,`${name} script is missing from index.html.`);
 assert.ok(positions.state<positions.v1&&positions.renderer<positions.v1&&positions.validation<positions.v1);
 assert.ok(positions.legacy<positions.bridge&&positions.bridge<positions.app);
+
+{
+  const dom=new JSDOM('<!doctype html><html lang="he"><body><div id="syncCard"></div></body></html>',{
+    runScripts:'outside-only',
+    url:'https://example.test/'
+  });
+  const browserWindow=dom.window;
+  let baseRenderCalls=0;
+  const activeRenderCalls=[];
+  browserWindow.SSCPreviewSizing={scheduleFit(){}};
+  browserWindow.SSCPreviewManager={
+    normalizeMode(value){return String(value||'').toLowerCase();},
+    async render(){return{engine:'manager'};}
+  };
+  browserWindow.SSCCubePreview={
+    async render(){baseRenderCalls++;return{engine:'base'};},
+    getEvent(eventId){return{id:eventId,name:eventId,label:eventId};}
+  };
+  browserWindow.eval(previewIntegrationSource);
+  const connectedApi=browserWindow.SSCCubePreview;
+  browserWindow.SSCCubePreview={
+    ...connectedApi,
+    async render(container,scramble,eventId){
+      activeRenderCalls.push({container,scramble,eventId});
+      return{engine:'active-v1'};
+    }
+  };
+  const card=browserWindow.document.getElementById('syncCard');
+  assert.equal(browserWindow.SSCPreviewSettings.syncLastRender(card,'OLD CLOCK','clock'),true);
+  assert.equal(browserWindow.SSCPreviewSettings.syncLastRender(card,"R U R'",'333'),true);
+  const rerendered=await browserWindow.SSCPreviewSettings.rerender();
+  assert.equal(rerendered.engine,'active-v1');
+  assert.equal(baseRenderCalls,0,'Settings rerenders must not bypass the active V1 renderer.');
+  assert.equal(activeRenderCalls.length,1);
+  assert.deepEqual(
+    {scramble:activeRenderCalls[0].scramble,eventId:activeRenderCalls[0].eventId},
+    {scramble:"R U R'",eventId:'333'},
+    'Settings rerenders must use the latest cube snapshot instead of a stale puzzle.'
+  );
+  dom.window.close();
+}
 
 {
   const dom=new JSDOM('<!doctype html><html><body><div id="cubePreview2D" class="cube-preview-card ssc-preview-mode-3d"></div></body></html>',{
@@ -333,5 +390,6 @@ console.log(JSON.stringify({
   physicalOriginSnapping:true,
   adjustableCubeLineWidth:true,
   stale3DCardStateCleared:true,
-  stalePuzzleProfileCleared:true
+  stalePuzzleProfileCleared:true,
+  rerendersUseCurrentSnapshot:true
 },null,2));
