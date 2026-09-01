@@ -1,374 +1,324 @@
 (() => {
   'use strict';
 
-  const TWISTY_MODULE_URL='https://cdn.cubing.net/v0/js/cubing/twisty';
-  const TWISTY_LOAD_TIMEOUT_MS=12000;
-  const RENDER_READY_TIMEOUT_MS=6000;
-  const states=new WeakMap();
-  const activeContainers=new Set();
-  let interactiveEnabled=true;
-  let renderSequence=0;
-  let twistyModulePromise=null;
-
-  const FALLBACK_EVENTS=Object.freeze({
-    '222':   {id:'222',label:'2×2',name:'2x2x2 Cube',family:'cube',puzzle:'2x2x2'},
-    '333':   {id:'333',label:'3×3',name:'3x3x3 Cube',family:'cube',puzzle:'3x3x3'},
-    '444':   {id:'444',label:'4×4',name:'4x4x4 Cube',family:'cube',puzzle:'4x4x4'},
-    '555':   {id:'555',label:'5×5',name:'5x5x5 Cube',family:'cube',puzzle:'5x5x5'},
-    '666':   {id:'666',label:'6×6',name:'6x6x6 Cube',family:'cube',puzzle:'6x6x6'},
-    '777':   {id:'777',label:'7×7',name:'7x7x7 Cube',family:'cube',puzzle:'7x7x7'},
-    '333bf': {id:'333bf',label:'3BLD',name:'3x3x3 Blindfolded',family:'cube',puzzle:'3x3x3',baseEvent:'333'},
-    '333fm': {id:'333fm',label:'FMC',name:'3x3x3 Fewest Moves',family:'cube',puzzle:'3x3x3',baseEvent:'333'},
-    '333oh': {id:'333oh',label:'OH',name:'3x3x3 One-Handed',family:'cube',puzzle:'3x3x3',baseEvent:'333'},
-    '333mbf':{id:'333mbf',label:'MBLD',name:'3x3x3 Multi-Blind',family:'cube',puzzle:'3x3x3',baseEvent:'333'},
-    '444bf': {id:'444bf',label:'4BLD',name:'4x4x4 Blindfolded',family:'cube',puzzle:'4x4x4',baseEvent:'444'},
-    '555bf': {id:'555bf',label:'5BLD',name:'5x5x5 Blindfolded',family:'cube',puzzle:'5x5x5',baseEvent:'555'},
-    'clock': {id:'clock',label:'CLOCK',name:'Clock',family:'clock',puzzle:'clock'},
-    'minx':  {id:'minx',label:'MEGA',name:'Megaminx',family:'minx',puzzle:'megaminx'},
-    'pyram': {id:'pyram',label:'PYRA',name:'Pyraminx',family:'pyram',puzzle:'pyraminx'},
-    'skewb': {id:'skewb',label:'SKEWB',name:'Skewb',family:'skewb',puzzle:'skewb'},
-    'sq1':   {id:'sq1',label:'SQ-1',name:'Square-1',family:'sq1',puzzle:'square1'},
-    'fto':   {id:'fto',label:'FTO',name:'Face-Turning Octahedron',family:'fto',puzzle:'fto'}
-  });
-
+  const LEGACY_3D=window.SSCPuzzle3D||null;
+  const NATIVE_EVENT_IDS=new Set(['333','333bf','333fm','333oh','333mbf']);
   const EVENT_ALIASES=Object.freeze({
-    '2x2':'222','2×2':'222','222':'222',
     '3x3':'333','3×3':'333','333':'333',
-    '4x4':'444','4×4':'444','444':'444',
-    '5x5':'555','5×5':'555','555':'555',
-    '6x6':'666','6×6':'666','666':'666',
-    '7x7':'777','7×7':'777','777':'777',
     '3bld':'333bf','333bf':'333bf','3x3bf':'333bf',
     'fmc':'333fm','333fm':'333fm',
     'oh':'333oh','333oh':'333oh','3x3oh':'333oh',
-    'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf',
-    '4bld':'444bf','444bf':'444bf','4x4bf':'444bf',
-    '5bld':'555bf','555bf':'555bf','5x5bf':'555bf',
-    'clock':'clock',
-    'megaminx':'minx','mega':'minx','minx':'minx',
-    'pyraminx':'pyram','pyra':'pyram','pyram':'pyram',
-    'skewb':'skewb',
-    'square-1':'sq1','square1':'sq1','sq-1':'sq1','sq1':'sq1',
-    'fto':'fto','face-turning-octahedron':'fto','face turning octahedron':'fto','octahedron':'fto'
+    'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
   });
+  const DEFAULT_COLORS=Object.freeze({U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'});
+  const INITIAL_CAMERA=Object.freeze({x:-27,y:-38,scale:1});
+  const states=new WeakMap();
+  const activeContainers=new Set();
+  let interactiveEnabled=true;
 
-  const CAMERA_PRESETS=Object.freeze({
-    cube:Object.freeze({latitude:28,longitude:35}),
-    minx:Object.freeze({latitude:24,longitude:32}),
-    pyram:Object.freeze({latitude:18,longitude:30}),
-    skewb:Object.freeze({latitude:25,longitude:35}),
-    sq1:Object.freeze({latitude:20,longitude:30}),
-    clock:Object.freeze({latitude:0,longitude:0}),
-    fto:Object.freeze({latitude:22,longitude:35})
-  });
-
-  function registry(){return window.SSCWCAEvents||FALLBACK_EVENTS;}
   function normalizeEventId(value){
-    if(window.SSCCubePreview?.normalizeEventId)return window.SSCCubePreview.normalizeEventId(value);
     const raw=String(value??'333').trim().toLowerCase();
     return EVENT_ALIASES[raw]||raw;
   }
-  function getEvent(eventValue){
-    const eventId=normalizeEventId(eventValue);
-    const event=registry()[eventId]||FALLBACK_EVENTS[eventId];
-    return event?{...event}:null;
-  }
-  function supportsEvent(eventValue){return Boolean(getEvent(eventValue));}
-  function scrambleToText(scramble){return Array.isArray(scramble)?scramble.join(' ').trim():String(scramble??'').trim();}
-  function presetFor(event){return CAMERA_PRESETS[event?.family]||CAMERA_PRESETS.cube;}
-  function isRTL(){return document.documentElement.dir==='rtl';}
-  function nextAnimationFrame(){return new Promise(resolve=>requestAnimationFrame(resolve));}
-  function delay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 
-  async function loadTwistyModule(){
-    if(!twistyModulePromise){
-      const importPromise=import(TWISTY_MODULE_URL);
-      twistyModulePromise=Promise.race([
-        importPromise,
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error('cubing.js TwistyPlayer did not load in time')),TWISTY_LOAD_TIMEOUT_MS))
-      ]).then(module=>{
-        if(typeof module?.TwistyPlayer!=='function')throw new Error('cubing.js loaded without TwistyPlayer.');
-        return module;
-      }).catch(error=>{
-        twistyModulePromise=null;
-        throw error;
-      });
+  function isNativeEvent(value){return NATIVE_EVENT_IDS.has(normalizeEventId(value));}
+  function supportsEvent(value){return isNativeEvent(value)||Boolean(LEGACY_3D?.supportsEvent?.(value));}
+  function getEvent(value){
+    const id=normalizeEventId(value);
+    if(isNativeEvent(id)){
+      const legacy=LEGACY_3D?.getEvent?.(id);
+      return legacy||{id,label:id==='333'?'3×3':id.toUpperCase(),name:'3x3x3 Cube',family:'cube',puzzle:'3x3x3'};
     }
-    return twistyModulePromise;
+    return LEGACY_3D?.getEvent?.(value)||null;
   }
 
-  function applyContainerMetadata(container,event){
+  function injectStyles(){
+    if(document.getElementById('sscNativeCube3DStyles'))return;
+    const style=document.createElement('style');
+    style.id='sscNativeCube3DStyles';
+    style.textContent=`
+      .ssc-native-cube3d-root{
+        --ssc-cube3d-size:min(72%,220px);
+        position:relative;
+        width:100%;height:100%;min-width:0;min-height:0;
+        display:grid!important;place-items:center;
+        perspective:780px;perspective-origin:50% 45%;
+        overflow:visible;background:transparent!important;
+        touch-action:none;user-select:none;-webkit-user-select:none;
+        cursor:grab;
+      }
+      .ssc-native-cube3d-root:active{cursor:grabbing}
+      .ssc-native-cube3d-stage{
+        position:relative;
+        width:var(--ssc-cube3d-size);height:var(--ssc-cube3d-size);
+        transform-style:preserve-3d;
+      }
+      .ssc-native-cube3d-cube{
+        position:absolute;left:50%;top:50%;
+        width:0;height:0;transform-style:preserve-3d;
+        will-change:transform;
+      }
+      .ssc-native-cube3d-cubie{
+        --cubie:52px;--half:26px;
+        position:absolute;left:0;top:0;
+        width:var(--cubie);height:var(--cubie);
+        margin-left:calc(var(--cubie) / -2);margin-top:calc(var(--cubie) / -2);
+        transform-style:preserve-3d;
+      }
+      .ssc-native-cube3d-face{
+        position:absolute;inset:0;
+        display:grid;place-items:center;
+        box-sizing:border-box;
+        border:1px solid rgba(0,0,0,.72);
+        border-radius:4px;
+        background:linear-gradient(145deg,#24272c,#090a0c 72%);
+        backface-visibility:hidden;
+        transform-style:preserve-3d;
+      }
+      .ssc-native-cube3d-face::before{
+        content:'';position:absolute;inset:4px;
+        border-radius:4px;
+        background:var(--sticker,transparent);
+        box-shadow:inset 0 0 0 1px rgba(0,0,0,.2),inset 0 1px 1px rgba(255,255,255,.2),0 1px 2px rgba(0,0,0,.28);
+        opacity:var(--sticker-visible,0);
+      }
+      .ssc-native-cube3d-face[data-side="F"]{transform:translateZ(var(--half))}
+      .ssc-native-cube3d-face[data-side="B"]{transform:rotateY(180deg) translateZ(var(--half))}
+      .ssc-native-cube3d-face[data-side="R"]{transform:rotateY(90deg) translateZ(var(--half))}
+      .ssc-native-cube3d-face[data-side="L"]{transform:rotateY(-90deg) translateZ(var(--half))}
+      .ssc-native-cube3d-face[data-side="U"]{transform:rotateX(90deg) translateZ(var(--half))}
+      .ssc-native-cube3d-face[data-side="D"]{transform:rotateX(-90deg) translateZ(var(--half))}
+      .ssc-native-cube3d-shadow{
+        position:absolute;left:50%;top:50%;width:68%;height:24%;
+        transform:translate(-50%,115%) rotateX(72deg) translateZ(-92px);
+        border-radius:50%;background:rgba(0,0,0,.18);filter:blur(12px);pointer-events:none;
+      }
+      .ssc-preview-3d-viewer .ssc-native-cube3d-root{--ssc-cube3d-size:min(72vmin,520px);perspective:1050px}
+      .cube-preview-card .ssc-native-cube3d-root{--ssc-cube3d-size:min(82%,190px);perspective:620px}
+      html[data-theme="dark"] .ssc-native-cube3d-face{background:linear-gradient(145deg,#2b2f35,#08090b 74%)}
+      html[data-theme="oled"] .ssc-native-cube3d-face{background:linear-gradient(145deg,#17191d,#000 78%)}
+      html[data-theme="dark"] .ssc-native-cube3d-shadow,html[data-theme="oled"] .ssc-native-cube3d-shadow{background:rgba(0,0,0,.34)}
+      @media(max-width:560px){.ssc-preview-3d-viewer .ssc-native-cube3d-root{--ssc-cube3d-size:min(76vmin,390px)}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function palette(){return{...DEFAULT_COLORS,...(window.SSCCubePreview?.getColors?.()||{})};}
+  function cellFor(side,x,y,z){
+    if(side==='F')return[1-y,x+1];
+    if(side==='B')return[1-y,1-x];
+    if(side==='R')return[1-y,1-z];
+    if(side==='L')return[1-y,z+1];
+    if(side==='U')return[z+1,x+1];
+    return[1-z,x+1];
+  }
+  function exposed(side,x,y,z){
+    return(side==='F'&&z===1)||(side==='B'&&z===-1)||(side==='R'&&x===1)||(side==='L'&&x===-1)||(side==='U'&&y===1)||(side==='D'&&y===-1);
+  }
+
+  function setCamera(state,x,y,scale=state.camera.scale){
+    state.camera.x=Math.max(-82,Math.min(82,Number(x)||0));
+    state.camera.y=Number(y)||0;
+    state.camera.scale=Math.max(.62,Math.min(1.55,Number(scale)||1));
+    state.cube.style.transform=`rotateX(${state.camera.x}deg) rotateY(${state.camera.y}deg) scale3d(${state.camera.scale},${state.camera.scale},${state.camera.scale})`;
+  }
+
+  function resetNativeCamera(container){
+    const state=states.get(container);
+    if(!state)return false;
+    setCamera(state,INITIAL_CAMERA.x,INITIAL_CAMERA.y,INITIAL_CAMERA.scale);
+    return true;
+  }
+
+  function bindInteraction(root,state){
+    let pointerId=null,startX=0,startY=0,startCamX=0,startCamY=0;
+    const down=event=>{
+      if(!interactiveEnabled||root.style.pointerEvents==='none')return;
+      pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;
+      startCamX=state.camera.x;startCamY=state.camera.y;
+      root.setPointerCapture?.(pointerId);
+      event.preventDefault();
+    };
+    const move=event=>{
+      if(pointerId!==event.pointerId||!interactiveEnabled)return;
+      const dx=event.clientX-startX,dy=event.clientY-startY;
+      setCamera(state,startCamX-(dy*.45),startCamY+(dx*.52));
+      event.preventDefault();
+    };
+    const up=event=>{
+      if(pointerId!==event.pointerId)return;
+      root.releasePointerCapture?.(pointerId);pointerId=null;
+    };
+    const wheel=event=>{
+      if(!interactiveEnabled||root.closest('.cube-preview-card'))return;
+      setCamera(state,state.camera.x,state.camera.y,state.camera.scale+(event.deltaY<0 ? .07 : -.07));
+      event.preventDefault();
+    };
+    root.addEventListener('pointerdown',down,{passive:false});
+    root.addEventListener('pointermove',move,{passive:false});
+    root.addEventListener('pointerup',up);
+    root.addEventListener('pointercancel',up);
+    root.addEventListener('wheel',wheel,{passive:false});
+    state.listeners={down,move,up,wheel};
+  }
+
+  function unbindInteraction(state){
+    const {root,listeners}=state||{};
+    if(!root||!listeners)return;
+    root.removeEventListener('pointerdown',listeners.down);
+    root.removeEventListener('pointermove',listeners.move);
+    root.removeEventListener('pointerup',listeners.up);
+    root.removeEventListener('pointercancel',listeners.up);
+    root.removeEventListener('wheel',listeners.wheel);
+  }
+
+  function clearMetadata(container){
     [...container.classList].forEach(className=>{
       if(className.startsWith('wca-family-')||className.startsWith('wca-event-'))container.classList.remove(className);
     });
-    container.classList.add('wca-preview-ready','ssc-preview-mode-3d',`wca-family-${event.family}`,`wca-event-${event.id}`);
-    container.classList.remove('ssc-preview-mode-2d','ssc-preview-3d-unavailable');
-    container.dataset.puzzle=event.label;
-    container.dataset.wcaEvent=event.id;
-    container.dataset.wcaPuzzle=event.puzzle;
-    container.dataset.previewEngine='cubing-twisty-3d';
-    container.dataset.previewMode='3d';
-    container.setAttribute('aria-label',isRTL()?`תצוגה תלת־ממדית של ${event.name} לאחר הערבוב`:`3D preview of ${event.name} scramble`);
+    container.classList.remove('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','ssc-preview-3d-static','ssc-preview-3d-unavailable','wca-preview-ready');
+    for(const key of ['previewReady','previewEngine','previewMode','wcaEvent','wcaPuzzle'])delete container.dataset[key];
   }
 
-  function renderFallback(container,event,message){
-    container.dataset.previewEngine='3d-unavailable';
-    container.classList.add('ssc-preview-3d-unavailable');
-    const fallback=document.createElement('div');
-    fallback.className='ssc-puzzle-3d-fallback';
-    fallback.setAttribute('role','status');
-    fallback.textContent=message||(isRTL()?'תצוגת 3D אינה זמינה':'3D preview unavailable');
-    container.replaceChildren(fallback);
-    if(event)container.dataset.puzzle=event.label;
-  }
-
-  function cleanupState(container,{clearDOM=true}={}){
+  function disposeNative(container,{clear=true}={}){
     const state=states.get(container);
-    if(state){
-      state.disposed=true;
-      state.resizeObserver?.disconnect();
-      if(state.doubleClickHandler)container.removeEventListener('dblclick',state.doubleClickHandler);
-      try{state.player?.pause?.();}catch{}
-      try{state.player?.remove?.();}catch{}
-      states.delete(container);
-    }
+    if(state){unbindInteraction(state);state.resizeObserver?.disconnect();states.delete(container);}
     activeContainers.delete(container);
-    container.classList.remove('ssc-preview-mode-3d','ssc-preview-3d-ready','ssc-preview-3d-static','ssc-preview-3d-unavailable');
-    delete container.dataset.previewReady;
-    if(clearDOM)container.replaceChildren();
+    clearMetadata(container);
+    if(clear)container.replaceChildren();
   }
 
-  function configureInteraction(player,enabled){
-    player.style.pointerEvents=enabled?'auto':'none';
-    player.tabIndex=enabled?0:-1;
-    try{
-      player.experimentalDragInput=enabled?'auto':'none';
-      player.experimentalMovePressInput='none';
-    }catch{}
-  }
+  function createCubie(x,y,z,faces,colors){
+    const cubie=document.createElement('div');
+    cubie.className='ssc-native-cube3d-cubie';
+    cubie.dataset.x=String(x);cubie.dataset.y=String(y);cubie.dataset.z=String(z);
 
-  function applyCamera(player,event){
-    const preset=presetFor(event);
-    try{
-      player.cameraLatitude=preset.latitude;
-      player.cameraLongitude=preset.longitude;
-    }catch{
-      player.setAttribute('camera-latitude',String(preset.latitude));
-      player.setAttribute('camera-longitude',String(preset.longitude));
+    for(const side of ['F','B','R','L','U','D']){
+      const face=document.createElement('span');
+      face.className='ssc-native-cube3d-face';
+      face.dataset.side=side;
+      if(exposed(side,x,y,z)){
+        const [row,col]=cellFor(side,x,y,z);
+        const identity=faces?.[side]?.[row]?.[col]||side;
+        face.style.setProperty('--sticker',colors[identity]||DEFAULT_COLORS[identity]||'#777');
+        face.style.setProperty('--sticker-visible','1');
+        face.dataset.identity=identity;
+        face.dataset.row=String(row);face.dataset.col=String(col);
+      }
+      cubie.appendChild(face);
     }
+    return cubie;
   }
 
-  function applyTheme(player){
-    const theme=document.documentElement.dataset.theme;
-    try{player.colorScheme=(theme==='dark'||theme==='oled')?'dark':'light';}catch{}
-  }
-
-  function configurePlayer(player,event){
-    player.className='ssc-puzzle-3d-player';
-    player.setAttribute('viewer-link','none');
-    player.setAttribute('aria-label',isRTL()?`פאזל ${event.name} בתלת־ממד`:`${event.name} 3D puzzle`);
-    player.style.width='100%';
-    player.style.height='100%';
-    player.style.minWidth='0';
-    player.style.minHeight='0';
-    player.style.display='block';
-    player.style.background='transparent';
-    player.style.maxWidth='100%';
-    player.style.maxHeight='100%';
-    configureInteraction(player,interactiveEnabled);
-    applyCamera(player,event);
-    applyTheme(player);
-  }
-
-  function setupResizeObserver(container,player,state){
-    if(typeof ResizeObserver!=='function')return;
-    let frame=0;
-    const observer=new ResizeObserver(entries=>{
-      const entry=entries[entries.length-1];
-      if(!entry||state.disposed)return;
-      cancelAnimationFrame(frame);
-      frame=requestAnimationFrame(()=>{
-        if(state.disposed)return;
-        const {width,height}=entry.contentRect;
-        container.style.setProperty('--ssc-3d-width',`${Math.max(0,Math.round(width))}px`);
-        container.style.setProperty('--ssc-3d-height',`${Math.max(0,Math.round(height))}px`);
-        player.style.width='100%';
-        player.style.height='100%';
-      });
+  function updateGeometry(state){
+    if(!state?.root?.isConnected)return;
+    const rect=state.root.getBoundingClientRect();
+    const shortSide=Math.max(120,Math.min(rect.width||0,rect.height||0));
+    const modal=Boolean(state.root.closest('.ssc-preview-3d-viewer'));
+    const cubieSize=Math.max(modal?54:30,Math.min(modal?132:52,shortSide*(modal ? .215 : .225)));
+    const half=cubieSize/2;
+    const step=cubieSize*.965;
+    state.root.style.setProperty('--cubie',`${cubieSize}px`);
+    state.root.style.setProperty('--half',`${half}px`);
+    state.cubies.forEach(cubie=>{
+      const x=Number(cubie.dataset.x),y=Number(cubie.dataset.y),z=Number(cubie.dataset.z);
+      cubie.style.transform=`translate3d(${x*step}px,${-y*step}px,${z*step}px)`;
     });
-    observer.observe(container);
+  }
+
+  function observeGeometry(state){
+    updateGeometry(state);
+    if(typeof ResizeObserver!=='function')return;
+    const observer=new ResizeObserver(()=>updateGeometry(state));
+    observer.observe(state.root);
     state.resizeObserver=observer;
   }
 
-  function setupResetGesture(container,state){
-    const handler=event=>{
-      if(!interactiveEnabled||state.disposed)return;
-      event.preventDefault();
-      resetCamera(container);
-    };
-    container.addEventListener('dblclick',handler,{passive:false});
-    state.doubleClickHandler=handler;
+  function applyMetadata(container,event){
+    clearMetadata(container);
+    container.classList.add('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','wca-preview-ready','wca-family-cube',`wca-event-${event.id}`);
+    container.classList.remove('ssc-preview-mode-2d','ssc-preview-3d-unavailable');
+    container.dataset.previewMode='3d';
+    container.dataset.previewEngine='ssc-native-css3d';
+    container.dataset.previewReady='true';
+    container.dataset.wcaEvent=event.id;
+    container.dataset.wcaPuzzle='3x3x3';
+    container.dataset.puzzle=event.label||'3×3';
   }
 
-  async function canvasReady(player){
-    if(typeof player?.experimentalCurrentCanvases!=='function')return true;
-    try{
-      const canvases=await player.experimentalCurrentCanvases();
-      return Boolean(canvases?.some(canvas=>canvas instanceof HTMLCanvasElement&&canvas.width>0&&canvas.height>0));
-    }catch{return false;}
-  }
+  function renderNative(container,scramble,eventValue){
+    if(!(container instanceof Element))throw new TypeError('SSC native 3D renderer requires a DOM container');
+    if(!window.SSCNxNState?.buildState)throw new Error('SSCNxNState is required for native 3D rendering');
+    injectStyles();
+    disposeNative(container);
+    LEGACY_3D?.dispose?.(container);
 
-  async function waitForPlayerReady(player,state){
-    const started=performance.now();
-    while(performance.now()-started<RENDER_READY_TIMEOUT_MS){
-      if(state.disposed)return false;
-      const rect=player.getBoundingClientRect();
-      if(rect.width>0&&rect.height>0&&await canvasReady(player))return true;
-      await Promise.race([nextAnimationFrame(),delay(50)]);
-    }
-    return false;
+    const event=getEvent(eventValue)||{id:'333',label:'3×3',name:'3x3x3 Cube'};
+    const cubeState=window.SSCNxNState.buildState(scramble,3,{strict:true});
+    const colors=palette();
+    const root=document.createElement('div');
+    root.className='ssc-native-cube3d-root ssc-puzzle-3d-player';
+    root.tabIndex=interactiveEnabled?0:-1;
+    root.setAttribute('role','img');
+    root.setAttribute('aria-label',document.documentElement.lang==='en'?'Interactive 3D 3x3 scramble preview':'תצוגת ערבוב תלת־ממדית אינטראקטיבית של 3x3');
+
+    const stage=document.createElement('div');
+    stage.className='ssc-native-cube3d-stage';
+    const shadow=document.createElement('div');shadow.className='ssc-native-cube3d-shadow';
+    const cube=document.createElement('div');cube.className='ssc-native-cube3d-cube';
+    const cubies=[];
+    for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++){const cubie=createCubie(x,y,z,cubeState.faces,colors);cubies.push(cubie);cube.appendChild(cubie);}
+    stage.append(shadow,cube);root.appendChild(stage);container.replaceChildren(root);
+
+    const state={root,cube,cubies,cubeState,event,camera:{...INITIAL_CAMERA},listeners:null,resizeObserver:null};
+    states.set(container,state);activeContainers.add(container);bindInteraction(root,state);observeGeometry(state);setCamera(state,INITIAL_CAMERA.x,INITIAL_CAMERA.y,INITIAL_CAMERA.scale);applyMetadata(container,event);
+    return root;
   }
 
   async function render(container,scramble,eventValue='333'){
-    if(!(container instanceof Element))throw new TypeError('SSCPuzzle3D.render() requires a DOM container');
-
-    const token=++renderSequence;
-    cleanupState(container);
-    const event=getEvent(eventValue);
-    if(!event){
-      renderFallback(container,null,isRTL()?'הפאזל אינו נתמך בתלת־ממד':'3D preview unavailable for this puzzle');
-      console.warn(`[SSC 3D] Unsupported event: ${eventValue}`);
-      return null;
-    }
-
-    applyContainerMetadata(container,event);
-    const state={token,event,player:null,resizeObserver:null,doubleClickHandler:null,disposed:false};
-    states.set(container,state);
-    activeContainers.add(container);
-
-    const loading=document.createElement('div');
-    loading.className='ssc-puzzle-3d-loading';
-    loading.setAttribute('aria-hidden','true');
-    container.replaceChildren(loading);
-
-    try{
-      const {TwistyPlayer}=await loadTwistyModule();
-      if(state.disposed||states.get(container)?.token!==token)return null;
-
-      const scrambleText=scrambleToText(scramble);
-      const player=new TwistyPlayer({
-        puzzle:event.puzzle,
-        alg:'',
-        experimentalSetupAlg:scrambleText,
-        experimentalSetupAnchor:'start',
-        visualization:'3D',
-        background:'none',
-        controlPanel:'none',
-        backView:'none',
-        viewerLink:'none',
-        hintFacelets:'none'
-      });
-      configurePlayer(player,event);
-      state.player=player;
-      container.replaceChildren(player);
-      setupResizeObserver(container,player,state);
-      setupResetGesture(container,state);
-
-      await nextAnimationFrame();
-      await nextAnimationFrame();
-      if(state.disposed||states.get(container)?.token!==token)return null;
-
-      const ready=await waitForPlayerReady(player,state);
-      if(state.disposed||states.get(container)?.token!==token)return null;
-      if(!ready)throw new Error(`TwistyPlayer did not produce a visible 3D canvas for ${event.id}.`);
-
-      container.classList.add('ssc-preview-3d-ready');
-      container.dataset.previewReady='true';
-      return player;
-    }catch(error){
-      if(state.disposed||states.get(container)?.token!==token)return null;
-      console.error(`[SSC 3D] Failed to render ${event.id}`,error);
-      cleanupState(container,{clearDOM:false});
-      applyContainerMetadata(container,event);
-      renderFallback(container,event);
-      return null;
-    }
+    if(isNativeEvent(eventValue))return renderNative(container,scramble,eventValue);
+    disposeNative(container);
+    if(LEGACY_3D?.render)return LEGACY_3D.render(container,scramble,eventValue);
+    const fallback=document.createElement('div');
+    fallback.className='ssc-puzzle-3d-fallback';
+    fallback.setAttribute('role','status');
+    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 3x3 only':'תצוגת 3D אמיתית זמינה כרגע ל־3x3 בלבד';
+    container.classList.add('ssc-preview-3d-unavailable');
+    container.dataset.previewEngine='native-3d-unavailable';
+    container.replaceChildren(fallback);
+    return null;
   }
 
   function resetCamera(container){
-    const state=states.get(container);
-    if(!state?.player)return false;
-    applyCamera(state.player,state.event);
-    return true;
+    if(states.has(container))return resetNativeCamera(container);
+    return Boolean(LEGACY_3D?.resetCamera?.(container));
   }
 
   function setInteractive(enabled){
     interactiveEnabled=Boolean(enabled);
     activeContainers.forEach(container=>{
-      const state=states.get(container);
-      if(state?.player)configureInteraction(state.player,interactiveEnabled);
-      container.classList.toggle('ssc-preview-3d-static',!interactiveEnabled);
+      const state=states.get(container);if(!state)return;
+      state.root.tabIndex=interactiveEnabled?0:-1;
+      state.root.classList.toggle('ssc-native-cube3d-static',!interactiveEnabled);
     });
+    LEGACY_3D?.setInteractive?.(interactiveEnabled);
     return interactiveEnabled;
   }
 
   function clear(container){
     if(!(container instanceof Element))return;
-    ++renderSequence;
-    cleanupState(container);
+    if(states.has(container))disposeNative(container);
+    else LEGACY_3D?.clear?.(container);
   }
-  function dispose(container){clear(container);}
-
-  async function getRealScramble(eventId,event){
-    if(window.SSCScrambles){
-      if(eventId==='333mbf')return (await window.SSCScrambles.generateMultiBlind(1))[0]||'';
-      return window.SSCScrambles.generate(eventId);
-    }
-    const {randomScrambleForEvent}=await import('https://cdn.cubing.net/v0/js/cubing/scramble');
-    try{return (await randomScrambleForEvent(eventId)).toString();}
-    catch(error){
-      if(event.baseEvent)return (await randomScrambleForEvent(event.baseEvent)).toString();
-      throw error;
-    }
-  }
-
-  async function testAll(){
-    await loadTwistyModule();
-    const testHost=document.createElement('div');
-    testHost.className='ssc-puzzle-3d-test-host';
-    testHost.setAttribute('aria-hidden','true');
-    document.body.appendChild(testHost);
-    const results=[];
-    try{
-      for(const event of Object.values(registry())){
-        let scramble='';
-        try{
-          scramble=await getRealScramble(event.id,event);
-          const player=await render(testHost,scramble,event.id);
-          const ok=Boolean(player&&testHost.dataset.previewReady==='true');
-          results.push({eventId:event.id,puzzle:event.puzzle,ok,scramble});
-          console[ok?'log':'error'](`${ok?'✓':'✗'} ${event.id}`);
-        }catch(error){
-          results.push({eventId:event.id,puzzle:event.puzzle,ok:false,scramble,error:String(error?.message||error)});
-          console.error(`✗ ${event.id}`,error);
-        }
-      }
-    }finally{
-      dispose(testHost);
-      testHost.remove();
-    }
-    return {ok:results.every(result=>result.ok),passed:results.filter(result=>result.ok).length,total:results.length,results};
+  function dispose(container){
+    if(!(container instanceof Element))return;
+    if(states.has(container))disposeNative(container);
+    else LEGACY_3D?.dispose?.(container);
   }
 
   window.SSCPuzzle3D=Object.freeze({
-    render,
-    clear,
-    dispose,
-    supportsEvent,
-    getEvent,
-    setInteractive,
-    resetCamera,
-    testAll,
-    cameraPresets:CAMERA_PRESETS
+    render,clear,dispose,resetCamera,setInteractive,supportsEvent,getEvent,
+    isNative3D:eventValue=>isNativeEvent(eventValue),
+    legacyRenderer:LEGACY_3D
   });
 })();
