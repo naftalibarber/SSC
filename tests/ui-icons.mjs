@@ -4,6 +4,7 @@ import {JSDOM} from 'jsdom';
 
 const index=fs.readFileSync('index.html','utf8');
 const appSource=fs.readFileSync('code/js/app.js','utf8');
+const enhancementCss=fs.readFileSync('code/css/app-enhancements.css','utf8');
 const advancedSource=fs.readFileSync('code/js/advanced-features.js','utf8');
 const importExportSource=fs.readFileSync('code/js/import-export.js','utf8');
 const workflow=fs.readFileSync('.github/workflows/preview-validation.yml','utf8');
@@ -12,10 +13,22 @@ assert.match(appSource,/data-toolbar-icon="focus-crosshair"/,'Focus mode must us
 assert.match(appSource,/<circle cx="12" cy="12" r="7"\/>/,'The focus crosshair must include a visible target ring.');
 assert.match(appSource,/M12 2v3M12 19v3M2 12h3M19 12h3/,'The focus icon must include four crosshair guides.');
 assert.match(appSource,/focus\.setAttribute\('aria-label',t\('focusMode'\)\)/,'Focus mode must keep a localized accessible name.');
+assert.match(appSource,/button\.id='fullscreenButton'/,'The toolbar must include the fullscreen toggle.');
+assert.match(appSource,/data-toolbar-icon="fullscreen-enter"/,'The fullscreen toggle must include a maximize icon.');
+assert.match(appSource,/data-toolbar-icon="fullscreen-exit"/,'The fullscreen toggle must include a restore icon.');
+assert.match(appSource,/toolbarButton\.setAttribute\('aria-pressed',fullscreen\?'true':'false'\)/,'The fullscreen toggle must expose its current state.');
+assert.match(appSource,/document\.getElementById\('fullscreenButton'\)\.addEventListener\('click',toggleFullscreen\)/,'The toolbar button must use the existing fullscreen function.');
+assert.match(enhancementCss,/#fullscreenButton\[aria-pressed="true"\] \[data-toolbar-icon="fullscreen-enter"\]/,'The maximize icon must hide after entering fullscreen.');
+assert.match(enhancementCss,/#fullscreenButton\[aria-pressed="true"\] \[data-toolbar-icon="fullscreen-exit"\]/,'The restore icon must appear after entering fullscreen.');
 assert.doesNotMatch(index,/#focusModeButton::before/,'The obsolete CSS-mask focus icon must not render alongside the SVG.');
-assert.match(index,/code\/js\/app\.js\?v=20260831-full-history-1/);
+assert.match(index,/code\/js\/app\.js\?v=20260901-fullscreen-1/);
+assert.match(index,/code\/css\/app-enhancements\.css\?v=20260901-fullscreen-1/);
 assert.match(index,/code\/js\/import-export\.js\?v=20260831-toolbar-icons-2/);
 assert.match(index,/code\/js\/advanced-features\.js\?v=20260831-toolbar-icons-2/);
+assert.doesNotMatch(index,/training(?:-data)?\.js|training-upgrades\.css/i,'The removed Training UI must not be loaded.');
+assert.doesNotMatch(appSource,/SSCTraining|trainingScramble|data-training-mode/,'The timer must not keep an active Training integration.');
+assert.equal(fs.existsSync('code/js/training.js'),false,'The removed Training implementation must not remain in the bundle.');
+assert.equal(fs.existsSync('code/js/training-data.js'),false,'The removed Training case catalog must not remain in the bundle.');
 assert.match(workflow,/for test in tests\/ui-\*\.mjs/,'CI must execute the toolbar icon regression test as part of the UI suite.');
 assert.match(workflow,/code\/js\/import-export\.js/,'CI must run when the advanced-features loader changes.');
 
@@ -75,6 +88,8 @@ console.log('[SSC UI CI] Toolbar icon summary');
 console.log(JSON.stringify({
   ok:true,
   focusIcon:'crosshair',
+  fullscreenIcons:['maximize','restore'],
+  trainingRemoved:true,
   analyticsIcon:'progress-chart',
   localizedLabels:['he','en'],
   analyticsOpens:true,

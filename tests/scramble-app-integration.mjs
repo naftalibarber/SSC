@@ -20,6 +20,12 @@ window.SSC_FEATURES={previewV1:true};
 if(!window.crypto.randomUUID)window.crypto.randomUUID=()=>`test-${Date.now()}-${Math.random()}`;
 if(!window.CSS)window.CSS={};
 if(!window.CSS.escape)window.CSS.escape=value=>String(value).replace(/[^a-zA-Z0-9_-]/g,'\\$&');
+let fullscreenElement=null;
+let fullscreenRequests=0;
+let fullscreenExits=0;
+Object.defineProperty(window.document,'fullscreenElement',{configurable:true,get:()=>fullscreenElement});
+window.document.documentElement.requestFullscreen=async()=>{fullscreenRequests+=1;fullscreenElement=window.document.documentElement;window.document.dispatchEvent(new window.Event('fullscreenchange'));};
+window.document.exitFullscreen=async()=>{fullscreenExits+=1;fullscreenElement=null;window.document.dispatchEvent(new window.Event('fullscreenchange'));};
 
 function evaluate(path){window.eval(`${fs.readFileSync(path,'utf8')}\n//# sourceURL=${path}`);}
 function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
@@ -54,6 +60,9 @@ evaluate('code/js/app.js');
 assert.equal(window.SSCScrambleProvider,window.SSCScrambles,'Production legacy API must be the same central provider object.');
 assert.equal(typeof window.SSCTimerEvents?.newScramble,'function','Timer integration API is missing.');
 assert.equal(typeof window.SSCTimerEvents?.repeatScramble,'function','Repeat-scramble integration API is missing.');
+assert.equal(window.SSCTraining,undefined,'The removed Training system must not initialize.');
+assert.equal(window.document.getElementById('trainingButton'),null,'The removed Training button must not render.');
+assert.equal(window.document.getElementById('trainingModal'),null,'The removed Training dialog must not render.');
 
 const scrambleElement=window.document.getElementById('scramble');
 const previewElement=window.document.getElementById('cubePreview2D');
@@ -66,6 +75,26 @@ assert.match(appSource,/if\(!text\|\|eventId!==currentEvent\|\|timer\.isBusy\(\)
 
 await waitFor(()=>scrambleElement.dataset.scrambleTransient==='false'&&scrambleElement.textContent.trim(),'initial scramble');
 assert.equal(scrambleElement.textContent.includes('[object Promise]'),false,'A Promise reached the scramble UI.');
+
+const fullscreenButton=window.document.getElementById('fullscreenButton');
+assert.ok(fullscreenButton,'The fullscreen toolbar button must render.');
+assert.equal(fullscreenButton.getAttribute('aria-label'),'מסך מלא','The fullscreen button must start with its Hebrew enter label.');
+assert.equal(fullscreenButton.getAttribute('aria-pressed'),'false','The fullscreen button must start unpressed.');
+assert.ok(fullscreenButton.querySelector('svg[data-toolbar-icon="fullscreen-enter"]'),'The fullscreen button is missing its maximize icon.');
+assert.ok(fullscreenButton.querySelector('svg[data-toolbar-icon="fullscreen-exit"]'),'The fullscreen button is missing its restore icon.');
+const fullscreenStateBefore={event:window.SSCTimerEvents.getCurrent(),scramble:scrambleElement.textContent,history:JSON.stringify(history())};
+fullscreenButton.click();
+await sleep(0);
+assert.equal(fullscreenRequests,1,'The fullscreen button did not request fullscreen.');
+assert.equal(window.document.fullscreenElement,window.document.documentElement,'The document did not enter fullscreen.');
+assert.equal(fullscreenButton.getAttribute('aria-label'),'מסך קטן','The active fullscreen button must offer the small-screen action.');
+assert.equal(fullscreenButton.getAttribute('aria-pressed'),'true','The fullscreen button did not expose its active state.');
+fullscreenButton.click();
+await sleep(0);
+assert.equal(fullscreenExits,1,'The fullscreen button did not exit fullscreen.');
+assert.equal(window.document.fullscreenElement,null,'The document did not return to normal size.');
+assert.equal(fullscreenButton.getAttribute('aria-label'),'מסך מלא','The restored button must offer fullscreen again.');
+assert.deepEqual({event:window.SSCTimerEvents.getCurrent(),scramble:scrambleElement.textContent,history:JSON.stringify(history())},fullscreenStateBefore,'Changing screen mode must not change the event, scramble, or solve history.');
 
 const events=['222','333','444','555','666','777'];
 const savedByEvent={};
@@ -185,6 +214,8 @@ assert.equal(fullHistoryModal.querySelectorAll('.full-history-row').length,15,'E
 
 window.document.getElementById('languageToggle').click();
 assert.equal(window.document.documentElement.lang,'en','The language toggle did not switch to English.');
+assert.equal(fullscreenButton.getAttribute('aria-label'),'Full Screen','The fullscreen button did not update to English.');
+assert.equal(fullscreenButton.querySelector('[data-fullscreen-label]').textContent,'FULL SCREEN','The visible fullscreen label did not update to English.');
 assert.equal(fullHistoryButton.textContent,'View all solves','The full-history button did not update to English.');
 assert.equal(fullHistoryModal.querySelector('[data-full-history-title]').textContent,'All solves','The open full-history dialog did not update to English.');
 window.document.getElementById('languageToggle').click();
@@ -208,6 +239,9 @@ console.log(JSON.stringify({
   fullHistoryCount:15,
   fullHistoryActions:true,
   fullHistoryLanguage:true,
+  fullscreenToggle:true,
+  fullscreenStatePreserved:true,
+  trainingRemoved:true,
   runningScrambleProtected:true,
   promiseLeak:false,
   failures:0
