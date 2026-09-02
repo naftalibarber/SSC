@@ -5,13 +5,19 @@
   const NATIVE_EVENT_ORDERS=new Map([
     ['222',2],
     ['333',3],['333bf',3],['333fm',3],['333oh',3],['333mbf',3],
-    ['444',4]
+    ['444',4],
+    ['555',5],
+    ['666',6],
+    ['777',7]
   ]);
   const NATIVE_EVENT_IDS=new Set(NATIVE_EVENT_ORDERS.keys());
   const EVENT_ALIASES=Object.freeze({
     '2x2':'222','2×2':'222','222':'222',
     '3x3':'333','3×3':'333','333':'333',
     '4x4':'444','4×4':'444','444':'444',
+    '5x5':'555','5×5':'555','555':'555',
+    '6x6':'666','6×6':'666','666':'666',
+    '7x7':'777','7×7':'777','777':'777',
     '3bld':'333bf','333bf':'333bf','3x3bf':'333bf',
     'fmc':'333fm','333fm':'333fm',
     'oh':'333oh','333oh':'333oh','3x3oh':'333oh',
@@ -40,7 +46,7 @@
       const order=nativeOrder(id);
       const dimensionLabel=`${order}×${order}`;
       const puzzle=`${order}x${order}x${order}`;
-      const primaryCubeEvent=id==='222'||id==='333'||id==='444';
+      const primaryCubeEvent=['222','333','444','555','666','777'].includes(id);
       const fallback={
         id,
         label:primaryCubeEvent?dimensionLabel:id.toUpperCase(),
@@ -111,6 +117,7 @@
         position:absolute;inset:0;
         box-sizing:border-box;
         display:grid;
+        direction:ltr;
         grid-template-columns:repeat(var(--ssc-native-order),minmax(0,1fr));
         grid-template-rows:repeat(var(--ssc-native-order),minmax(0,1fr));
         gap:2.4%;
@@ -328,7 +335,7 @@
     const fallback=document.createElement('div');
     fallback.className='ssc-puzzle-3d-fallback';
     fallback.setAttribute('role','status');
-    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 2x2, 3x3 and 4x4 cube events':'תצוגת 3D אמיתית זמינה כרגע למקצי 2x2, 3x3 ו־4x4';
+    fallback.textContent=document.documentElement.lang==='en'?'Native 3D is currently available for 2x2 through 7x7 cube events':'תצוגת 3D אמיתית זמינה כרגע למקצי קובייה מ־2x2 עד 7x7';
     container.classList.add('ssc-preview-3d-unavailable');
     container.dataset.previewEngine='native-3d-unavailable';
     container.replaceChildren(fallback);
