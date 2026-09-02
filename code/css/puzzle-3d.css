@@ -6,6 +6,15 @@
   background:transparent!important;
 }
 
+/* The native cube is rotated in X/Y and projected with perspective, so its
+   visible silhouette is larger than the square stage itself. Keep the same
+   renderer/camera for every NxN and fit the whole 3D solid inside the small
+   thumbnail by scaling the stage as one unit (including Z depth). */
+html body .cube-preview-card.ssc-preview-mode-3d .ssc-native-cube3d-stage{
+  transform:scale3d(.82,.82,.82);
+  transform-origin:50% 50%;
+}
+
 /* Higher specificity than the runtime integration styles so the thumbnail keeps
    one consistent premium surface in every theme. The preview must preserve the
    same fixed viewport placement as the regular 2D preview. */
