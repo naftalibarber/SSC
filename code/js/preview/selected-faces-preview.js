@@ -120,7 +120,7 @@
   }
 
   function isNativeFaceEvent(eventId){
-    return Boolean(window.SSCPuzzle3D?.isNative3D?.(eventId));
+    return Boolean(window.SSCPuzzle3D?.isNative3D?.(eventId)&&window.SSCPuzzle3D?.createFaceSet);
   }
 
   function clearCardGeometry(container){
@@ -128,7 +128,7 @@
     container.classList.remove(
       'ssc-preview-mode-2d','ssc-preview-mode-3d','ssc-preview-mode-single-face',
       'ssc-preview-thumbnail-3d','ssc-preview-3d-ready','ssc-preview-3d-static',
-      'ssc-native-cube3d-host','ssc-native-cube3d-static'
+      'ssc-native-cube3d-host','ssc-native-cube3d-static','ssc-native-flat-net-host'
     );
     container.classList.add('ssc-preview-mode-faces','ssc-native-selected-faces-host');
     for(const property of ['display','width','min-width','height','min-height','max-width','max-height'])container.style.removeProperty(property);
@@ -137,43 +137,33 @@
     container.style.setProperty('pointer-events','auto','important');
   }
 
-  async function buildFacesFromNative3D(scramble,eventId){
-    if(!isNativeFaceEvent(eventId)||!window.SSCPuzzle3D?.render)return null;
-    const source=document.createElement('div');
-    source.className='ssc-selected-faces-native-source';
-    let player=null;
-    try{
-      player=await window.SSCPuzzle3D.render(source,scramble,eventId);
-      if(!(player instanceof Element))return null;
-      const event=window.SSCPuzzle3D.getEvent?.(eventId)||null;
-      const order=Number(player.dataset.cubeOrder)||Number(event?.order)||0;
-      if(!order)return null;
+  function buildFacesFromNative3D(scramble,eventId){
+    if(!isNativeFaceEvent(eventId))return null;
+    const built=window.SSCPuzzle3D.createFaceSet(scramble,eventId,selectedFaces);
+    if(!built?.faces?.length)return null;
 
-      const root=document.createElement('div');
-      root.className='ssc-native-selected-faces';
-      root.dataset.count=String(selectedFaces.length);
-      root.dataset.faces=selectedFaces.join('');
-      root.dataset.cubeOrder=String(order);
-      root.dataset.source='native-3d';
-      root.style.setProperty('--ssc-native-order',String(order));
+    const root=document.createElement('div');
+    root.className='ssc-native-selected-faces';
+    root.dataset.count=String(selectedFaces.length);
+    root.dataset.faces=selectedFaces.join('');
+    root.dataset.cubeOrder=String(built.order);
+    root.dataset.source='native-3d';
+    root.dataset.faceFactory=built.source||window.SSCPuzzle3D.nativeFaceSource||'ssc-puzzle-3d-face-factory';
+    root.style.setProperty('--ssc-native-order',String(built.order));
 
-      for(const side of selectedFaces){
-        const face=source.querySelector(`.ssc-native-cube3d-face[data-side="${side}"]`);
-        if(!(face instanceof HTMLElement))return null;
-        face.classList.add('ssc-native-flat-face');
-        face.setAttribute('aria-label',side);
-        root.appendChild(face);
-      }
-      return{root,order,event};
-    }finally{
-      window.SSCPuzzle3D?.dispose?.(source);
+    for(const face of built.faces){
+      if(!(face instanceof HTMLElement))return null;
+      face.classList.add('ssc-native-flat-face');
+      face.setAttribute('aria-label',face.dataset.side||'');
+      root.appendChild(face);
     }
+    return{root,order:built.order,event:built.event};
   }
 
   async function renderSelectedFaces(container,scramble,eventId='333'){
     if(!(container instanceof Element))return null;
     const token=++renderToken;
-    const built=await buildFacesFromNative3D(scramble,eventId);
+    const built=buildFacesFromNative3D(scramble,eventId);
     if(token!==renderToken)return null;
     if(!built)return null;
 
@@ -390,6 +380,7 @@
     setFaces,
     render:renderSelectedFaces,
     rerender:rerenderFaces,
-    usesNative3DFaces:true
+    usesNative3DFaces:true,
+    faceFactory:'SSCPuzzle3D.createFaceSet'
   });
 })();
