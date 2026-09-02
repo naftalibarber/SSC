@@ -14,6 +14,9 @@ ${['U','L','F','R','B','D'].map(face=>`<label class="cube-color-item"><span>${fa
 </body></html>`,{url:'https://ssc.test/',pretendToBeVisual:true,runScripts:'outside-only'});
 const {window}=dom;
 window.console=console;
+// Let the shared validation helper recognize this JSDOM execution as Node so
+// it imports the installed cubing package instead of browser CDN modules.
+window.process=process;
 window.requestAnimationFrame=cb=>{cb();return 1;};
 window.cancelAnimationFrame=()=>{};
 window.ResizeObserver=class{observe(){} disconnect(){}};
