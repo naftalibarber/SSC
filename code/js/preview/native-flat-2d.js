@@ -94,6 +94,11 @@
     return preferredMode(container)==='2d'&&supportsNativeFlat(eventId);
   }
 
+  function clearNativeFlatHost(container){
+    if(!(container instanceof Element))return;
+    container.classList.remove('ssc-native-flat-net-host');
+  }
+
   function prepareContainer(container,event,order){
     try{window.SSCPuzzle3D?.dispose?.(container);}catch{}
     container.classList.remove(
@@ -171,13 +176,17 @@
 
   async function connectedRender(container,scramble,eventId='333'){
     lastRender={container,scramble,eventId};
-    if(!shouldUseNativeFlat(container,eventId))return baseRender?.(container,scramble,eventId)??null;
+    if(!shouldUseNativeFlat(container,eventId)){
+      clearNativeFlatHost(container);
+      return baseRender?.(container,scramble,eventId)??null;
+    }
     try{
       const result=await renderNativeFlat(container,scramble,eventId);
       if(result)return result;
     }catch(error){
       console.warn('[SSC native flat 2D] Native 3D face extraction failed; falling back to existing 2D renderer.',error);
     }
+    clearNativeFlatHost(container);
     return baseRender?.(container,scramble,eventId)??null;
   }
 
