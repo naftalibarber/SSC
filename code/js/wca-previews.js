@@ -17,7 +17,7 @@
     'skewb': { id:'skewb', label:'SKEWB',name:'Skewb',                   family:'skewb', puzzle:'skewb' },
     'sq1':   { id:'sq1',   label:'SQ-1', name:'Square-1',                family:'sq1',   puzzle:'square1' },
     'fto':   { id:'fto',   label:'FTO',  name:'Face-Turning Octahedron', family:'fto',   puzzle:'fto', scrambleDisplayEvent:'333ft', officialFrom:'2027-01-02' },
-    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444' },
+    '444bf': { id:'444bf', label:'4BLD', name:'4x4x4 Blindfolded',        family:'cube',  puzzle:'4x4x4', baseEvent:'444', scrambleDisplayEvent:'444' },
     '555bf': { id:'555bf', label:'5BLD', name:'5x5x5 Blindfolded',        family:'cube',  puzzle:'5x5x5', baseEvent:'555' },
     '333mbf':{ id:'333mbf',label:'MBLD', name:'3x3x3 Multi-Blind',        family:'cube',  puzzle:'3x3x3', baseEvent:'333' }
   });
