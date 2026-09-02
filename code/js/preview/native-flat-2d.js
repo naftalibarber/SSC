@@ -31,7 +31,7 @@
       }
       .ssc-native-flat-net{
         direction:ltr!important;
-        width:min(96%,360px);
+        width:min(92%,360px);
         aspect-ratio:4/3;
         min-width:0;
         min-height:0;
