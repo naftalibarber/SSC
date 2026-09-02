@@ -3,11 +3,13 @@
 
   const PREVIEW_ID='cubePreview2D';
   const MBLD_EVENT='333mbf';
+  const MBLD_CAMERA=Object.freeze({x:-30,y:-45,scale:1});
   const NATIVE_3D_THUMBNAIL_MIGRATION_KEY='sscNative3DThumbnailV2';
   const THUMBNAIL_DIMENSIONS=['display','width','min-width','height','min-height'];
   const watchedCards=new WeakSet();
   const verificationTokens=new WeakMap();
   const cardSnapshots=new WeakMap();
+  const mbld3DContainers=new WeakSet();
   let verificationSequence=0;
   let viewportListenersBound=false;
 
@@ -15,6 +17,18 @@
     return window.SSCTimerEvents?.getCurrent?.()
       || document.getElementById('eventSelect')?.value
       || '';
+  }
+
+  function isMbldEvent(value){
+    const id=String(value||'').trim().toLowerCase();
+    return id===MBLD_EVENT||id==='mbld'||id==='multi-blind';
+  }
+
+  function isMbldPreviewCard(container){
+    return container instanceof Element&&(
+      container.classList.contains('ssc-mbld-view-preview')||
+      Boolean(container.closest('#sscMbldViewList'))
+    );
   }
 
   function shouldSuppressMainPreview(container){
@@ -29,6 +43,41 @@
     container.style.setProperty('pointer-events','none','important');
     container.style.setProperty('z-index','-1','important');
     container.setAttribute('aria-hidden','true');
+  }
+
+  function applyMbldCamera(container){
+    if(!(container instanceof Element))return false;
+    const cube=container.querySelector('.ssc-native-cube3d-cube');
+    if(!(cube instanceof HTMLElement))return false;
+    const {x,y,scale}=MBLD_CAMERA;
+    cube.style.transform=`rotateX(${x}deg) rotateY(${y}deg) scale3d(${scale},${scale},${scale})`;
+    container.dataset.sscMbldCamera='u-top-f-left-r-right';
+    return true;
+  }
+
+  function installMbld3DCameraOverride(){
+    const api=window.SSCPuzzle3D;
+    if(!api?.render||api.__sscMbldCameraOverride)return;
+    const baseRender=api.render.bind(api);
+    const baseReset=api.resetCamera?.bind(api);
+
+    window.SSCPuzzle3D=Object.freeze({
+      ...api,
+      __sscMbldCameraOverride:true,
+      async render(container,scramble,eventId='333'){
+        const player=await baseRender(container,scramble,eventId);
+        if(isMbldEvent(eventId)){
+          mbld3DContainers.add(container);
+          applyMbldCamera(container);
+        }
+        return player;
+      },
+      resetCamera(container){
+        const result=Boolean(baseReset?.(container));
+        if(mbld3DContainers.has(container))queueMicrotask(()=>applyMbldCamera(container));
+        return result;
+      }
+    });
   }
 
   function migrateToProfessionalTwistyPreview(){
@@ -71,6 +120,15 @@
     container.style.setProperty('opacity','1','important');
     container.style.setProperty('z-index','120','important');
     container.style.setProperty('pointer-events','auto','important');
+
+    if(isMbldPreviewCard(container)){
+      container.style.setProperty('position','relative','important');
+      container.style.setProperty('display','flex','important');
+      container.style.removeProperty('z-index');
+      queueMicrotask(()=>lockSmall3D(container));
+      return;
+    }
+
     if(container.classList.contains('ssc-preview-mode-3d')){
       container.style.setProperty('display','block','important');
       const side=Math.max(120,Math.min(
@@ -109,6 +167,13 @@
     }
   }
 
+  function bindSnapshotCard(card){
+    if(!(card instanceof HTMLElement)||watchedCards.has(card))return;
+    watchedCards.add(card);
+    card.addEventListener('click',openFromCard,true);
+    card.addEventListener('keydown',openFromCard,true);
+  }
+
   function isCurrentVerification(container,token){
     return verificationTokens.get(container)===token;
   }
@@ -122,13 +187,20 @@
       __sscVisibilityGuard:true,
       async render(container,scramble,eventId){
         const token=++verificationSequence;
+        const resolvedEventId=isMbldPreviewCard(container)?MBLD_EVENT:eventId;
         if(container instanceof Element)verificationTokens.set(container,token);
         forceVisible(container);
 
-        const player=await guardedRender(container,scramble,eventId);
+        const player=await guardedRender(container,scramble,resolvedEventId);
         if(!isCurrentVerification(container,token))return player;
 
-        if(container instanceof Element)cardSnapshots.set(container,{scramble,eventId});
+        if(container instanceof Element){
+          cardSnapshots.set(container,{scramble,eventId:resolvedEventId});
+          if(isMbldPreviewCard(container)){
+            bindSnapshotCard(container);
+            applyMbldCamera(container);
+          }
+        }
         forceVisible(container);
         lockSmall3D(container);
         window.SSCPreviewSizing?.scheduleFit?.(container);
@@ -175,6 +247,7 @@
     bindViewportListeners();
   }
 
+  installMbld3DCameraOverride();
   migrateToProfessionalTwistyPreview();
   installRenderGuard();
   watchCard();
@@ -182,6 +255,7 @@
   window.addEventListener('ssc-event-change',()=>queueMicrotask(refreshMainPreviewVisibility));
 
   document.addEventListener('DOMContentLoaded',()=>{
+    installMbld3DCameraOverride();
     migrateToProfessionalTwistyPreview();
     installRenderGuard();
     watchCard();
