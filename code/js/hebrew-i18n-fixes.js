@@ -132,3 +132,85 @@
   injectMbld3x3Sizing();
   window.SSCMBLD3x3Preview=Object.freeze({rerender:rerenderMbld3x3Previews});
 })();
+
+(() => {
+  'use strict';
+
+  // The current MBLD viewer lives in #sscMbldViewList. Keep every scramble and
+  // its own 3x3 preview in the same row on desktop, tablet and mobile.
+  function injectMbldViewerRowFix(){
+    if(document.getElementById('sscMbldViewerSideBySideStyles'))return;
+    const style=document.createElement('style');
+    style.id='sscMbldViewerSideBySideStyles';
+    style.textContent=`
+      #sscMbldViewList .ssc-mbld-view-row{
+        grid-template-columns:44px minmax(0,1fr) 116px!important;
+        align-items:center!important;
+        gap:12px!important;
+      }
+      #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+        grid-column:3!important;
+        grid-row:1!important;
+        justify-self:end!important;
+        align-self:center!important;
+        width:116px!important;
+        min-width:116px!important;
+        max-width:116px!important;
+        height:76px!important;
+        min-height:76px!important;
+        max-height:76px!important;
+      }
+      @media(max-width:680px){
+        #sscMbldViewList .ssc-mbld-view-row{
+          grid-template-columns:34px minmax(0,1fr) 94px!important;
+          gap:7px!important;
+          padding:9px 8px!important;
+        }
+        #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+          grid-column:3!important;
+          grid-row:1!important;
+          width:94px!important;
+          min-width:94px!important;
+          max-width:94px!important;
+          height:64px!important;
+          min-height:64px!important;
+          max-height:64px!important;
+          padding:5px!important;
+        }
+        #sscMbldViewList .ssc-mbld-view-text{
+          font-size:12px!important;
+          line-height:1.35!important;
+          word-spacing:2px!important;
+        }
+        #sscMbldViewList .ssc-mbld-view-number{
+          width:29px!important;
+          height:29px!important;
+          font-size:12px!important;
+        }
+      }
+      @media(max-width:430px){
+        #sscMbldViewList .ssc-mbld-view-row{
+          grid-template-columns:28px minmax(0,1fr) 78px!important;
+          gap:5px!important;
+          padding:7px 6px!important;
+        }
+        #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+          width:78px!important;
+          min-width:78px!important;
+          max-width:78px!important;
+          height:54px!important;
+          min-height:54px!important;
+          max-height:54px!important;
+          padding:4px!important;
+        }
+        #sscMbldViewList .ssc-mbld-view-text{
+          font-size:10.5px!important;
+          line-height:1.3!important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  injectMbldViewerRowFix();
+})();
