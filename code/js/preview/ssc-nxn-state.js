@@ -11,6 +11,7 @@
     R:Object.freeze([1,0,0]),
     L:Object.freeze([-1,0,0])
   });
+  const ROTATION_FACES=Object.freeze({x:'R',y:'U',z:'F'});
 
   function assertOrder(order){
     const n=Number(order);
@@ -84,6 +85,25 @@
     const n=assertOrder(order);
     if(typeof move!=='string'||!move.trim())return null;
     const token=move.trim();
+
+    // WCA blindfolded scrambles can end with whole-cube orientation moves,
+    // especially 4BLD (for example x' y2 or z y'). Treat x/y/z as rotations
+    // of every layer in the same direction as R/U/F respectively.
+    const rotationMatch=token.match(/^([xyzXYZ])(2'|2|'|)?$/);
+    if(rotationMatch){
+      const [,rawRotation,suffix='']=rotationMatch;
+      const rotation=rawRotation.toLowerCase();
+      return Object.freeze({
+        token,
+        face:ROTATION_FACES[rotation],
+        layerDepth:n,
+        halfTurn:suffix.startsWith('2'),
+        prime:suffix.includes("'"),
+        wholeCube:true,
+        rotation
+      });
+    }
+
     const match=token.match(/^(\d+)?([URFDLBurfdlb])(w)?(2'|2|'|)?$/);
     if(!match)return null;
 
@@ -105,7 +125,9 @@
       face,
       layerDepth,
       halfTurn:suffix.startsWith('2'),
-      prime:suffix.includes("'")
+      prime:suffix.includes("'"),
+      wholeCube:false,
+      rotation:null
     });
   }
 
@@ -252,12 +274,13 @@
   function selfTest(){
     const results=[];
     const basicMoves=['U','D','F','B','R','L'];
+    const rotations=['x','y','z'];
 
     for(let n=2;n<=7;n++){
       const solved=solvedSignature(n);
       const tests=[];
 
-      for(const move of basicMoves){
+      for(const move of [...basicMoves,...rotations]){
         const inverse=inverseMove(move,n);
         const state=buildState(`${move} ${inverse}`,n,{strict:true});
         tests.push({name:`${move}+inverse`,ok:faceSignature(state.faces)===solved});
