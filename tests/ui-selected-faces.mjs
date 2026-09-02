@@ -11,7 +11,7 @@ assert.match(source,/\.ssc-native-cube3d-face\[data-side=/,'Selected faces must 
 assert.match(source,/aspect-ratio:1\/1!important/,'Flattened native faces must stay square.');
 assert.match(source,/data-count="2"[\s\S]*?flex-wrap:nowrap!important/,'Exactly two selected faces must stay side by side without stretching.');
 assert.doesNotMatch(source,/preview\.buildState|SSCPreviewV1\.buildState/,'Selected-face mode must not calculate a second cube state.');
-assert.doesNotMatch(source,/ssc-selected-face-sticker|createElement\('span'\)/,'Selected-face mode must not create its own sticker grid.');
+assert.doesNotMatch(source,/ssc-selected-face-sticker|className=['"]ssc-selected-face['"]/,'Selected-face mode must not create its own face/sticker grid.');
 assert.doesNotMatch(source,/function parseMove|function applyMove/,'Selected faces must not add a scramble parser.');
 assert.match(index,/selected-faces-preview\.js\?v=20260901-selected-faces-1/,'Selected-face mode must remain loaded from index.html.');
 
