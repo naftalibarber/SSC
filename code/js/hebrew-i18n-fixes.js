@@ -138,17 +138,24 @@
 
   // MBLD previews use the same .cube-preview-card class as the floating main
   // preview. The global cube-preview stylesheet intentionally makes that class
-  // position:fixed. Inside the MBLD viewer we must explicitly restore normal
-  // document flow so every scramble keeps its own preview beside it.
+  // position:fixed. Inside the MBLD viewer we explicitly restore normal flow.
+  // The interactive 3D modal must also stack above the MBLD scramble modal.
   function injectMbldViewerRowFix(){
     if(document.getElementById('sscMbldViewerSideBySideStyles'))return;
     const style=document.createElement('style');
     style.id='sscMbldViewerSideBySideStyles';
     style.textContent=`
+      #sscPreview3DModal.ssc-preview-3d-modal{
+        z-index:14100!important;
+      }
+
       #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row{
         grid-template-columns:44px minmax(0,1fr) 116px!important;
         align-items:center!important;
         gap:12px!important;
+      }
+      #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row:has(.ssc-mbld-view-preview.ssc-preview-mode-2d){
+        grid-template-columns:44px minmax(0,1fr) 184px!important;
       }
       #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
         position:relative!important;
@@ -173,6 +180,15 @@
         margin:0!important;
         padding:7px!important;
       }
+      #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card.ssc-preview-mode-2d{
+        width:184px!important;
+        min-width:184px!important;
+        max-width:184px!important;
+        height:132px!important;
+        min-height:132px!important;
+        max-height:132px!important;
+        padding:8px!important;
+      }
       html[lang="he"] #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card,
       html[lang="en"] #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
         right:auto!important;
@@ -184,6 +200,9 @@
           grid-template-columns:34px minmax(0,1fr) 94px!important;
           gap:7px!important;
           padding:9px 8px!important;
+        }
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row:has(.ssc-mbld-view-preview.ssc-preview-mode-2d){
+          grid-template-columns:34px minmax(0,1fr) 132px!important;
         }
         #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
           position:relative!important;
@@ -200,6 +219,15 @@
           min-height:64px!important;
           max-height:64px!important;
           padding:5px!important;
+        }
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card.ssc-preview-mode-2d{
+          width:132px!important;
+          min-width:132px!important;
+          max-width:132px!important;
+          height:96px!important;
+          min-height:96px!important;
+          max-height:96px!important;
+          padding:6px!important;
         }
         #sscMbldViewList .ssc-mbld-view-text{
           font-size:12px!important;
@@ -218,6 +246,9 @@
           gap:5px!important;
           padding:7px 6px!important;
         }
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row:has(.ssc-mbld-view-preview.ssc-preview-mode-2d){
+          grid-template-columns:28px minmax(0,1fr) 100px!important;
+        }
         #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
           width:78px!important;
           min-width:78px!important;
@@ -225,6 +256,15 @@
           height:54px!important;
           min-height:54px!important;
           max-height:54px!important;
+          padding:4px!important;
+        }
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card.ssc-preview-mode-2d{
+          width:100px!important;
+          min-width:100px!important;
+          max-width:100px!important;
+          height:74px!important;
+          min-height:74px!important;
+          max-height:74px!important;
           padding:4px!important;
         }
         #sscMbldViewList .ssc-mbld-view-text{
