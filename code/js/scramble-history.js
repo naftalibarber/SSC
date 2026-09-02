@@ -59,3 +59,22 @@
 
   updateButton();
 })();
+
+(() => {
+  'use strict';
+  const historyList=document.getElementById('historyList');
+  const historySettingsButton=document.getElementById('historySettingsButton');
+  const historySettings=document.getElementById('historySettings');
+  function isMbld(){return window.SSCTimerEvents?.getCurrent?.()==='333mbf';}
+  function syncMbldHistoryGuards(){
+    const active=isMbld();
+    if(historySettingsButton)historySettingsButton.hidden=active;
+    if(historySettings&&active)historySettings.hidden=true;
+    if(active)historyList?.querySelectorAll('[data-mbld-delete]').forEach(button=>button.remove());
+  }
+  const observer=historyList?new MutationObserver(syncMbldHistoryGuards):null;
+  observer?.observe(historyList,{childList:true,subtree:true});
+  window.addEventListener('ssc-event-change',syncMbldHistoryGuards);
+  window.addEventListener('ssc-mbld-result-saved',syncMbldHistoryGuards);
+  syncMbldHistoryGuards();
+})();
