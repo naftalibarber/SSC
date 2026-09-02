@@ -6,11 +6,11 @@ const source=fs.readFileSync('code/js/preview/selected-faces-preview.js','utf8')
 const index=fs.readFileSync('index.html','utf8');
 
 assert.match(source,/const FACE_ORDER=Object\.freeze\(\['U','L','F','R','B','D'\]\)/,'Selected-face order must use cube face notation.');
-assert.match(source,/window\.SSCPuzzle3D\.render\(source,scramble,eventId\)/,'Selected faces must be sourced from the existing native 3D renderer.');
-assert.match(source,/\.ssc-native-cube3d-face\[data-side=/,'Selected faces must extract the real native 3D face DOM.');
+assert.match(source,/window\.SSCPuzzle3D\.createFaceSet\(scramble,eventId,selectedFaces\)/,'Selected faces must come directly from the native 3D face factory.');
+assert.doesNotMatch(source,/window\.SSCPuzzle3D\.render\(source,scramble,eventId\)/,'Selected faces must not render a hidden 3D scene and imitate its face DOM.');
 assert.match(source,/aspect-ratio:1\/1!important/,'Flattened native faces must stay square.');
 assert.match(source,/data-count="2"[\s\S]*?flex-wrap:nowrap!important/,'Exactly two selected faces must stay side by side without stretching.');
-assert.doesNotMatch(source,/preview\.buildState|SSCPreviewV1\.buildState/,'Selected-face mode must not calculate a second cube state.');
+assert.doesNotMatch(source,/preview\.buildState|SSCPreviewV1\.buildState|SSCNxNState/,'Selected-face mode must not calculate a second cube state.');
 assert.doesNotMatch(source,/ssc-selected-face-sticker|className=['"]ssc-selected-face['"]/,'Selected-face mode must not create its own face/sticker grid.');
 assert.doesNotMatch(source,/function parseMove|function applyMove/,'Selected faces must not add a scramble parser.');
 assert.match(index,/selected-faces-preview\.js\?v=20260901-selected-faces-1/,'Selected-face mode must remain loaded from index.html.');
@@ -37,7 +37,7 @@ const dom=new JSDOM(`<!doctype html><html lang="he" dir="rtl"><head></head><body
 const {window}=dom;
 window.console=console;
 let bridgeCalls=0;
-let nativeRenderCalls=0;
+let nativeFactoryCalls=0;
 let fitCalls=0;
 let snapshot=null;
 let colors={U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'};
@@ -49,48 +49,51 @@ function normalizeEventId(eventId){
   return aliases[raw]||raw;
 }
 
+function makeFace(side,order){
+  const face=window.document.createElement('div');
+  face.className='ssc-native-cube3d-face';
+  face.dataset.side=side;
+  face.dataset.nativeFaceSource='ssc-puzzle-3d';
+  for(let row=0;row<order;row++){
+    for(let col=0;col<order;col++){
+      const sticker=window.document.createElement('span');
+      sticker.className='ssc-native-cube3d-sticker';
+      sticker.dataset.side=side;
+      sticker.dataset.row=String(row);
+      sticker.dataset.col=String(col);
+      sticker.dataset.identity=side;
+      sticker.dataset.nativeFaceSource='ssc-puzzle-3d';
+      sticker.style.setProperty('--sticker',colors[side]);
+      face.appendChild(sticker);
+    }
+  }
+  return face;
+}
+
 window.SSCPreviewSizing={scheduleFit(){fitCalls++;}};
 window.SSCPreviewSettings={
   syncLastRender(container,scramble,eventId){snapshot={container,scramble,eventId};return true;}
 };
 window.SSCPuzzle3D={
+  nativeFaceSource:'ssc-puzzle-3d-face-factory',
   isNative3D(eventId){return Boolean(orders[normalizeEventId(eventId)]);},
   getEvent(eventId){
     const id=normalizeEventId(eventId);
     const order=orders[id];
     return order?{id,order,puzzle:`${order}x${order}x${order}`,label:`${order}×${order}`} : null;
   },
-  async render(container,scramble,eventId){
-    nativeRenderCalls++;
+  createFaceSet(scramble,eventId,sides){
+    nativeFactoryCalls++;
     const id=normalizeEventId(eventId);
     const order=orders[id];
     assert.ok(order,'Native mock only accepts supported native cube events.');
-    const root=window.document.createElement('div');
-    root.className='ssc-native-cube3d-root ssc-puzzle-3d-player';
-    root.dataset.cubeOrder=String(order);
-    const cube=window.document.createElement('div');
-    cube.className='ssc-native-cube3d-cube';
-    for(const side of ['F','B','R','L','U','D']){
-      const face=window.document.createElement('div');
-      face.className='ssc-native-cube3d-face';
-      face.dataset.side=side;
-      for(let row=0;row<order;row++){
-        for(let col=0;col<order;col++){
-          const sticker=window.document.createElement('span');
-          sticker.className='ssc-native-cube3d-sticker';
-          sticker.dataset.side=side;
-          sticker.dataset.row=String(row);
-          sticker.dataset.col=String(col);
-          sticker.dataset.identity=side;
-          sticker.style.setProperty('--sticker',colors[side]);
-          face.appendChild(sticker);
-        }
-      }
-      cube.appendChild(face);
-    }
-    root.appendChild(cube);
-    container.replaceChildren(root);
-    return root;
+    return Object.freeze({
+      event:this.getEvent(id),
+      order,
+      sides:Object.freeze([...sides]),
+      faces:Object.freeze(sides.map(side=>makeFace(side,order))),
+      source:'ssc-puzzle-3d-face-factory'
+    });
   },
   dispose(container){container.replaceChildren();}
 };
@@ -113,6 +116,7 @@ window.SSCCubePreview={
 window.eval(`${source}\n//# sourceURL=selected-faces-preview.js`);
 assert.ok(window.SSCSelectedFacesPreview,'Selected-face API must be installed.');
 assert.equal(window.SSCSelectedFacesPreview.usesNative3DFaces,true);
+assert.equal(window.SSCSelectedFacesPreview.faceFactory,'SSCPuzzle3D.createFaceSet');
 assert.equal(window.SSCSelectedFacesPreview.isEnabled(),false);
 assert.deepEqual([...window.SSCSelectedFacesPreview.getFaces()],['F']);
 
@@ -137,9 +141,12 @@ assert.equal(card.dataset.previewEngine,'ssc-native-3d-selected-faces');
 assert.equal(card.dataset.selectedFaces,'F');
 assert.equal(card.style.getPropertyValue('width'),'','Selected faces must release stale 3D thumbnail width.');
 assert.equal(card.style.getPropertyValue('height'),'','Selected faces must release stale 3D thumbnail height.');
-assert.equal(card.querySelector('.ssc-native-selected-faces')?.dataset.source,'native-3d','Flat face view must identify native 3D as its source.');
+const firstRoot=card.querySelector('.ssc-native-selected-faces');
+assert.equal(firstRoot?.dataset.source,'native-3d','Flat face view must identify native 3D as its source.');
+assert.equal(firstRoot?.dataset.faceFactory,'ssc-puzzle-3d-face-factory','Selected faces must expose the renderer-owned face factory.');
 assert.equal(card.querySelectorAll('.ssc-native-cube3d-face.ssc-native-flat-face').length,1);
 assert.equal(card.querySelectorAll('.ssc-native-cube3d-sticker').length,9);
+assert.equal(card.querySelector('.ssc-native-flat-face')?.dataset.nativeFaceSource,'ssc-puzzle-3d');
 assert.equal(card.querySelectorAll('.ssc-selected-face').length,0,'Legacy selected-face DOM must not be rendered.');
 assert.equal(card.querySelectorAll('.ssc-selected-face-sticker').length,0,'Legacy selected sticker DOM must not be rendered.');
 
@@ -160,10 +167,15 @@ assert.deepEqual([...window.SSCSelectedFacesPreview.getFaces()],['U','F']);
 const twoFaceRoot=card.querySelector('.ssc-native-selected-faces');
 assert.equal(twoFaceRoot.dataset.count,'2');
 assert.equal(twoFaceRoot.dataset.source,'native-3d');
+assert.equal(twoFaceRoot.dataset.faceFactory,'ssc-puzzle-3d-face-factory');
 assert.equal(card.querySelectorAll('.ssc-native-cube3d-face.ssc-native-flat-face').length,2);
 assert.equal(card.querySelectorAll('.ssc-native-cube3d-sticker').length,18);
 for(const face of card.querySelectorAll('.ssc-native-flat-face')){
-  assert.equal(face.classList.contains('ssc-native-cube3d-face'),true,'Every flat face must still be the native 3D face element.');
+  assert.equal(face.classList.contains('ssc-native-cube3d-face'),true,'Every flat face must be the exact native 3D face class.');
+  assert.equal(face.dataset.nativeFaceSource,'ssc-puzzle-3d','Every selected face must be created by puzzle-3d.js itself.');
+  for(const sticker of face.querySelectorAll('.ssc-native-cube3d-sticker')){
+    assert.equal(sticker.dataset.nativeFaceSource,'ssc-puzzle-3d');
+  }
 }
 
 await window.SSCSelectedFacesPreview.setFaces(['R','U']);
@@ -172,14 +184,14 @@ assert.equal(result444.order,4);
 assert.equal(result444.source,'native-3d');
 assert.deepEqual([...result444.faces],['U','R']);
 assert.equal(card.querySelectorAll('.ssc-native-cube3d-face.ssc-native-flat-face').length,2);
-assert.equal(card.querySelectorAll('.ssc-native-cube3d-sticker').length,32,'Two 4x4 native faces must contain 32 original 3D stickers.');
+assert.equal(card.querySelectorAll('.ssc-native-cube3d-sticker').length,32,'Two 4x4 native faces must contain 32 renderer-owned 3D stickers.');
 assert.ok(bridgeCalls>=2,'Scramble changes in face mode must still synchronize through the existing preview pipeline.');
-assert.ok(nativeRenderCalls>=4,'Face changes must rebuild from the native 3D renderer.');
+assert.ok(nativeFactoryCalls>=4,'Face changes must rebuild directly from the shared 3D face factory.');
 
 window.SSCCubePreview.setColors({U:'#123456'});
 await new Promise(resolve=>window.setTimeout(resolve,0));
 const uSticker=card.querySelector('.ssc-native-flat-face[data-side="U"] .ssc-native-cube3d-sticker');
-assert.equal(uSticker.style.getPropertyValue('--sticker'),'#123456','Color changes must repaint through native 3D face rendering.');
+assert.equal(uSticker.style.getPropertyValue('--sticker'),'#123456','Color changes must repaint through the native 3D face factory.');
 assert.ok(fitCalls>0);
 
 modeSelect.value='2d';
@@ -190,4 +202,4 @@ const baseResult=await window.SSCCubePreview.render(card,'R U','333');
 assert.equal(baseResult.engine,'base','Leaving selected faces must restore the normal 2D/3D pipeline.');
 
 dom.window.close();
-console.log('Native 3D selected-face extraction, square two-face layout and color checks passed.');
+console.log('Shared native 3D face factory, selected-face layout and color checks passed.');
