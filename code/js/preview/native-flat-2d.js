@@ -86,7 +86,7 @@
   }
 
   function supportsNativeFlat(eventId){
-    return Boolean(window.SSCPuzzle3D?.isNative3D?.(eventId));
+    return Boolean(window.SSCPuzzle3D?.isNative3D?.(eventId)&&window.SSCPuzzle3D?.createFaceSet);
   }
 
   function shouldUseNativeFlat(container,eventId){
@@ -121,43 +121,36 @@
     delete container.dataset.selectedFaces;
   }
 
-  async function buildNativeNet(scramble,eventId){
-    if(!supportsNativeFlat(eventId)||!window.SSCPuzzle3D?.render)return null;
-    const source=document.createElement('div');
-    source.className='ssc-native-flat-net-source';
-    try{
-      const player=await window.SSCPuzzle3D.render(source,scramble,eventId);
-      if(!(player instanceof Element))return null;
-      const event=window.SSCPuzzle3D.getEvent?.(eventId)||null;
-      const order=Number(player.dataset.cubeOrder)||Number(event?.order)||0;
-      if(!order)return null;
+  function buildNativeNet(scramble,eventId){
+    if(!supportsNativeFlat(eventId))return null;
+    const built=window.SSCPuzzle3D.createFaceSet(scramble,eventId,FACE_ORDER);
+    if(!built?.faces?.length)return null;
 
-      const root=document.createElement('div');
-      root.className='ssc-native-flat-net';
-      root.dataset.source='native-3d';
-      root.dataset.cubeOrder=String(order);
-      root.style.setProperty('--ssc-native-order',String(order));
+    const root=document.createElement('div');
+    root.className='ssc-native-flat-net';
+    root.dataset.source='native-3d';
+    root.dataset.faceFactory=built.source||window.SSCPuzzle3D.nativeFaceSource||'ssc-puzzle-3d-face-factory';
+    root.dataset.cubeOrder=String(built.order);
+    root.style.setProperty('--ssc-native-order',String(built.order));
 
-      for(const side of FACE_ORDER){
-        const face=source.querySelector(`.ssc-native-cube3d-face[data-side="${side}"]`);
-        if(!(face instanceof HTMLElement))return null;
-        const position=NET_POSITION[side];
-        face.classList.add('ssc-native-flat-net-face');
-        face.style.gridColumn=String(position[0]);
-        face.style.gridRow=String(position[1]);
-        face.setAttribute('aria-label',side);
-        root.appendChild(face);
-      }
-      return{root,event,order};
-    }finally{
-      window.SSCPuzzle3D?.dispose?.(source);
+    for(const face of built.faces){
+      if(!(face instanceof HTMLElement))return null;
+      const side=String(face.dataset.side||'').toUpperCase();
+      const position=NET_POSITION[side];
+      if(!position)return null;
+      face.classList.add('ssc-native-flat-net-face');
+      face.style.gridColumn=String(position[0]);
+      face.style.gridRow=String(position[1]);
+      face.setAttribute('aria-label',side);
+      root.appendChild(face);
     }
+    return{root,event:built.event,order:built.order};
   }
 
   async function renderNativeFlat(container,scramble,eventId='333'){
     if(!(container instanceof Element))return null;
     const token=++renderToken;
-    const built=await buildNativeNet(scramble,eventId);
+    const built=buildNativeNet(scramble,eventId);
     if(token!==renderToken||!built)return null;
 
     prepareContainer(container,built.event,built.order);
@@ -184,7 +177,7 @@
       const result=await renderNativeFlat(container,scramble,eventId);
       if(result)return result;
     }catch(error){
-      console.warn('[SSC native flat 2D] Native 3D face extraction failed; falling back to existing 2D renderer.',error);
+      console.warn('[SSC native flat 2D] Shared native 3D face factory failed; falling back to existing 2D renderer.',error);
     }
     clearNativeFlatHost(container);
     return baseRender?.(container,scramble,eventId)??null;
@@ -226,6 +219,7 @@
     supportsEvent:supportsNativeFlat,
     shouldUseNativeFlat,
     render:renderNativeFlat,
-    source:'native-3d'
+    source:'native-3d',
+    faceFactory:'SSCPuzzle3D.createFaceSet'
   });
 })();
