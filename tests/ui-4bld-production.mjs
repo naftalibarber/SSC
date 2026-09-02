@@ -52,7 +52,7 @@ for(const rotation of ['x','x2',"x'",'y','y2',"y'",'z','z2',"z'"]){
 for(const scramble of scrambles){
   const tokens=scramble.trim().split(/\s+/);
   const unsupported=tokens.filter(token=>!window.SSCNxNState.parseMove(token,4));
-  assert.deepEqual(unsupported,[],`Real 444bf scramble contains unsupported moves: ${unsupported.join(' ')}`);
+  assert.equal(unsupported.length,0,`Real 444bf scramble contains unsupported moves: ${unsupported.join(' ')}`);
 
   const full=window.SSCPreviewV1.render(card,scramble,'444bf',{strict:true});
   assert.equal(full.order,4);
@@ -66,7 +66,7 @@ for(const scramble of scrambles){
   const mismatches=window.SSCPreviewValidation.compareStates(full.state,reference,{
     eventId:'444',scramble,order:4
   });
-  assert.deepEqual(mismatches,[],`Real 4BLD state must match cubing.js exactly. First mismatch: ${JSON.stringify(mismatches[0]||null)}`);
+  assert.equal(mismatches.length,0,`Real 4BLD state must match cubing.js exactly. First mismatch: ${JSON.stringify(mismatches[0]||null)}`);
 
   const threeD=await window.SSCPuzzle3D.render(card,scramble,'444bf');
   assert.ok(threeD,'4BLD must render with native 4x4 CSS 3D.');
