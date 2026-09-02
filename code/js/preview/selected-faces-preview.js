@@ -10,7 +10,6 @@
   let enabled=localStorage.getItem(ENABLED_KEY)==='true';
   let selectedFaces=loadFaces();
   let lastRender=null;
-  let renderToken=0;
 
   function isEnglish(){
     return document.documentElement.lang==='en'||document.documentElement.dir==='ltr';
@@ -24,11 +23,14 @@
   }
 
   function loadFaces(){
-    try{return normalizeFaces(JSON.parse(localStorage.getItem(FACES_KEY)||'[]'));}
-    catch{return['F'];}
+    try{
+      return normalizeFaces(JSON.parse(localStorage.getItem(FACES_KEY)||'[]'));
+    }catch{return['F'];}
   }
 
-  function saveFaces(){localStorage.setItem(FACES_KEY,JSON.stringify(selectedFaces));}
+  function saveFaces(){
+    localStorage.setItem(FACES_KEY,JSON.stringify(selectedFaces));
+  }
 
   function injectStyles(){
     if(document.getElementById('sscSelectedFacesPreviewStyles'))return;
@@ -37,51 +39,45 @@
     style.textContent=`
       .cube-preview-card.ssc-preview-mode-faces{
         overflow:hidden!important;
-        padding:4px!important;
+        padding:5px!important;
       }
-      .ssc-native-selected-faces{
+      .ssc-selected-faces-preview{
         direction:ltr!important;
         width:100%;height:100%;min-width:0;min-height:0;
         box-sizing:border-box;
-        display:flex!important;
-        flex-wrap:wrap;
-        align-content:center;
-        align-items:center;
-        justify-content:center;
+        display:grid;
+        grid-template-columns:repeat(var(--ssc-selected-face-columns,1),minmax(0,1fr));
+        grid-template-rows:repeat(var(--ssc-selected-face-rows,1),minmax(0,1fr));
+        place-items:center;
         gap:6px;
         padding:3px;
+      }
+      .ssc-selected-face{
+        height:100%;
+        width:auto;
+        max-width:100%;
+        max-height:100%;
+        aspect-ratio:1;
+        box-sizing:border-box;
+        display:grid;
+        grid-template-columns:repeat(var(--ssc-selected-face-order),minmax(0,1fr));
+        grid-template-rows:repeat(var(--ssc-selected-face-order),minmax(0,1fr));
+        gap:calc(var(--ssc-cube-line-width,1) * 1px);
+        padding:calc(var(--ssc-cube-line-width,1) * 1px);
+        border-radius:4%;
+        background:#050505;
         overflow:hidden;
+        box-shadow:0 1px 4px rgba(0,0,0,.22);
       }
-      .ssc-native-selected-faces>.ssc-native-cube3d-face.ssc-native-flat-face{
-        position:relative!important;
-        inset:auto!important;
-        transform:none!important;
-        flex:0 0 var(--ssc-native-flat-face-size)!important;
-        width:var(--ssc-native-flat-face-size)!important;
-        height:auto!important;
-        max-width:var(--ssc-native-flat-face-size)!important;
-        max-height:none!important;
-        aspect-ratio:1/1!important;
-        box-sizing:border-box!important;
-        direction:ltr!important;
+      .ssc-selected-faces-preview[data-count="1"] .ssc-selected-face{
+        height:min(88%,220px);
+        width:auto;
       }
-      .ssc-native-selected-faces[data-count="1"]{
-        --ssc-native-flat-face-size:min(88%,118px);
-      }
-      .ssc-native-selected-faces[data-count="2"]{
-        --ssc-native-flat-face-size:min(calc((100% - 8px)/2),92px);
-        flex-wrap:nowrap!important;
-      }
-      .ssc-native-selected-faces[data-count="3"],
-      .ssc-native-selected-faces[data-count="4"]{
-        --ssc-native-flat-face-size:min(calc((100% - 8px)/2),62px);
-      }
-      .ssc-native-selected-faces[data-count="5"],
-      .ssc-native-selected-faces[data-count="6"]{
-        --ssc-native-flat-face-size:min(calc((100% - 14px)/3),56px);
-      }
-      .ssc-native-selected-faces>.ssc-native-cube3d-face.ssc-native-flat-face[data-side]{
-        transform:none!important;
+      .ssc-selected-face-sticker{
+        min-width:0;min-height:0;
+        display:block;
+        background:var(--ssc-selected-sticker,#777);
+        border-radius:4%;
       }
       .ssc-preview-face-setting[hidden]{display:none!important}
       .ssc-preview-face-options{
@@ -119,84 +115,92 @@
     document.head.appendChild(style);
   }
 
-  function isNativeFaceEvent(eventId){
-    return Boolean(window.SSCPuzzle3D?.isNative3D?.(eventId)&&window.SSCPuzzle3D?.createFaceSet);
-  }
-
-  function clearCardGeometry(container){
+  function clear3DCardGeometry(container){
     if(!(container instanceof HTMLElement))return;
-    container.classList.remove(
-      'ssc-preview-mode-2d','ssc-preview-mode-3d','ssc-preview-mode-single-face',
-      'ssc-preview-thumbnail-3d','ssc-preview-3d-ready','ssc-preview-3d-static',
-      'ssc-native-cube3d-host','ssc-native-cube3d-static','ssc-native-flat-net-host'
-    );
-    container.classList.add('ssc-preview-mode-faces','ssc-native-selected-faces-host');
+    container.classList.remove('ssc-preview-mode-2d','ssc-preview-mode-3d','ssc-preview-mode-single-face','ssc-preview-thumbnail-3d','ssc-preview-3d-ready','ssc-preview-3d-static');
+    container.classList.add('ssc-preview-mode-faces');
     for(const property of ['display','width','min-width','height','min-height','max-width','max-height'])container.style.removeProperty(property);
     container.style.setProperty('visibility','visible','important');
     container.style.setProperty('opacity','1','important');
     container.style.setProperty('pointer-events','auto','important');
   }
 
-  function buildFacesFromNative3D(scramble,eventId){
-    if(!isNativeFaceEvent(eventId))return null;
-    const built=window.SSCPuzzle3D.createFaceSet(scramble,eventId,selectedFaces);
-    if(!built?.faces?.length)return null;
-
-    const root=document.createElement('div');
-    root.className='ssc-native-selected-faces';
-    root.dataset.count=String(selectedFaces.length);
-    root.dataset.faces=selectedFaces.join('');
-    root.dataset.cubeOrder=String(built.order);
-    root.dataset.source='native-3d';
-    root.dataset.faceFactory=built.source||window.SSCPuzzle3D.nativeFaceSource||'ssc-puzzle-3d-face-factory';
-    root.style.setProperty('--ssc-native-order',String(built.order));
-
-    for(const face of built.faces){
-      if(!(face instanceof HTMLElement))return null;
-      face.classList.add('ssc-native-flat-face');
-      face.setAttribute('aria-label',face.dataset.side||'');
-      root.appendChild(face);
-    }
-    return{root,order:built.order,event:built.event};
+  function geometryForCount(count){
+    const columns=count<=1?1:count<=4?2:3;
+    return{columns,rows:Math.ceil(count/columns)};
   }
 
-  async function renderSelectedFaces(container,scramble,eventId='333'){
+  function renderSelectedFaces(container,scramble,eventId='333'){
     if(!(container instanceof Element))return null;
-    const token=++renderToken;
-    const built=buildFacesFromNative3D(scramble,eventId);
-    if(token!==renderToken)return null;
-    if(!built)return null;
+    const preview=window.SSCPreviewV1;
+    if(!preview?.supportsEvent?.(eventId)||!preview?.buildState||!preview?.orderForEvent){
+      return null;
+    }
 
-    clearCardGeometry(container);
-    container.replaceChildren(built.root);
+    window.SSCPuzzle3D?.dispose?.(container);
+    const normalizedEventId=preview.normalizeEventId?.(eventId)||String(eventId||'333');
+    const order=preview.orderForEvent(normalizedEventId);
+    const state=preview.buildState(normalizedEventId,scramble,{strict:true});
+    const colors=preview.readColors?.()||window.SSCCubePreview?.getColors?.()||{};
+    const root=document.createElement('div');
+    root.className='ssc-selected-faces-preview';
+    root.dataset.count=String(selectedFaces.length);
+    root.dataset.faces=selectedFaces.join('');
+    root.dataset.cubeOrder=String(order);
+    const geometry=geometryForCount(selectedFaces.length);
+    root.style.setProperty('--ssc-selected-face-columns',String(geometry.columns));
+    root.style.setProperty('--ssc-selected-face-rows',String(geometry.rows));
+
+    for(const faceName of selectedFaces){
+      const face=document.createElement('div');
+      face.className='ssc-selected-face';
+      face.dataset.face=faceName;
+      face.style.setProperty('--ssc-selected-face-order',String(order));
+      face.setAttribute('aria-label',faceName);
+      for(let row=0;row<order;row++){
+        for(let col=0;col<order;col++){
+          const identity=state.faces?.[faceName]?.[row]?.[col]||faceName;
+          const sticker=document.createElement('span');
+          sticker.className='ssc-selected-face-sticker';
+          sticker.dataset.face=faceName;
+          sticker.dataset.row=String(row);
+          sticker.dataset.col=String(col);
+          sticker.dataset.identity=identity;
+          sticker.style.setProperty('--ssc-selected-sticker',colors[identity]||'#777777');
+          face.appendChild(sticker);
+        }
+      }
+      root.appendChild(face);
+    }
+
+    clear3DCardGeometry(container);
+    container.replaceChildren(root);
     container.dataset.previewMode='faces';
     container.dataset.previewModePreference='faces';
-    container.dataset.previewEngine='ssc-native-3d-selected-faces';
+    container.dataset.previewEngine='ssc-selected-faces';
     container.dataset.previewReady='true';
-    container.dataset.wcaEvent=built.event?.id||String(eventId||'333');
-    container.dataset.wcaPuzzle=built.event?.puzzle||`${built.order}x${built.order}x${built.order}`;
+    container.dataset.wcaEvent=normalizedEventId;
     container.dataset.selectedFaces=selectedFaces.join(',');
-    container.dataset.puzzle=`${built.order}×${built.order}`;
+    container.dataset.puzzle=`${order}×${order}`;
     container.setAttribute('role','button');
-    container.setAttribute('aria-label',isEnglish()?`Selected cube faces from 3D: ${selectedFaces.join(', ')}`:`פאות קובייה נבחרות מתוך תצוגת 3D: ${selectedFaces.join(', ')}`);
-    lastRender={container,scramble,eventId};
-    window.SSCPreviewSettings?.syncLastRender?.(container,scramble,eventId);
+    container.setAttribute('aria-label',isEnglish()?`Selected cube faces: ${selectedFaces.join(', ')}`:`פאות קובייה נבחרות: ${selectedFaces.join(', ')}`);
+    lastRender={container,scramble,eventId:normalizedEventId};
+    window.SSCPreviewSettings?.syncLastRender?.(container,scramble,normalizedEventId);
     window.SSCPreviewSizing?.scheduleFit?.(container);
-    return Object.freeze({root:built.root,eventId,order:built.order,faces:[...selectedFaces],source:'native-3d'});
+    return Object.freeze({root,state,eventId:normalizedEventId,order,faces:[...selectedFaces]});
   }
 
   async function connectedRender(container,scramble,eventId='333'){
-    lastRender={container,scramble,eventId};
     if(!enabled)return underlyingRender?.(container,scramble,eventId)??null;
 
-    let baseResult=null;
+    // Preserve the existing integration pipeline first so its exact card
+    // snapshot (used by the 3D modal) stays synchronized with this scramble.
     if(underlyingRender){
-      try{baseResult=await underlyingRender(container,scramble,eventId);}
-      catch(error){console.warn('[SSC selected faces] Base preview bridge failed before native face render.',error);}
+      try{await underlyingRender(container,scramble,eventId);}catch(error){
+        console.warn('[SSC selected faces] Base preview bridge failed before face render.',error);
+      }
     }
-
-    const nativeResult=await renderSelectedFaces(container,scramble,eventId);
-    return nativeResult||baseResult;
+    return renderSelectedFaces(container,scramble,eventId);
   }
 
   function installPreviewWrapper(){
@@ -294,9 +298,7 @@
 
   async function rerenderFaces(){
     if(!enabled||!lastRender?.container?.isConnected)return null;
-    const result=await renderSelectedFaces(lastRender.container,lastRender.scramble,lastRender.eventId);
-    if(result)return result;
-    return underlyingRender?.(lastRender.container,lastRender.scramble,lastRender.eventId)??null;
+    return renderSelectedFaces(lastRender.container,lastRender.scramble,lastRender.eventId);
   }
 
   async function setFaces(value,{rerender=true}={}){
@@ -311,9 +313,12 @@
     enabled=Boolean(value);
     localStorage.setItem(ENABLED_KEY,String(enabled));
     syncControls();
-    if(rerender&&lastRender?.container?.isConnected){
-      if(enabled)await rerenderFaces();
-      else await underlyingRender?.(lastRender.container,lastRender.scramble,lastRender.eventId);
+    if(rerender){
+      if(enabled){
+        const card=document.getElementById('cubePreview2D');
+        if(lastRender?.container?.isConnected)await renderSelectedFaces(lastRender.container,lastRender.scramble,lastRender.eventId);
+        else if(card instanceof Element)await window.SSCPreviewSettings?.rerender?.();
+      }else await window.SSCPreviewSettings?.rerender?.();
     }
     window.dispatchEvent(new CustomEvent('ssc-selected-faces-mode-change',{detail:{enabled,faces:[...selectedFaces]}}));
     return enabled;
@@ -370,17 +375,18 @@
   window.addEventListener('ssc-preview-interaction-change',()=>queueMicrotask(syncControls));
   window.addEventListener('ssc-preview-mode-change',()=>queueMicrotask(syncControls));
 
-  if(enabled&&lastRender)queueMicrotask(()=>rerenderFaces());
+  if(enabled)queueMicrotask(()=>window.SSCPreviewSettings?.rerender?.());
 
   window.SSCSelectedFacesPreview=Object.freeze({
-    ENABLED_KEY,FACES_KEY,FACE_ORDER,
+    ENABLED_KEY,
+    FACES_KEY,
+    FACE_ORDER,
     isEnabled:()=>enabled,
     setEnabled,
     getFaces:()=>[...selectedFaces],
     setFaces,
     render:renderSelectedFaces,
     rerender:rerenderFaces,
-    usesNative3DFaces:true,
-    faceFactory:'SSCPuzzle3D.createFaceSet'
+    syncControls
   });
 })();
