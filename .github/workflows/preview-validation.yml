@@ -18,11 +18,13 @@ on:
       - 'code/js/scramble-generators.js'
       - 'code/js/scramble2x2.js'
       - 'code/js/app.js'
+      - 'code/js/mbld-flow.js'
       - 'code/js/advanced-features.js'
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
       - 'code/js/scramble-history.js'
       - 'tests/cube-3d-native.mjs'
+      - 'tests/mbld-flow.mjs'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
       - 'tests/ui-*.mjs'
@@ -43,11 +45,13 @@ on:
       - 'code/js/scramble-generators.js'
       - 'code/js/scramble2x2.js'
       - 'code/js/app.js'
+      - 'code/js/mbld-flow.js'
       - 'code/js/advanced-features.js'
       - 'code/js/import-export.js'
       - 'code/js/settings.js'
       - 'code/js/scramble-history.js'
       - 'tests/cube-3d-native.mjs'
+      - 'tests/mbld-flow.mjs'
       - 'tests/preview-*.mjs'
       - 'tests/scramble-*.mjs'
       - 'tests/ui-*.mjs'
@@ -72,6 +76,8 @@ jobs:
         run: node tests/scramble-fallback.mjs
       - name: Validate NxN timer/history/repeat integration
         run: node tests/scramble-app-integration.mjs
+      - name: Validate MBLD scoring and result formatting
+        run: node tests/mbld-flow.mjs
       - name: Validate SSC state against cubing.js
         run: node tests/preview-validation.mjs
       - name: Validate SVG rendering geometry
