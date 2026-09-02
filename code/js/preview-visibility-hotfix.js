@@ -31,23 +31,6 @@
     container.setAttribute('aria-hidden','true');
   }
 
-  function injectNative3DOrientationFix(){
-    if(document.getElementById('sscNative3DOrientationFix'))return;
-    const style=document.createElement('style');
-    style.id='sscNative3DOrientationFix';
-    style.textContent=`
-      /* puzzle-3d.js starts the native camera at rotateX(-28deg). Rotate the
-         stage by the opposite offset so the visual default is the standard
-         cubing view: U on top, F front/left and R on the right. Keeping the
-         correction on the parent stage preserves smooth drag/reset behavior. */
-      .ssc-native-cube3d-stage{
-        transform:rotateX(56deg)!important;
-        transform-style:preserve-3d!important;
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
   function migrateToProfessionalTwistyPreview(){
     if(localStorage.getItem(NATIVE_3D_THUMBNAIL_MIGRATION_KEY)==='1')return;
 
@@ -116,9 +99,6 @@
     event.stopImmediatePropagation();
     lockSmall3D(card);
 
-    // The modal integration keeps a global lastRender snapshot. Refresh it from
-    // the exact card that was clicked so the large 3D view cannot open with a
-    // stale scramble/event while the thumbnail shows the current cube state.
     if(snapshot){
       window.SSCPreviewSettings?.syncLastRender?.(card,snapshot.scramble,snapshot.eventId);
     }
@@ -195,7 +175,6 @@
     bindViewportListeners();
   }
 
-  injectNative3DOrientationFix();
   migrateToProfessionalTwistyPreview();
   installRenderGuard();
   watchCard();
@@ -203,7 +182,6 @@
   window.addEventListener('ssc-event-change',()=>queueMicrotask(refreshMainPreviewVisibility));
 
   document.addEventListener('DOMContentLoaded',()=>{
-    injectNative3DOrientationFix();
     migrateToProfessionalTwistyPreview();
     installRenderGuard();
     watchCard();
