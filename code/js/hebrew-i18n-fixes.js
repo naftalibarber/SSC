@@ -136,37 +136,61 @@
 (() => {
   'use strict';
 
-  // The current MBLD viewer lives in #sscMbldViewList. Keep every scramble and
-  // its own 3x3 preview in the same row on desktop, tablet and mobile.
+  // MBLD previews use the same .cube-preview-card class as the floating main
+  // preview. The global cube-preview stylesheet intentionally makes that class
+  // position:fixed. Inside the MBLD viewer we must explicitly restore normal
+  // document flow so every scramble keeps its own preview beside it.
   function injectMbldViewerRowFix(){
     if(document.getElementById('sscMbldViewerSideBySideStyles'))return;
     const style=document.createElement('style');
     style.id='sscMbldViewerSideBySideStyles';
     style.textContent=`
-      #sscMbldViewList .ssc-mbld-view-row{
+      #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row{
         grid-template-columns:44px minmax(0,1fr) 116px!important;
         align-items:center!important;
         gap:12px!important;
       }
-      #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+      #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+        position:relative!important;
+        inset:auto!important;
+        top:auto!important;
+        right:auto!important;
+        bottom:auto!important;
+        left:auto!important;
+        z-index:1!important;
+        isolation:isolate!important;
         grid-column:3!important;
         grid-row:1!important;
         justify-self:end!important;
         align-self:center!important;
+        display:grid!important;
         width:116px!important;
         min-width:116px!important;
         max-width:116px!important;
         height:76px!important;
         min-height:76px!important;
         max-height:76px!important;
+        margin:0!important;
+        padding:7px!important;
+      }
+      html[lang="he"] #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card,
+      html[lang="en"] #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+        right:auto!important;
+        left:auto!important;
+        bottom:auto!important;
       }
       @media(max-width:680px){
-        #sscMbldViewList .ssc-mbld-view-row{
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row{
           grid-template-columns:34px minmax(0,1fr) 94px!important;
           gap:7px!important;
           padding:9px 8px!important;
         }
-        #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+          position:relative!important;
+          top:auto!important;
+          right:auto!important;
+          bottom:auto!important;
+          left:auto!important;
           grid-column:3!important;
           grid-row:1!important;
           width:94px!important;
@@ -189,12 +213,12 @@
         }
       }
       @media(max-width:430px){
-        #sscMbldViewList .ssc-mbld-view-row{
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-row{
           grid-template-columns:28px minmax(0,1fr) 78px!important;
           gap:5px!important;
           padding:7px 6px!important;
         }
-        #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
+        #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card{
           width:78px!important;
           min-width:78px!important;
           max-width:78px!important;
