@@ -19,6 +19,7 @@
   });
   const DEFAULT_COLORS=Object.freeze({U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'});
   const FACE_ORDER=Object.freeze(['F','B','R','L','U','D']);
+  const FACE_SET=new Set(FACE_ORDER);
   // Standard cubing orientation: U (white) on top, F (green) on the left/front,
   // and R (red) on the right. The same camera is used for thumbnail and modal reset.
   const INITIAL_CAMERA=Object.freeze({x:-28,y:-38,scale:1});
@@ -228,10 +229,24 @@
     if(clear)container.replaceChildren();
   }
 
+  function normalizeFaceSides(value=FACE_ORDER){
+    const source=Array.isArray(value)?value:[value];
+    const result=[];
+    const seen=new Set();
+    for(const item of source){
+      const side=String(item||'').trim().toUpperCase();
+      if(!FACE_SET.has(side)||seen.has(side))continue;
+      seen.add(side);
+      result.push(side);
+    }
+    return result.length?result:[...FACE_ORDER];
+  }
+
   function createFace(side,faces,colors,order){
     const face=document.createElement('div');
     face.className='ssc-native-cube3d-face';
     face.dataset.side=side;
+    face.dataset.nativeFaceSource='ssc-puzzle-3d';
     for(let row=0;row<order;row++){
       for(let col=0;col<order;col++){
         const identity=faces?.[side]?.[row]?.[col]||side;
@@ -241,11 +256,33 @@
         sticker.dataset.row=String(row);
         sticker.dataset.col=String(col);
         sticker.dataset.identity=identity;
+        sticker.dataset.nativeFaceSource='ssc-puzzle-3d';
         sticker.style.setProperty('--sticker',colors[identity]||DEFAULT_COLORS[identity]||'#777');
         face.appendChild(sticker);
       }
     }
     return face;
+  }
+
+  function createNativeFaceSet(scramble,eventValue='333',sides=FACE_ORDER){
+    if(!isNativeEvent(eventValue))return null;
+    if(!window.SSCNxNState?.buildState)throw new Error('SSCNxNState is required for native 3D face rendering');
+    injectStyles();
+    const event=getEvent(eventValue)||getEvent('333');
+    const order=nativeOrder(event?.id)||event?.order||3;
+    const cubeState=window.SSCNxNState.buildState(scramble,order,{strict:true});
+    const colors=palette();
+    const normalizedSides=normalizeFaceSides(sides);
+    const faces=normalizedSides.map(side=>createFace(side,cubeState.faces,colors,order));
+    return Object.freeze({
+      event,
+      order,
+      cubeState,
+      colors:Object.freeze({...colors}),
+      sides:Object.freeze([...normalizedSides]),
+      faces:Object.freeze(faces),
+      source:'ssc-puzzle-3d-face-factory'
+    });
   }
 
   function updateGeometry(state){
@@ -284,18 +321,17 @@
 
   function renderNative(container,scramble,eventValue){
     if(!(container instanceof Element))throw new TypeError('SSC native 3D renderer requires a DOM container');
-    if(!window.SSCNxNState?.buildState)throw new Error('SSCNxNState is required for native 3D rendering');
     injectStyles();
     disposeNative(container);
     LEGACY_3D?.dispose?.(container);
 
-    const event=getEvent(eventValue)||getEvent('333');
-    const order=nativeOrder(event?.id)||event?.order||3;
-    const cubeState=window.SSCNxNState.buildState(scramble,order,{strict:true});
-    const colors=palette();
+    const built=createNativeFaceSet(scramble,eventValue,FACE_ORDER);
+    if(!built)throw new Error(`Native 3D face set is unavailable for ${eventValue}`);
+    const {event,order,cubeState}=built;
     const root=document.createElement('div');
     root.className='ssc-native-cube3d-root ssc-puzzle-3d-player';
     root.dataset.cubeOrder=String(order);
+    root.dataset.nativeFaceSource=built.source;
     root.style.setProperty('--ssc-native-order',String(order));
     root.tabIndex=interactiveEnabled?0:-1;
     root.setAttribute('role','img');
@@ -306,7 +342,7 @@
     stage.className='ssc-native-cube3d-stage';
     const cube=document.createElement('div');
     cube.className='ssc-native-cube3d-cube';
-    FACE_ORDER.forEach(side=>cube.appendChild(createFace(side,cubeState.faces,colors,order)));
+    built.faces.forEach(face=>cube.appendChild(face));
     stage.appendChild(cube);
     root.appendChild(stage);
     container.replaceChildren(root);
@@ -364,6 +400,9 @@
 
   window.SSCPuzzle3D=Object.freeze({
     render,clear,dispose,resetCamera,setInteractive,supportsEvent,getEvent,
+    createFaceSet:createNativeFaceSet,
+    nativeFaceSource:'ssc-puzzle-3d-face-factory',
+    nativeFaceOrder:FACE_ORDER,
     isNative3D:eventValue=>isNativeEvent(eventValue),
     legacyRenderer:LEGACY_3D
   });
