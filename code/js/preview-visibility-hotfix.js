@@ -2,6 +2,7 @@
   'use strict';
 
   const PREVIEW_ID='cubePreview2D';
+  const MBLD_EVENT='333mbf';
   const NATIVE_3D_THUMBNAIL_MIGRATION_KEY='sscNative3DThumbnailV2';
   const THUMBNAIL_DIMENSIONS=['display','width','min-width','height','min-height'];
   const watchedCards=new WeakSet();
@@ -9,6 +10,43 @@
   const cardSnapshots=new WeakMap();
   let verificationSequence=0;
   let viewportListenersBound=false;
+
+  function currentEvent(){
+    return window.SSCTimerEvents?.getCurrent?.()
+      || document.getElementById('eventSelect')?.value
+      || '';
+  }
+
+  function shouldSuppressMainPreview(container){
+    return container?.id===PREVIEW_ID && currentEvent()===MBLD_EVENT;
+  }
+
+  function forceSuppressed(container){
+    if(!(container instanceof HTMLElement))return;
+    container.style.setProperty('display','none','important');
+    container.style.setProperty('visibility','hidden','important');
+    container.style.setProperty('opacity','0','important');
+    container.style.setProperty('pointer-events','none','important');
+    container.style.setProperty('z-index','-1','important');
+    container.setAttribute('aria-hidden','true');
+  }
+
+  function injectNative3DOrientationFix(){
+    if(document.getElementById('sscNative3DOrientationFix'))return;
+    const style=document.createElement('style');
+    style.id='sscNative3DOrientationFix';
+    style.textContent=`
+      /* puzzle-3d.js starts the native camera at rotateX(-28deg). Rotate the
+         stage by the opposite offset so the visual default is the standard
+         cubing view: U on top, F front/left and R on the right. Keeping the
+         correction on the parent stage preserves smooth drag/reset behavior. */
+      .ssc-native-cube3d-stage{
+        transform:rotateX(56deg)!important;
+        transform-style:preserve-3d!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   function migrateToProfessionalTwistyPreview(){
     if(localStorage.getItem(NATIVE_3D_THUMBNAIL_MIGRATION_KEY)==='1')return;
@@ -27,7 +65,7 @@
   }
 
   function lockSmall3D(card){
-    if(!(card instanceof HTMLElement)||!card.classList.contains('ssc-preview-mode-3d'))return;
+    if(!(card instanceof HTMLElement)||shouldSuppressMainPreview(card)||!card.classList.contains('ssc-preview-mode-3d'))return;
     if(!card.classList.contains('ssc-preview-thumbnail-3d'))card.classList.add('ssc-preview-thumbnail-3d');
     const root=card.querySelector('.ssc-native-cube3d-root,.ssc-puzzle-3d-player');
     if(!(root instanceof HTMLElement))return;
@@ -40,6 +78,12 @@
 
   function forceVisible(container){
     if(!(container instanceof HTMLElement))return;
+    if(shouldSuppressMainPreview(container)){
+      forceSuppressed(container);
+      return;
+    }
+
+    container.removeAttribute('aria-hidden');
     container.style.setProperty('visibility','visible','important');
     container.style.setProperty('opacity','1','important');
     container.style.setProperty('z-index','120','important');
@@ -63,7 +107,7 @@
 
   function openFromCard(event){
     const card=event.currentTarget;
-    if(!(card instanceof HTMLElement))return;
+    if(!(card instanceof HTMLElement)||shouldSuppressMainPreview(card))return;
     const snapshot=cardSnapshots.get(card)||null;
     const eventId=snapshot?.eventId||card.dataset.wcaEvent||'333';
     if(!card.classList.contains('ssc-preview-mode-3d')&&!window.SSCPuzzle3D?.supportsEvent?.(eventId))return;
@@ -113,16 +157,18 @@
     };
   }
 
+  function refreshMainPreviewVisibility(){
+    const card=document.getElementById(PREVIEW_ID);
+    if(!(card instanceof HTMLElement))return;
+    forceVisible(card);
+    lockSmall3D(card);
+  }
+
   function bindViewportListeners(){
     if(viewportListenersBound)return;
     viewportListenersBound=true;
-    const refresh=()=>{
-      const card=document.getElementById(PREVIEW_ID);
-      forceVisible(card);
-      lockSmall3D(card);
-    };
-    window.addEventListener('resize',refresh,{passive:true});
-    window.visualViewport?.addEventListener('resize',refresh,{passive:true});
+    window.addEventListener('resize',refreshMainPreviewVisibility,{passive:true});
+    window.visualViewport?.addEventListener('resize',refreshMainPreviewVisibility,{passive:true});
   }
 
   function watchCard(){
@@ -149,13 +195,19 @@
     bindViewportListeners();
   }
 
+  injectNative3DOrientationFix();
   migrateToProfessionalTwistyPreview();
   installRenderGuard();
   watchCard();
+
+  window.addEventListener('ssc-event-change',()=>queueMicrotask(refreshMainPreviewVisibility));
+
   document.addEventListener('DOMContentLoaded',()=>{
+    injectNative3DOrientationFix();
     migrateToProfessionalTwistyPreview();
     installRenderGuard();
     watchCard();
     window.SSCPreviewSizing?.applyPreviewSize?.();
+    refreshMainPreviewVisibility();
   },{once:true});
 })();
