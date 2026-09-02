@@ -3,7 +3,7 @@
 
   const V1_EVENTS=new Set([
     '222','333','444','555','666','777',
-    '333bf','333fm','333oh'
+    '333bf','333fm','333oh','444bf','555bf'
   ]);
   const LEGACY_3D_DIMENSIONS=[
     'display','width','min-width','height','min-height','--ssc-3d-width','--ssc-3d-height'
@@ -98,7 +98,8 @@
     window.SSCPreviewSettings?.syncLastRender?.(container,scramble,eventId);
 
     // Preview V1 owns the 2D path, but native 3D-capable events must keep the
-    // connected 3D route. 3BLD/FMC/OH are all 3x3-derived native 3D events.
+    // connected 3D route. Blindfolded 4x4/5x5 use the same cube renderers as
+    // their base 444/555 events while preserving the original WCA event id.
     if(shouldUseConnected3D(container,eventId)){
       return legacyRender?.(container,scramble,eventId)??null;
     }

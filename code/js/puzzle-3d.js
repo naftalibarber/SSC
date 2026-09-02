@@ -5,8 +5,8 @@
   const NATIVE_EVENT_ORDERS=new Map([
     ['222',2],
     ['333',3],['333bf',3],['333fm',3],['333oh',3],['333mbf',3],
-    ['444',4],
-    ['555',5],
+    ['444',4],['444bf',4],
+    ['555',5],['555bf',5],
     ['666',6],
     ['777',7]
   ]);
@@ -21,6 +21,8 @@
     '3bld':'333bf','333bf':'333bf','3x3bf':'333bf',
     'fmc':'333fm','333fm':'333fm',
     'oh':'333oh','333oh':'333oh','3x3oh':'333oh',
+    '4bld':'444bf','444bf':'444bf','4x4bf':'444bf',
+    '5bld':'555bf','555bf':'555bf','5x5bf':'555bf',
     'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
   });
   const DEFAULT_COLORS=Object.freeze({U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'});
@@ -55,16 +57,18 @@
         puzzle,
         order
       };
+      const registryEvent=window.SSCWCAEvents?.[id]||null;
       const legacy=LEGACY_3D?.getEvent?.(id)||null;
+      const metadata=registryEvent||legacy;
       return Object.freeze({
         ...fallback,
-        ...(legacy||{}),
+        ...(metadata||{}),
         id,
         order,
         puzzle:fallback.puzzle,
-        label:primaryCubeEvent?dimensionLabel:legacy?.label||fallback.label,
-        name:legacy?.name||fallback.name,
-        family:legacy?.family||fallback.family
+        label:primaryCubeEvent?dimensionLabel:metadata?.label||fallback.label,
+        name:metadata?.name||fallback.name,
+        family:metadata?.family||fallback.family
       });
     }
     return LEGACY_3D?.getEvent?.(value)||null;
