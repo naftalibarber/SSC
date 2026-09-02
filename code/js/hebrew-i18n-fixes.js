@@ -118,10 +118,16 @@
     document.querySelectorAll('#sscMbldScrambleList .ssc-mbld-item-preview[data-scramble]').forEach(renderNormal3x3);
   }
 
-  window.addEventListener('ssc-mbld-scramble',()=>queueMicrotask(rerenderMbld3x3Previews));
+  const scheduleRerender=()=>queueMicrotask(rerenderMbld3x3Previews);
+
+  window.addEventListener('ssc-mbld-scramble',scheduleRerender);
   window.addEventListener('ssc-event-change',event=>{
-    if(event.detail?.eventId===EVENT_ID)queueMicrotask(rerenderMbld3x3Previews);
+    if(event.detail?.eventId===EVENT_ID)scheduleRerender();
   });
+  window.addEventListener('ssc-preview-mode-change',scheduleRerender);
+  window.addEventListener('ssc-preview-interaction-change',scheduleRerender);
+  window.addEventListener('ssc-selected-faces-mode-change',scheduleRerender);
+  window.addEventListener('ssc-general-settings-change',scheduleRerender);
 
   injectMbld3x3Sizing();
   window.SSCMBLD3x3Preview=Object.freeze({rerender:rerenderMbld3x3Previews});
