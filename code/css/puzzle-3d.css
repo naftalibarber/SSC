@@ -15,6 +15,29 @@ html body .cube-preview-card.ssc-preview-mode-3d .ssc-native-cube3d-stage{
   transform-origin:50% 50%;
 }
 
+/* MBLD rows use a much shorter 3D thumbnail (76px desktop, then smaller on
+   narrow screens). The native cube geometry has a 92px minimum, so the normal
+   thumbnail scale clips the rotated cube vertically. Scale only MBLD 3D stages
+   to the actual row-card proportions; 2D and every non-MBLD 3D preview keep
+   the standard renderer size. */
+html body #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.cube-preview-card.ssc-preview-mode-3d{
+  padding:0!important;
+}
+html body #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.ssc-preview-mode-3d .ssc-native-cube3d-stage{
+  transform:scale3d(.50,.50,.50)!important;
+  transform-origin:50% 50%!important;
+}
+@media(max-width:680px){
+  html body #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.ssc-preview-mode-3d .ssc-native-cube3d-stage{
+    transform:scale3d(.42,.42,.42)!important;
+  }
+}
+@media(max-width:430px){
+  html body #sscMbldScramblesModal #sscMbldViewList .ssc-mbld-view-preview.ssc-preview-mode-3d .ssc-native-cube3d-stage{
+    transform:scale3d(.35,.35,.35)!important;
+  }
+}
+
 /* Higher specificity than the runtime integration styles so the thumbnail keeps
    one consistent premium surface in every theme. The preview must preserve the
    same fixed viewport placement as the regular 2D preview. */
