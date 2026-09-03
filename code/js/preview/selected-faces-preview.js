@@ -276,7 +276,10 @@
       select.dataset.sscSelectedFacesBound='true';
       select.addEventListener('change',event=>{
         if(event.target.value==='faces'){event.stopImmediatePropagation();setEnabled(true);return;}
-        if(enabled)setEnabled(false,{rerender:false});
+        if(enabled){
+          const baseMode=window.SSCPreviewSettings?.getMode?.();
+          setEnabled(false,{rerender:baseMode===event.target.value});
+        }
       },true);
     }
     document.querySelectorAll('[data-ssc-preview-face]').forEach(input=>{
