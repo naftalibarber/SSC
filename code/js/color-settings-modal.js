@@ -4,6 +4,7 @@
   const SETTINGS_KEY='sscGeneralSettingsV1';
   const LANGUAGE_KEY='sscLanguageV1';
   const FIXED_CUBE_LINE_WIDTH='1';
+  const COLOR_PREVIEW_SCRAMBLE="R U R' U' F2 D L2 B' U2 R2";
 
   function isEnglish(){
     return localStorage.getItem(LANGUAGE_KEY)==='en';
@@ -33,13 +34,25 @@
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
       #colorSettingsButton svg{display:block;width:19px;height:19px;flex:0 0 auto}
-      .color-settings-dialog{width:min(620px,94vw)}
+      .color-settings-dialog{width:min(720px,94vw)}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
       .color-settings-grid .cube-colors-control{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .cube-color-preview-section{display:grid;gap:10px;padding:10px 0 4px;border-top:1px solid var(--border)}
+      .cube-color-preview-heading{font-size:.95em;font-weight:800;color:var(--text)}
+      .cube-color-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+      .cube-color-preview-card{min-width:0;display:grid;gap:8px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--soft)}
+      .cube-color-preview-label{font-size:.9em;font-weight:800;text-align:center;color:var(--text)}
+      .cube-color-preview-canvas{min-width:0;min-height:128px;display:grid;place-items:center;overflow:hidden;border-radius:8px;background:var(--card-solid)}
+      .cube-color-preview-canvas .ssc-native-preview-svg{display:block;width:100%;height:auto;max-width:100%;max-height:170px}
       @media(max-width:700px){
-        .color-settings-dialog{width:min(96vw,520px)!important}
+        .color-settings-dialog{width:min(96vw,560px)!important}
         .color-settings-grid .cube-colors-control{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+        .cube-color-preview-canvas{min-height:112px}
+      }
+      @media(max-width:520px){
+        .cube-color-preview-grid{grid-template-columns:1fr}
+        .cube-color-preview-canvas{min-height:132px}
       }
       @media(max-width:380px){
         .color-settings-grid .cube-colors-control{grid-template-columns:1fr!important}
@@ -75,6 +88,55 @@
     return button;
   }
 
+  function currentCubeColors(){
+    return window.SSCPreviewV1?.readColors?.()
+      ||window.SSCCubePreview?.getColors?.()
+      ||window.SSCSvgCubeRenderer?.DEFAULT_COLORS
+      ||{};
+  }
+
+  function renderColorPreview(container,scramble,idPrefix){
+    if(!(container instanceof Element))return false;
+    const stateEngine=window.SSCNxNState;
+    const renderer=window.SSCSvgCubeRenderer;
+    if(!stateEngine?.buildState||!renderer?.renderState)return false;
+    try{
+      const state=stateEngine.buildState(scramble,3,{strict:true});
+      renderer.renderState(container,state,{colors:currentCubeColors(),idPrefix});
+      container.dataset.colorPreview='true';
+      container.dataset.puzzle='3×3';
+      return true;
+    }catch(error){
+      console.warn('[SSC appearance] Unable to render cube color preview.',error);
+      return false;
+    }
+  }
+
+  function renderColorPreviews(){
+    renderColorPreview(document.getElementById('cubeColorPreviewSolved'),'','ssc-color-preview-solved');
+    renderColorPreview(document.getElementById('cubeColorPreviewScrambled'),COLOR_PREVIEW_SCRAMBLE,'ssc-color-preview-scrambled');
+  }
+
+  function createPreviewSection(){
+    const section=document.createElement('section');
+    section.id='cubeColorPreviewSection';
+    section.className='cube-color-preview-section';
+    section.innerHTML=`
+      <div id="cubeColorPreviewHeading" class="cube-color-preview-heading">תצוגה מקדימה</div>
+      <div class="cube-color-preview-grid">
+        <div class="cube-color-preview-card">
+          <div id="cubeColorPreviewSolvedLabel" class="cube-color-preview-label">פתורה</div>
+          <div id="cubeColorPreviewSolved" class="cube-color-preview-canvas" role="img"></div>
+        </div>
+        <div class="cube-color-preview-card">
+          <div id="cubeColorPreviewScrambledLabel" class="cube-color-preview-label">מעורבבת</div>
+          <div id="cubeColorPreviewScrambled" class="cube-color-preview-canvas" role="img"></div>
+        </div>
+      </div>
+    `;
+    return section;
+  }
+
   function createColorModal(){
     if(document.getElementById('colorSettingsModal'))return;
 
@@ -104,9 +166,12 @@
     document.body.appendChild(modal);
 
     const colorGrid=modal.querySelector('#colorSettingsGrid');
-    colorGrid.append(primaryRow,cubeRow,themeRow);
+    const previewSection=createPreviewSection();
+    colorGrid.append(primaryRow,cubeRow,previewSection,themeRow);
 
     const closeButton=modal.querySelector('#closeColorSettings');
+    const cubeColorInputs=[...cubeRow.querySelectorAll('[data-cube-face]')];
+    const resetCubeColors=document.getElementById('resetCubeColors');
 
     function updateLabels(){
       const en=isEnglish();
@@ -116,6 +181,11 @@
       const lightButton=document.getElementById('themeLightButton');
       const darkButton=document.getElementById('themeDarkButton');
       const oledButton=document.querySelector('[data-theme-choice="oled"]');
+      const previewHeading=document.getElementById('cubeColorPreviewHeading');
+      const solvedLabel=document.getElementById('cubeColorPreviewSolvedLabel');
+      const scrambledLabel=document.getElementById('cubeColorPreviewScrambledLabel');
+      const solvedPreview=document.getElementById('cubeColorPreviewSolved');
+      const scrambledPreview=document.getElementById('cubeColorPreviewScrambled');
 
       if(title)title.textContent=en?'Appearance & colors':'הגדרות מראה וצבע';
       if(buttonText)buttonText.textContent=en?'APPEARANCE':'עיצוב';
@@ -123,6 +193,11 @@
       if(lightButton)lightButton.textContent=en?'Light':'בהיר';
       if(darkButton)darkButton.textContent=en?'Dark':'כהה';
       if(oledButton)oledButton.textContent='OLED';
+      if(previewHeading)previewHeading.textContent=en?'Cube color preview':'תצוגה מקדימה של צבעי הקובייה';
+      if(solvedLabel)solvedLabel.textContent=en?'Solved':'פתורה';
+      if(scrambledLabel)scrambledLabel.textContent=en?'Scrambled':'מעורבבת';
+      if(solvedPreview)solvedPreview.setAttribute('aria-label',en?'Solved 3 by 3 cube color preview':'תצוגת צבעים של קוביית 3 על 3 פתורה');
+      if(scrambledPreview)scrambledPreview.setAttribute('aria-label',en?'Scrambled 3 by 3 cube color preview':'תצוגת צבעים של קוביית 3 על 3 מעורבבת');
       if(closeButton)closeButton.setAttribute('aria-label',en?'Close':'סגור');
       if(openButton){
         openButton.title=en?'Appearance and color settings':'הגדרות מראה וצבע';
@@ -133,7 +208,10 @@
     function openModal(){
       updateLabels();
       modal.hidden=false;
-      requestAnimationFrame(()=>closeButton?.focus());
+      requestAnimationFrame(()=>{
+        renderColorPreviews();
+        closeButton?.focus();
+      });
     }
 
     function closeModal(){
@@ -150,6 +228,12 @@
         event.preventDefault();
         closeModal();
       }
+    });
+
+    cubeColorInputs.forEach(input=>input.addEventListener('input',()=>queueMicrotask(renderColorPreviews)));
+    resetCubeColors?.addEventListener('click',()=>queueMicrotask(renderColorPreviews));
+    window.addEventListener('storage',event=>{
+      if(event.key==='sscCubeColorsV1')queueMicrotask(renderColorPreviews);
     });
 
     document.getElementById('languageSelect')?.addEventListener('change',()=>setTimeout(updateLabels,0));
