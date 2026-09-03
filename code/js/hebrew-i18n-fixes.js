@@ -294,3 +294,47 @@
 
   injectMbldViewerRowFix();
 })();
+
+(() => {
+  'use strict';
+
+  const HISTORY_KEY='rubiksCubeTimerHistoryV1';
+
+  function isEditableTarget(target){
+    return Boolean(target?.closest?.('input,textarea,select,[contenteditable="true"]'));
+  }
+
+  function refreshHistory(){
+    try{
+      window.dispatchEvent(new StorageEvent('storage',{
+        key:HISTORY_KEY,
+        newValue:localStorage.getItem(HISTORY_KEY),
+        storageArea:localStorage
+      }));
+    }catch{
+      window.dispatchEvent(new Event('storage'));
+    }
+  }
+
+  function latestSolve(){
+    return window.SSCTimerEvents?.getCurrentSession?.()?.solves?.[0]||null;
+  }
+
+  window.addEventListener('keydown',event=>{
+    if(event.repeat||isEditableTarget(event.target))return;
+    const primaryModifier=event.ctrlKey||event.metaKey;
+    if(!primaryModifier||event.altKey)return;
+
+    const isDnf=event.code==='KeyD';
+    const isPlus=event.code==='NumpadAdd'||(event.code==='Equal'&&event.shiftKey)||event.key==='+';
+    if(!isDnf&&!isPlus)return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const solve=latestSolve();
+    const api=window.SSCTimerEvents;
+    if(!solve?.id||typeof api?.setPenalty!=='function')return;
+    if(api.setPenalty(solve.id,isDnf?'DNF':'+2'))refreshHistory();
+  },true);
+})();
