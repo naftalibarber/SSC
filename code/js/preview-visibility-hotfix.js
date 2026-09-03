@@ -243,7 +243,7 @@
         width:100%!important;
         min-height:38px!important;
         direction:ltr!important;
-        text-align:left!important;
+        text-align:center!important;
         font-family:'Share Tech Mono',ui-monospace,monospace!important;
         line-height:1.22!important;
         word-spacing:2px!important;
@@ -260,6 +260,7 @@
         white-space:nowrap!important;
         overflow:visible!important;
         text-overflow:clip!important;
+        text-align:center!important;
       }
       #scramble.ssc-mbld-summary .${ITEM_CLASS} strong{
         display:inline!important;
