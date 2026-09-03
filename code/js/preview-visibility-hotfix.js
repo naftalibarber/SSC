@@ -218,3 +218,119 @@
     refreshMainPreviewVisibility();
   },{once:true});
 })();
+
+/* Keep the main MBLD scramble strip as a full, readable numbered list.
+   The MBLD flow still owns click/keyboard behavior; this only changes the
+   compact summary rendering so no scramble is truncated with an ellipsis. */
+(() => {
+  'use strict';
+
+  const STYLE_ID='sscMbldFullInlineLineStyles';
+  const ITEM_CLASS='ssc-mbld-full-line-item';
+  let fitFrame=0;
+
+  function ensureStyles(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #scramble.ssc-mbld-summary{
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:stretch!important;
+        justify-content:center!important;
+        gap:0!important;
+        width:100%!important;
+        min-height:38px!important;
+        direction:ltr!important;
+        text-align:left!important;
+        font-family:'Share Tech Mono',ui-monospace,monospace!important;
+        line-height:1.22!important;
+        word-spacing:2px!important;
+        white-space:normal!important;
+        overflow:visible!important;
+      }
+      #scramble.ssc-mbld-summary .${ITEM_CLASS}{
+        display:block!important;
+        width:100%!important;
+        min-width:0!important;
+        margin:0!important;
+        padding:0 2px!important;
+        color:var(--text)!important;
+        white-space:nowrap!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+      }
+      #scramble.ssc-mbld-summary .${ITEM_CLASS} strong{
+        display:inline!important;
+        color:var(--text)!important;
+        font-weight:900!important;
+      }
+      #scramble.ssc-mbld-summary .${ITEM_CLASS} span{
+        display:inline!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+      }
+      #scramble.ssc-mbld-summary .ssc-mbld-summary-more{display:none!important}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function fitLines(scramble){
+    if(!(scramble instanceof HTMLElement))return;
+    cancelAnimationFrame(fitFrame);
+    fitFrame=requestAnimationFrame(()=>{
+      const items=[...scramble.querySelectorAll(`:scope > .${ITEM_CLASS}`)];
+      if(!items.length)return;
+      const available=Math.max(1,scramble.clientWidth-4);
+      let size=14;
+      scramble.style.setProperty('font-size',`${size}px`,'important');
+      let widest=0;
+      items.forEach(item=>{widest=Math.max(widest,item.scrollWidth);});
+      if(widest>available){
+        size=Math.max(8,Math.floor((size*available/widest)*100)/100);
+        scramble.style.setProperty('font-size',`${size}px`,'important');
+      }
+    });
+  }
+
+  function renderFullLines(){
+    const scramble=document.getElementById('scramble');
+    if(!(scramble instanceof HTMLElement)||!scramble.classList.contains('ssc-mbld-summary'))return;
+    const scrambles=window.SSCMBLD?.getScrambles?.();
+    if(!Array.isArray(scrambles)||!scrambles.length)return;
+
+    const current=[...scramble.children];
+    if(current.length===scrambles.length&&current.every(child=>child.classList.contains(ITEM_CLASS))){
+      fitLines(scramble);
+      return;
+    }
+
+    ensureStyles();
+    const fragment=document.createDocumentFragment();
+    scrambles.forEach((value,index)=>{
+      const row=document.createElement('span');
+      row.className=`ssc-mbld-summary-item ${ITEM_CLASS}`;
+      const number=document.createElement('strong');
+      number.textContent=`${index+1})`;
+      const text=document.createElement('span');
+      text.textContent=` ${value}`;
+      row.append(number,text);
+      fragment.appendChild(row);
+    });
+    scramble.replaceChildren(fragment);
+    scramble.title=document.documentElement.lang==='en'?'Click to open all MBLD scrambles':'לחץ לפתיחת כל ערבובי MBLD';
+    fitLines(scramble);
+  }
+
+  const scramble=document.getElementById('scramble');
+  if(scramble instanceof HTMLElement){
+    const observer=new MutationObserver(()=>queueMicrotask(renderFullLines));
+    observer.observe(scramble,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+  }
+
+  window.addEventListener('ssc-mbld-scramble',()=>queueMicrotask(renderFullLines));
+  window.addEventListener('resize',()=>renderFullLines(),{passive:true});
+  window.visualViewport?.addEventListener('resize',()=>renderFullLines(),{passive:true});
+  queueMicrotask(renderFullLines);
+})();
