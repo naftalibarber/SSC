@@ -95,26 +95,53 @@
       ||{};
   }
 
+  function captureMainPreview(){
+    const container=document.getElementById('cubePreview2D');
+    const scrambleElement=document.getElementById('scramble');
+    if(!(container instanceof Element)||!(scrambleElement instanceof Element))return null;
+    if(scrambleElement.dataset.scrambleTransient==='true'||scrambleElement.getAttribute('aria-busy')==='true')return null;
+    const scramble=String(scrambleElement.textContent||'').trim();
+    if(!scramble)return null;
+    const eventId=window.SSCTimerEvents?.getCurrent?.()||scrambleElement.dataset.eventId||'333';
+    return{container,scramble,eventId};
+  }
+
+  async function restoreMainPreview(snapshot){
+    if(!snapshot?.container?.isConnected)return;
+    try{
+      await Promise.resolve(window.SSCCubePreview?.render?.(snapshot.container,snapshot.scramble,snapshot.eventId));
+    }catch(error){
+      console.warn('[SSC appearance] Unable to restore the main cube preview after color preview rendering.',error);
+    }
+  }
+
   function renderColorPreview(container,scramble,idPrefix){
     if(!(container instanceof Element))return false;
-    const stateEngine=window.SSCNxNState;
-    const renderer=window.SSCSvgCubeRenderer;
-    if(!stateEngine?.buildState||!renderer?.renderState)return false;
+    const preview=window.SSCPreviewV1;
+    if(!preview?.render)return false;
     try{
-      const state=stateEngine.buildState(scramble,3,{strict:true});
-      renderer.renderState(container,state,{colors:currentCubeColors(),idPrefix});
-      container.dataset.colorPreview='true';
+      window.SSCPreviewV1Integration?.prepare2DContainer?.(container);
+      const result=preview.render(container,scramble,'333',{
+        strict:true,
+        colors:currentCubeColors(),
+        idPrefix
+      });
+      container.dataset.colorPreview='333';
+      container.dataset.wcaEvent='333';
       container.dataset.puzzle='3×3';
-      return true;
+      container.dataset.previewModePreference='2d';
+      return Boolean(result?.svg);
     }catch(error){
-      console.warn('[SSC appearance] Unable to render cube color preview.',error);
+      console.warn('[SSC appearance] Unable to render the regular 3x3 cube preview.',error);
       return false;
     }
   }
 
-  function renderColorPreviews(){
+  async function renderColorPreviews(){
+    const mainPreview=captureMainPreview();
     renderColorPreview(document.getElementById('cubeColorPreviewSolved'),'','ssc-color-preview-solved');
     renderColorPreview(document.getElementById('cubeColorPreviewScrambled'),COLOR_PREVIEW_SCRAMBLE,'ssc-color-preview-scrambled');
+    await restoreMainPreview(mainPreview);
   }
 
   function createPreviewSection(){
@@ -193,9 +220,9 @@
       if(lightButton)lightButton.textContent=en?'Light':'בהיר';
       if(darkButton)darkButton.textContent=en?'Dark':'כהה';
       if(oledButton)oledButton.textContent='OLED';
-      if(previewHeading)previewHeading.textContent=en?'Cube color preview':'תצוגה מקדימה של צבעי הקובייה';
-      if(solvedLabel)solvedLabel.textContent=en?'Solved':'פתורה';
-      if(scrambledLabel)scrambledLabel.textContent=en?'Scrambled':'מעורבבת';
+      if(previewHeading)previewHeading.textContent=en?'3x3 cube color preview':'תצוגה מקדימה של צבעי 3×3';
+      if(solvedLabel)solvedLabel.textContent=en?'Solved 3x3':'3×3 פתורה';
+      if(scrambledLabel)scrambledLabel.textContent=en?'Scrambled 3x3':'3×3 מעורבבת';
       if(solvedPreview)solvedPreview.setAttribute('aria-label',en?'Solved 3 by 3 cube color preview':'תצוגת צבעים של קוביית 3 על 3 פתורה');
       if(scrambledPreview)scrambledPreview.setAttribute('aria-label',en?'Scrambled 3 by 3 cube color preview':'תצוגת צבעים של קוביית 3 על 3 מעורבבת');
       if(closeButton)closeButton.setAttribute('aria-label',en?'Close':'סגור');
