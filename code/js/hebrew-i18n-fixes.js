@@ -21,6 +21,18 @@
     label.insertBefore(document.createTextNode(next),input||null);
   }
 
+  function fixShortcutNxnLabels(){
+    const modal=document.getElementById('shortcutsModal');
+    if(!modal)return;
+    modal.querySelectorAll('.shortcuts-grid > div').forEach(row=>{
+      const key=String(row.querySelector('kbd')?.textContent||'');
+      const match=key.match(/Ctrl\/Cmd\s*\+\s*([2-7])$/);
+      if(!match)return;
+      const label=row.querySelector('span');
+      if(label?.textContent.includes('{n}'))label.textContent=label.textContent.split('{n}').join(match[1]);
+    });
+  }
+
   const translate=()=>{
     setText('#generalSettingsButton span','הגדרות','SETTINGS');
     setText('#importExportButton span','יבוא / יצוא','IMPORT / EXPORT');
@@ -44,6 +56,8 @@
       'יבוא נתונים',
       'Import data'
     );
+
+    fixShortcutNxnLabels();
   };
 
   translate();
@@ -51,6 +65,8 @@
   observer.observe(document.documentElement,{attributes:true,attributeFilter:['lang','dir']});
   const stats=document.getElementById('statsGrid');
   if(stats)observer.observe(stats,{childList:true,subtree:true});
+  const shortcuts=document.getElementById('shortcutsModal');
+  if(shortcuts)observer.observe(shortcuts,{childList:true,subtree:true});
 })();
 
 (() => {
