@@ -42,9 +42,14 @@ html body .cube-preview-card.ssc-preview-mode-3d:hover{
 
 /* Keep only the black plastic dividers inside each 3D face. The dark face
    background is visible through the grid gap, while zero padding/border means
-   no black casing is painted around the outside perimeter of the face. */
+   no black casing is painted around the outside perimeter of the face.
+
+   CSS 3D can expose a sub-pixel sliver of the host background where two
+   perpendicular planes meet. Overscan each face by 1 CSS pixel so neighbouring
+   planes overlap at their outer edge and no white/gray seam can leak through. */
 html body .ssc-native-cube3d-face{
   direction:ltr!important;
+  inset:-1px!important;
   border-radius:0!important;
   overflow:hidden!important;
   gap:2.4%!important;
@@ -52,6 +57,8 @@ html body .ssc-native-cube3d-face{
   background:#07080a!important;
   border:0!important;
   box-shadow:none!important;
+  backface-visibility:hidden!important;
+  -webkit-backface-visibility:hidden!important;
 }
 
 html body .ssc-native-cube3d-sticker{
