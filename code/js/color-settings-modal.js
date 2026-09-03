@@ -73,11 +73,11 @@
     button.className='toolbar-button';
     button.type='button';
     button.innerHTML=`
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M11 17a4 4 0 0 1-8 0V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v12Z"/>
-        <path d="m7 17 7.5-7.5a2 2 0 0 0 0-2.8l-2.8-2.8"/>
-        <path d="M16.7 13H19a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H7"/>
-        <circle cx="7" cy="17" r="1.15" fill="currentColor" stroke="none"/>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="9.2" cy="10" r="3.25" fill="#ef4444"/>
+        <circle cx="14.8" cy="10" r="3.25" fill="#3b82f6"/>
+        <circle cx="12" cy="14.6" r="3.25" fill="#22c55e"/>
       </svg>
       <span id="colorSettingsButtonText">APPEARANCE</span>
     `;
