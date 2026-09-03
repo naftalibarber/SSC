@@ -40,18 +40,16 @@ html body .cube-preview-card.ssc-preview-mode-3d:hover{
     0 12px 30px rgba(15,23,42,.11)!important;
 }
 
-/* Native CSS-3D cube faces are now rendered as seamless color grids. The
-   previous black plastic face shell (padding, gaps, dark face background and
-   borders) is intentionally removed so no black casing appears around a face
-   or around its stickers. Cube face geometry remains physical, not
-   language-directional, so every face grid stays LTR under the Hebrew UI. */
+/* Keep only the black plastic dividers inside each 3D face. The dark face
+   background is visible through the grid gap, while zero padding/border means
+   no black casing is painted around the outside perimeter of the face. */
 html body .ssc-native-cube3d-face{
   direction:ltr!important;
   border-radius:0!important;
   overflow:hidden!important;
-  gap:0!important;
+  gap:2.4%!important;
   padding:0!important;
-  background:transparent!important;
+  background:#07080a!important;
   border:0!important;
   box-shadow:none!important;
 }
@@ -64,7 +62,7 @@ html body .ssc-native-cube3d-sticker{
 
 html[data-theme="dark"] body .ssc-native-cube3d-face,
 html[data-theme="oled"] body .ssc-native-cube3d-face{
-  background:transparent!important;
+  background:#050608!important;
 }
 
 .ssc-puzzle-3d-player{
