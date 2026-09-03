@@ -69,20 +69,55 @@
 
   const MAX_EXTRA_HEIGHT=10;
   const MIN_FONT_SIZE=6;
+  const ABSOLUTE_MIN_FONT_SIZE=4;
   const OVERFLOW_EPSILON=.75;
   let rafId=0;
   let fitting=false;
+  let baseBarHeight=0;
+  let baseScrambleMaxHeight=0;
+
+  function forceNoScroll(){
+    scramble.style.setProperty('overflow','hidden','important');
+    scramble.style.setProperty('overflow-x','hidden','important');
+    scramble.style.setProperty('overflow-y','hidden','important');
+    scramble.style.setProperty('scrollbar-width','none','important');
+    scramble.style.setProperty('overscroll-behavior','none','important');
+  }
 
   function setExtraHeight(value){
     const px=Math.max(0,Math.min(MAX_EXTRA_HEIGHT,Number(value)||0));
     bar.style.setProperty('--scramble-extra-height',`${px}px`);
+    if(baseBarHeight>0)bar.style.setProperty('min-height',`${baseBarHeight+px}px`,'important');
+    if(baseScrambleMaxHeight>0)scramble.style.setProperty('max-height',`${baseScrambleMaxHeight+px}px`,'important');
     bar.classList.toggle('scramble-expanded',px>=MAX_EXTRA_HEIGHT);
     scramble.dataset.fitExtraHeight=String(px);
+  }
+
+  function setFontSize(px){
+    scramble.style.setProperty('font-size',`${px}px`,'important');
   }
 
   function overflows(){
     return scramble.scrollHeight>scramble.clientHeight+OVERFLOW_EPSILON
       ||scramble.scrollWidth>scramble.clientWidth+OVERFLOW_EPSILON;
+  }
+
+  function resetForMeasurement(){
+    scramble.style.removeProperty('font-size');
+    scramble.style.removeProperty('max-height');
+    bar.style.removeProperty('min-height');
+    bar.classList.remove('scramble-expanded');
+    bar.style.setProperty('--scramble-extra-height','0px');
+    forceNoScroll();
+    void scramble.offsetHeight;
+
+    baseBarHeight=Math.max(1,bar.getBoundingClientRect().height);
+    const computedMax=parseFloat(getComputedStyle(scramble).maxHeight);
+    baseScrambleMaxHeight=Number.isFinite(computedMax)&&computedMax>0
+      ?computedMax
+      :Math.max(1,scramble.clientHeight);
+    setExtraHeight(0);
+    void scramble.offsetHeight;
   }
 
   function fitScramble(){
@@ -91,11 +126,7 @@
     fitting=true;
 
     try{
-      scramble.style.removeProperty('font-size');
-      bar.classList.remove('scramble-expanded');
-      setExtraHeight(0);
-      void scramble.offsetHeight;
-
+      resetForMeasurement();
       const baseFontSize=parseFloat(getComputedStyle(scramble).fontSize)||27;
       scramble.dataset.fitBaseFontSize=baseFontSize.toFixed(2);
 
@@ -104,41 +135,50 @@
         return;
       }
 
-      const verticalShortage=Math.max(0,Math.ceil(scramble.scrollHeight-scramble.clientHeight));
-      const extraHeight=Math.min(MAX_EXTRA_HEIGHT,verticalShortage||MAX_EXTRA_HEIGHT);
-      setExtraHeight(extraHeight);
-      void scramble.offsetHeight;
+      let fittedWithExtra=false;
+      for(let extra=1;extra<=MAX_EXTRA_HEIGHT;extra+=1){
+        setExtraHeight(extra);
+        void scramble.offsetHeight;
+        if(!overflows()){
+          fittedWithExtra=true;
+          break;
+        }
+      }
 
-      if(!overflows()){
+      if(fittedWithExtra){
         delete scramble.dataset.fitReducedFont;
         return;
       }
 
+      setExtraHeight(MAX_EXTRA_HEIGHT);
       let low=MIN_FONT_SIZE;
       let high=baseFontSize;
-      scramble.style.fontSize=`${low}px`;
+      setFontSize(low);
       void scramble.offsetHeight;
 
-      // In unusually narrow layouts keep reducing slightly below the normal
-      // safety floor so the scramble still never needs its own scrollbar.
-      while(overflows()&&low>4){
-        low=Math.max(4,low-.5);
-        scramble.style.fontSize=`${low}px`;
+      while(overflows()&&low>ABSOLUTE_MIN_FONT_SIZE){
+        low=Math.max(ABSOLUTE_MIN_FONT_SIZE,low-.5);
+        setFontSize(low);
         void scramble.offsetHeight;
       }
 
       if(!overflows()){
-        for(let step=0;step<12;step+=1){
+        for(let step=0;step<14;step+=1){
           const mid=(low+high)/2;
-          scramble.style.fontSize=`${mid}px`;
+          setFontSize(mid);
           void scramble.offsetHeight;
           if(overflows())high=mid;
           else low=mid;
         }
-        scramble.style.fontSize=`${Math.max(4,low-.05).toFixed(2)}px`;
+        const fitted=Math.max(ABSOLUTE_MIN_FONT_SIZE,low-.05);
+        setFontSize(fitted.toFixed(2));
+        scramble.dataset.fitReducedFont=`${fitted.toFixed(2)}px`;
+      }else{
+        setFontSize(ABSOLUTE_MIN_FONT_SIZE);
+        scramble.dataset.fitReducedFont=`${ABSOLUTE_MIN_FONT_SIZE}px`;
       }
 
-      scramble.dataset.fitReducedFont=scramble.style.fontSize||`${low}px`;
+      forceNoScroll();
     }finally{
       fitting=false;
     }
