@@ -13,4 +13,17 @@ assert.doesNotMatch(fitRule[0],/data-cube-order|222|333|444|555|666|777/,'Thumbn
 assert.doesNotMatch(css,/\.ssc-preview-3d-viewer[^\{]*\.ssc-native-cube3d-stage\s*\{[^}]*scale3d/,'The interactive modal must not inherit the thumbnail-only fit scale.');
 assert.match(index,/code\/css\/puzzle-3d\.css\?v=20260902-thumbnail-fit-1/,'The thumbnail-fit CSS must be cache-busted in production.');
 
-console.log('[SSC UI] Native 3D thumbnail fit is shared by 2x2-7x7 and scoped away from the modal.');
+const faceRule=css.match(/html body \.ssc-native-cube3d-face\s*\{([^}]*)\}/);
+assert.ok(faceRule,'Native 3D faces must have an explicit production style rule.');
+assert.match(faceRule[1],/gap\s*:\s*0!important/,'3D faces must not expose black gutters between stickers.');
+assert.match(faceRule[1],/padding\s*:\s*0!important/,'3D faces must not keep a black outer shell around the sticker grid.');
+assert.match(faceRule[1],/background\s*:\s*transparent!important/,'3D faces must not paint a black plastic background.');
+assert.match(faceRule[1],/border\s*:\s*0!important/,'3D faces must not paint a black perimeter border.');
+assert.match(faceRule[1],/box-shadow\s*:\s*none!important/,'3D faces must not recreate the shell with a shadow.');
+
+const stickerRule=css.match(/html body \.ssc-native-cube3d-sticker\s*\{([^}]*)\}/);
+assert.ok(stickerRule,'Native 3D stickers must have an explicit production style rule.');
+assert.match(stickerRule[1],/border\s*:\s*0!important/,'3D stickers must not have individual black outlines.');
+assert.match(stickerRule[1],/box-shadow\s*:\s*none!important/,'3D stickers must not have inset black edging.');
+
+console.log('[SSC UI] Native 3D thumbnail fit remains shared and the black face shell is removed.');
