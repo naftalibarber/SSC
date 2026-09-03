@@ -25,6 +25,10 @@
 
   function supportsEvent(eventId){return normalizeEventId(eventId)!==null;}
   function isNxNEvent(eventId){return Boolean(NXN_ORDERS[eventId]);}
+  function dedicatedEventModule(eventId){
+    const module=window.SSCEventModules?.[eventId];
+    return module&&typeof module.generate==='function'?module:null;
+  }
 
   function getEvent(eventId){
     const id=normalizeEventId(eventId);
@@ -129,6 +133,8 @@
     if(!id)throw new Error(`Unsupported scramble event: ${String(eventId)}`);
 
     try{
+      const dedicated=dedicatedEventModule(id);
+      if(dedicated)return await dedicated.generate();
       return await generateWithCubing(id);
     }catch(error){
       if(isNxNEvent(id)){

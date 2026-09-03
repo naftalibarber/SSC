@@ -16,6 +16,20 @@
     return window.SSCPreviewV1?.normalizeEventId?.(eventId)||String(eventId??'333').trim().toLowerCase();
   }
 
+  function dedicatedEventModule(eventId){
+    const module=window.SSCEventModules?.[normalizeEventId(eventId)];
+    return module&&typeof module.render2D==='function'?module:null;
+  }
+
+  function repaintDedicated(colors){
+    if(!colors)return;
+    for(const eventId of ['333bf','333fm','333oh']){
+      try{window.SSCEventModules?.[eventId]?.repaint?.(colors);}catch(error){
+        console.warn(`[SSC Preview V1] ${eventId} dedicated repaint failed.`,error);
+      }
+    }
+  }
+
   function featureEnabled(){return window.SSC_FEATURES?.previewV1===true;}
 
   function shouldUseV1(eventId){
@@ -61,6 +75,7 @@
     container.dataset.previewModePreference='2d';
     delete container.dataset.wcaPuzzle;
     delete container.dataset.previewReady;
+    delete container.dataset.previewModule;
   }
 
   async function legacyFallback(container,scramble,eventId,originalError){
@@ -105,9 +120,12 @@
     }
 
     try{
-      if(!window.SSCPreviewV1?.render)throw new Error('SSCPreviewV1 is unavailable.');
       prepare2DContainer(container);
-      const result=window.SSCPreviewV1.render(container,scramble,eventId,{strict:true});
+      const dedicated=dedicatedEventModule(eventId);
+      const result=dedicated
+        ?dedicated.render2D(container,scramble,{strict:true})
+        :window.SSCPreviewV1?.render?.(container,scramble,eventId,{strict:true});
+      if(!result?.svg)throw new Error('SSCPreviewV1 render result is unavailable.');
       window.SSCPreviewSizing?.scheduleFit?.(container);
       return result.svg;
     }catch(error){
@@ -124,14 +142,18 @@
     let colors=null;
     if(window.SSCPreviewV1?.setColors)colors=window.SSCPreviewV1.setColors(next);
     try{legacyPreview?.setColors?.(next);}catch(error){console.warn('[SSC Preview V1] legacy color update failed.',error);}
-    return colors??legacyPreview?.getColors?.()??null;
+    const resolved=colors??legacyPreview?.getColors?.()??null;
+    repaintDedicated(resolved);
+    return resolved;
   }
 
   function resetColors(){
     let colors=null;
     if(window.SSCPreviewV1?.resetColors)colors=window.SSCPreviewV1.resetColors();
     try{legacyPreview?.resetColors?.();}catch(error){console.warn('[SSC Preview V1] legacy color reset failed.',error);}
-    return colors??legacyPreview?.getColors?.()??null;
+    const resolved=colors??legacyPreview?.getColors?.()??null;
+    repaintDedicated(resolved);
+    return resolved;
   }
 
   if(!legacyPreview||!legacyRender){
@@ -152,6 +174,7 @@
     shouldUseV1,
     preferredMode,
     shouldUseConnected3D,
+    dedicatedEventModule,
     prepare2DContainer,
     render,
     legacyFallback

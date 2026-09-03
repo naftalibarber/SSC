@@ -58,11 +58,13 @@ const registryPreview=globalThis.SSCCubePreview;
 await load('code/js/preview/ssc-nxn-state.js');
 await load('code/js/preview/ssc-svg-renderer.js');
 await load('code/js/preview/ssc-preview-v1.js');
+await load('code/js/events/333bf.js');
 await load('code/js/scramble-generators.js');
 
 assert.equal(globalThis.SSCPreviewV1.orderForEvent('333bf'),3);
 assert.equal(globalThis.SSCPreviewV1.normalizeEventId('3bld'),'333bf');
 assert.equal(globalThis.SSCNxNState.parseMove("Fw'",3)?.layerDepth,2,'3BLD-oriented 3x3 wide moves must parse.');
+assert.equal(globalThis.SSCEventModules?.['333bf']?.source,'isolated-333-copy','3BLD must load its isolated event module.');
 
 const samples=30;
 for(let index=0;index<samples;index+=1){
@@ -106,24 +108,26 @@ globalThis.SSCPreviewV1={...globalThis.SSCPreviewV1,render(...args){v1Calls+=1;r
 await load('code/js/preview/ssc-preview-v1-integration.js');
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('333bf'),true);
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseV1('3bld'),true);
+assert.equal(globalThis.SSCPreviewV1Integration.dedicatedEventModule('3bld')?.id,'333bf');
 
 const productionScramble=await globalThis.SSCScrambleProvider.generate('333bf');
 
 previewMode='2d';
 const twoDContainer=new FakeElement();
 await globalThis.SSCCubePreview.render(twoDContainer,productionScramble,'333bf');
-assert.equal(v1Calls,1,'2D 3BLD must call the native 3x3 V1 renderer.');
+assert.equal(v1Calls,0,'2D 3BLD must not call the shared SSCPreviewV1.render path.');
 assert.equal(connected3DCalls,0,'2D 3BLD must not use the 3D connected renderer.');
 assert.equal(twoDContainer.dataset.previewEngine,'ssc-native-v1');
+assert.equal(twoDContainer.dataset.previewModule,'333bf');
 assert.equal(twoDContainer.dataset.wcaEvent,'333bf');
 
 previewMode='3d';
 const threeDContainer=new FakeElement();
 await globalThis.SSCCubePreview.render(threeDContainer,productionScramble,'333bf');
-assert.equal(v1Calls,1,'3D 3BLD must not be forced back through the 2D V1 renderer.');
-assert.equal(connected3DCalls,1,'3D 3BLD must use the same connected 3D route as 3x3.');
+assert.equal(v1Calls,0,'3D 3BLD must not be forced through the shared 2D V1 renderer.');
+assert.equal(connected3DCalls,1,'3D 3BLD must keep the existing connected 3D route.');
 assert.equal(threeDContainer.dataset.previewEngine,'ssc-native-3d');
 assert.equal(threeDContainer.dataset.wcaEvent,'333bf');
 assert.equal(globalThis.SSCPreviewV1Integration.shouldUseConnected3D(threeDContainer,'333bf'),true);
 
-console.log(JSON.stringify({ok:true,event:'333bf',samples,twoD:'ssc-native-v1',threeD:'ssc-native-3d'},null,2));
+console.log(JSON.stringify({ok:true,event:'333bf',samples,twoD:'isolated-333-copy',threeD:'ssc-native-3d'},null,2));

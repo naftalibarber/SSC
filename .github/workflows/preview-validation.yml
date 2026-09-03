@@ -9,6 +9,7 @@ on:
       - 'code/css/app-enhancements.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
+      - 'code/js/events/**'
       - 'code/js/preview/**'
       - 'code/js/puzzle-3d.js'
       - 'code/js/preview-sizing.js'
@@ -36,6 +37,7 @@ on:
       - 'code/css/app-enhancements.css'
       - 'code/css/cube-preview.css'
       - 'code/css/ssc-preview-v1.css'
+      - 'code/js/events/**'
       - 'code/js/preview/**'
       - 'code/js/puzzle-3d.js'
       - 'code/js/preview-sizing.js'
@@ -88,6 +90,8 @@ jobs:
         run: node tests/preview-high-order-integration.mjs
       - name: Validate FMC, 3BLD and OH 3x3 preview routing
         run: node tests/preview-333-derived-events.mjs
+      - name: Validate isolated FMC, 3BLD and OH event modules
+        run: node tests/preview-333-isolated-events.mjs
       - name: Validate real oriented 3BLD scrambles and wide moves
         run: node tests/preview-3bld-production.mjs
       - name: Validate pixel-perfect preview centering
