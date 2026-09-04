@@ -29,8 +29,10 @@
   const INITIAL_CAMERA=Object.freeze({x:-28,y:-38,scale:1});
   const DEG=Math.PI/180;
   const CAMERA_DISTANCE=5.4;
-  const MIN_RENDER_SCALE=2;
-  const MAX_RENDER_SCALE=3;
+  const MIN_RENDER_SCALE=3;
+  const MAX_RENDER_SCALE=4;
+  const MIN_SAFE_RENDER_SCALE=2;
+  const MAX_CANVAS_PIXELS=6500000;
   const INTERNAL_GAP=.048;
 
   const FACE_DEFS=Object.freeze({
@@ -229,10 +231,13 @@
     if(!state?.root?.isConnected)return;
     const rect=state.root.getBoundingClientRect();
     const width=Math.max(1,rect.width||0),height=Math.max(1,rect.height||0);
-    const renderScale=Math.min(MAX_RENDER_SCALE,Math.max(MIN_RENDER_SCALE,Number(window.devicePixelRatio)||1));
+    const dpr=Math.max(1,Number(window.devicePixelRatio)||1);
+    const desiredScale=Math.min(MAX_RENDER_SCALE,Math.max(MIN_RENDER_SCALE,dpr*1.5));
+    const pixelSafeScale=Math.sqrt(MAX_CANVAS_PIXELS/Math.max(1,width*height));
+    const renderScale=Math.max(MIN_SAFE_RENDER_SCALE,Math.min(desiredScale,pixelSafeScale));
     const pixelWidth=Math.max(1,Math.round(width*renderScale));
     const pixelHeight=Math.max(1,Math.round(height*renderScale));
-    const changed=state.canvas.width!==pixelWidth||state.canvas.height!==pixelHeight||state.renderScale!==renderScale;
+    const changed=state.canvas.width!==pixelWidth||state.canvas.height!==pixelHeight||Math.abs(state.renderScale-renderScale)>.001;
     state.cssWidth=width;
     state.cssHeight=height;
     state.renderScale=renderScale;
