@@ -34,6 +34,11 @@
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
       #colorSettingsButton img{display:block;width:19px;height:19px;object-fit:contain;flex:0 0 auto}
+      #generalSettingsButton img,#colorSettingsButton img{filter:none;transition:filter .16s ease}
+      html[data-theme="dark"] #generalSettingsButton img,
+      html[data-theme="dark"] #colorSettingsButton img,
+      html[data-theme="oled"] #generalSettingsButton img,
+      html[data-theme="oled"] #colorSettingsButton img{filter:brightness(0) invert(1)}
       .color-settings-dialog{width:min(720px,94vw);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
