@@ -114,6 +114,30 @@ html[data-theme="oled"] #prevScramble::before,
   filter: brightness(0) invert(1);
 }
 
+/* Next scramble uses the supplied image icon instead of the inline SVG. */
+#newScramble svg {
+  display: none !important;
+}
+
+#newScramble::before {
+  content: "";
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  background: url("../../Next%20icon.png") center/contain no-repeat;
+  filter: none;
+  transition: filter .16s ease;
+}
+
+html[data-theme="dark"] #newScramble::before,
+html[data-theme="oled"] #newScramble::before,
+#newScramble:hover::before,
+#newScramble:focus-visible::before,
+#newScramble:active::before {
+  filter: brightness(0) invert(1);
+}
+
 /* Keep image icons readable when a button turns into the primary color. */
 button:hover img,
 button:focus-visible img,
