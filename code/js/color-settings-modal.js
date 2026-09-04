@@ -12,7 +12,6 @@
 
   function retireLineWidthControl(){
     document.getElementById('cubeLineWidthRange')?.closest('.general-setting-row')?.remove();
-
     try{
       const raw=localStorage.getItem(SETTINGS_KEY);
       if(raw){
@@ -23,7 +22,6 @@
         }
       }
     }catch{}
-
     document.documentElement.style.removeProperty('--ssc-cube-line-width');
   }
 
@@ -33,7 +31,21 @@
     style.id='sscColorSettingsModalStyles';
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
-      #colorSettingsButton svg{display:block;width:19px;height:19px;flex:0 0 auto}
+      #colorSettingsButton{
+        background:#2d3238!important;
+        color:#fff!important;
+        border-color:#2d3238!important;
+        border-radius:12px!important;
+        box-shadow:none!important;
+      }
+      #colorSettingsButton:hover,
+      #colorSettingsButton:focus-visible{
+        background:#373d44!important;
+        color:#fff!important;
+        border-color:#373d44!important;
+        box-shadow:none!important;
+      }
+      #colorSettingsButton svg{display:block;width:20px!important;height:20px!important;flex:0 0 auto;color:#fff!important}
       .color-settings-dialog{width:min(720px,94vw)}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
@@ -64,7 +76,6 @@
   function createToolbarButton(){
     const existing=document.getElementById('colorSettingsButton');
     if(existing)return existing;
-
     const toolbar=document.querySelector('.topbar-start');
     if(!toolbar)return null;
 
@@ -170,7 +181,6 @@
 
   function createColorModal(){
     if(document.getElementById('colorSettingsModal'))return;
-
     document.querySelector('.color-settings-launch')?.remove();
 
     const generalModal=document.getElementById('generalSettingsModal');
