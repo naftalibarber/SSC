@@ -12,6 +12,7 @@
 
   function retireLineWidthControl(){
     document.getElementById('cubeLineWidthRange')?.closest('.general-setting-row')?.remove();
+
     try{
       const raw=localStorage.getItem(SETTINGS_KEY);
       if(raw){
@@ -22,6 +23,7 @@
         }
       }
     }catch{}
+
     document.documentElement.style.removeProperty('--ssc-cube-line-width');
   }
 
@@ -31,21 +33,7 @@
     style.id='sscColorSettingsModalStyles';
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
-      #colorSettingsButton{
-        background:#2d3238!important;
-        color:#fff!important;
-        border-color:#2d3238!important;
-        border-radius:12px!important;
-        box-shadow:none!important;
-      }
-      #colorSettingsButton:hover,
-      #colorSettingsButton:focus-visible{
-        background:#373d44!important;
-        color:#fff!important;
-        border-color:#373d44!important;
-        box-shadow:none!important;
-      }
-      #colorSettingsButton svg{display:block;width:20px!important;height:20px!important;flex:0 0 auto;color:#fff!important}
+      #colorSettingsButton svg{display:block;width:19px;height:19px;flex:0 0 auto}
       .color-settings-dialog{width:min(720px,94vw)}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
@@ -76,6 +64,7 @@
   function createToolbarButton(){
     const existing=document.getElementById('colorSettingsButton');
     if(existing)return existing;
+
     const toolbar=document.querySelector('.topbar-start');
     if(!toolbar)return null;
 
@@ -84,15 +73,8 @@
     button.className='toolbar-button';
     button.type='button';
     button.innerHTML=`
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <mask id="sscPaletteIconMask">
-          <rect width="24" height="24" fill="white"/>
-          <circle cx="7.4" cy="10.6" r="1.35" fill="black"/>
-          <circle cx="9.7" cy="7.1" r="1.35" fill="black"/>
-          <circle cx="14.2" cy="6.8" r="1.35" fill="black"/>
-          <circle cx="17.1" cy="10" r="1.35" fill="black"/>
-        </mask>
-        <path fill="currentColor" mask="url(#sscPaletteIconMask)" d="M12 2.5C6.48 2.5 2 6.2 2 10.9c0 4.36 3.63 7.9 8.1 7.9h1.42c1.08 0 1.73-1.18 1.17-2.1a2.8 2.8 0 0 1-.4-1.43c0-1.82 1.48-3.3 3.3-3.3h1.54c2.69 0 4.87-2.18 4.87-4.87C22 4.18 17.52 2.5 12 2.5Z"/>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+        <path d="M12 3C7.03 3 3 6.58 3 11c0 3.87 3.13 7 7 7h1.65c.74 0 1.35.6 1.35 1.35 0 .91.74 1.65 1.65 1.65H15c3.87 0 7-3.13 7-7 0-5.52-4.48-10-10-10ZM6.5 12A1.5 1.5 0 1 1 6.5 9a1.5 1.5 0 0 1 0 3Zm3-4A1.5 1.5 0 1 1 9.5 5a1.5 1.5 0 0 1 0 3Zm5 0A1.5 1.5 0 1 1 14.5 5a1.5 1.5 0 0 1 0 3Zm3 4A1.5 1.5 0 1 1 17.5 9a1.5 1.5 0 0 1 0 3Z"/>
       </svg>
       <span id="colorSettingsButtonText">APPEARANCE</span>
     `;
@@ -181,6 +163,7 @@
 
   function createColorModal(){
     if(document.getElementById('colorSettingsModal'))return;
+
     document.querySelector('.color-settings-launch')?.remove();
 
     const generalModal=document.getElementById('generalSettingsModal');
