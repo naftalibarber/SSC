@@ -76,6 +76,9 @@ html[dir="rtl"] .solve-detail-row strong{text-align:end}
 
 .focus-controls{position:fixed;z-index:1300;top:14px;inset-inline-end:14px;display:none;align-items:center;gap:7px}
 .focus-controls button{background:color-mix(in srgb,var(--card-solid) 90%,transparent);backdrop-filter:blur(10px);font-size:.76em}
+#focusModeButton [data-toolbar-icon="focus-crosshair"]{display:none!important}
+#focusModeButton::before{content:"";display:block;width:19px;height:19px;flex:0 0 auto;background:url("../../Focus%20icon.png") center/contain no-repeat;filter:none;transition:filter .16s ease}
+html[data-theme="dark"] #focusModeButton::before,html[data-theme="oled"] #focusModeButton::before{filter:brightness(0) invert(1)}
 #fullscreenButton [data-toolbar-icon="fullscreen-exit"]{display:none!important}
 #fullscreenButton[aria-pressed="true"] [data-toolbar-icon="fullscreen-enter"]{display:none!important}
 #fullscreenButton[aria-pressed="true"] [data-toolbar-icon="fullscreen-exit"]{display:block!important}
