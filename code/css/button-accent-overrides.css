@@ -221,6 +221,11 @@ html body #importExportButton > img {
   mask-image: url("../../Full-screen%20icon.png") !important;
 }
 
+#fullscreenButton[aria-pressed="true"]::before {
+  -webkit-mask-image: url("../../Small%20screen%20icon.png") !important;
+  mask-image: url("../../Small%20screen%20icon.png") !important;
+}
+
 #analyticsButton::before {
   -webkit-mask-image: url("../../Progress%20analysis%20icon.png") !important;
   mask-image: url("../../Progress%20analysis%20icon.png") !important;
