@@ -90,6 +90,30 @@ button:active,
   padding: 4px 8px;
 }
 
+/* Previous scramble uses the supplied image icon instead of the inline SVG. */
+#prevScramble svg {
+  display: none !important;
+}
+
+#prevScramble::before {
+  content: "";
+  display: block;
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  background: url("../../Previous%20icon.png") center/contain no-repeat;
+  filter: none;
+  transition: filter .16s ease;
+}
+
+html[data-theme="dark"] #prevScramble::before,
+html[data-theme="oled"] #prevScramble::before,
+#prevScramble:hover::before,
+#prevScramble:focus-visible::before,
+#prevScramble:active::before {
+  filter: brightness(0) invert(1);
+}
+
 /* Keep image icons readable when a button turns into the primary color. */
 button:hover img,
 button:focus-visible img,
