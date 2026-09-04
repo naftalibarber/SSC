@@ -1,6 +1,8 @@
 /* SSC application enhancements. Intentionally does not style cube preview internals. */
 .session-toolbar{position:relative}
-#sessionMenuButton{font-size:22px;line-height:1;font-weight:900}
+#sessionMenuButton{font-size:0;line-height:1;font-weight:900}
+#sessionMenuButton::before{content:"";display:block;width:19px;height:19px;background:url("../../Three-dot%20icon.png") center/contain no-repeat;filter:none;transition:filter .16s ease}
+html[data-theme="dark"] #sessionMenuButton::before,html[data-theme="oled"] #sessionMenuButton::before{filter:brightness(0) invert(1)}
 .session-menu{position:absolute;z-index:900;top:calc(100% + 8px);inset-inline-end:0;width:min(390px,92vw);max-height:min(68vh,560px);overflow:auto;padding:8px;background:var(--card-solid);border:1px solid var(--border);border-radius:16px;box-shadow:0 18px 50px rgba(0,0,0,.18)}
 .session-menu[hidden]{display:none}
 .session-menu-head{padding:7px 9px 9px;color:var(--muted);font-size:.75em;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
