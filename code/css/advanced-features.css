@@ -1,3 +1,6 @@
+#analyticsButton [data-toolbar-icon="progress-chart"]{display:none!important}
+#analyticsButton::before{content:"";display:block;width:19px;height:19px;flex:0 0 auto;background:url("../../Progress%20analysis%20icon.png") center/contain no-repeat;filter:none;transition:filter .16s ease}
+html[data-theme="dark"] #analyticsButton::before,html[data-theme="oled"] #analyticsButton::before{filter:brightness(0) invert(1)}
 .analytics-dialog{width:min(980px,calc(100vw - 24px));max-width:980px;max-height:min(92vh,900px);overflow:auto}
 .analytics-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .analytics-ranges{display:flex;gap:6px;flex-wrap:wrap}.analytics-ranges button{border:1px solid var(--border);background:var(--soft);color:var(--text);border-radius:8px;padding:7px 10px;cursor:pointer}.analytics-ranges button.active{border-color:var(--primary);box-shadow:inset 0 0 0 1px var(--primary)}
