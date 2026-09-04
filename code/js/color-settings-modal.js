@@ -34,7 +34,7 @@
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
       #colorSettingsButton img{display:block;width:19px;height:19px;object-fit:contain;flex:0 0 auto}
-      .color-settings-dialog{width:min(720px,94vw)}
+      .color-settings-dialog{width:min(720px,94vw);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
       .color-settings-grid .cube-colors-control{grid-template-columns:repeat(3,minmax(0,1fr))}
