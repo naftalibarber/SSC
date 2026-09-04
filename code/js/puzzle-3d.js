@@ -26,10 +26,23 @@
     'mbld':'333mbf','multi-blind':'333mbf','333mbf':'333mbf'
   });
   const DEFAULT_COLORS=Object.freeze({U:'#ffffff',D:'#ffff00',F:'#00dd00',B:'#0000ff',R:'#ff0000',L:'#ffaa00'});
-  const FACE_ORDER=Object.freeze(['F','B','R','L','U','D']);
-  // Standard cubing orientation: U (white) on top, F (green) on the left/front,
-  // and R (red) on the right. The same camera is used for thumbnail and modal reset.
   const INITIAL_CAMERA=Object.freeze({x:-28,y:-38,scale:1});
+  const DEG=Math.PI/180;
+  const CAMERA_DISTANCE=5.4;
+  const MIN_RENDER_SCALE=2;
+  const MAX_RENDER_SCALE=3;
+  const INTERNAL_GAP=.048;
+
+  const FACE_DEFS=Object.freeze({
+    F:{center:[0,0,1],u:[1,0,0],v:[0,-1,0],normal:[0,0,1]},
+    B:{center:[0,0,-1],u:[-1,0,0],v:[0,-1,0],normal:[0,0,-1]},
+    R:{center:[1,0,0],u:[0,0,-1],v:[0,-1,0],normal:[1,0,0]},
+    L:{center:[-1,0,0],u:[0,0,1],v:[0,-1,0],normal:[-1,0,0]},
+    U:{center:[0,1,0],u:[1,0,0],v:[0,0,1],normal:[0,1,0]},
+    D:{center:[0,-1,0],u:[1,0,0],v:[0,0,-1],normal:[0,-1,0]}
+  });
+  const FACE_ORDER=Object.freeze(['F','B','R','L','U','D']);
+
   const states=new WeakMap();
   const activeContainers=new Set();
   let interactiveEnabled=true;
@@ -38,40 +51,29 @@
     const raw=String(value??'333').trim().toLowerCase();
     return EVENT_ALIASES[raw]||raw;
   }
-
   function nativeOrder(value){return NATIVE_EVENT_ORDERS.get(normalizeEventId(value))||null;}
   function isNativeEvent(value){return NATIVE_EVENT_IDS.has(normalizeEventId(value));}
   function supportsEvent(value){return isNativeEvent(value)||Boolean(LEGACY_3D?.supportsEvent?.(value));}
+
   function getEvent(value){
     const id=normalizeEventId(value);
-    if(isNativeEvent(id)){
-      const order=nativeOrder(id);
-      const dimensionLabel=`${order}×${order}`;
-      const puzzle=`${order}x${order}x${order}`;
-      const primaryCubeEvent=['222','333','444','555','666','777'].includes(id);
-      const fallback={
-        id,
-        label:primaryCubeEvent?dimensionLabel:id.toUpperCase(),
-        name:`${puzzle} Cube`,
-        family:'cube',
-        puzzle,
-        order
-      };
-      const registryEvent=window.SSCWCAEvents?.[id]||null;
-      const legacy=LEGACY_3D?.getEvent?.(id)||null;
-      const metadata=registryEvent||legacy;
-      return Object.freeze({
-        ...fallback,
-        ...(metadata||{}),
-        id,
-        order,
-        puzzle:fallback.puzzle,
-        label:primaryCubeEvent?dimensionLabel:metadata?.label||fallback.label,
-        name:metadata?.name||fallback.name,
-        family:metadata?.family||fallback.family
-      });
-    }
-    return LEGACY_3D?.getEvent?.(value)||null;
+    if(!isNativeEvent(id))return LEGACY_3D?.getEvent?.(value)||null;
+    const order=nativeOrder(id);
+    const dimensionLabel=`${order}×${order}`;
+    const puzzle=`${order}x${order}x${order}`;
+    const primaryCubeEvent=['222','333','444','555','666','777'].includes(id);
+    const fallback={id,label:primaryCubeEvent?dimensionLabel:id.toUpperCase(),name:`${puzzle} Cube`,family:'cube',puzzle,order};
+    const metadata=window.SSCWCAEvents?.[id]||LEGACY_3D?.getEvent?.(id)||null;
+    return Object.freeze({
+      ...fallback,
+      ...(metadata||{}),
+      id,
+      order,
+      puzzle:fallback.puzzle,
+      label:primaryCubeEvent?dimensionLabel:metadata?.label||fallback.label,
+      name:metadata?.name||fallback.name,
+      family:metadata?.family||fallback.family
+    });
   }
 
   function injectStyles(){
@@ -80,13 +82,9 @@
     style.id='sscNativeCube3DStyles';
     style.textContent=`
       .ssc-native-cube3d-root{
-        --ssc-native-order:3;
-        --ssc-native-cube-size:150px;
-        --ssc-native-cube-half:75px;
         position:relative;
         width:100%;height:100%;min-width:0;min-height:0;
         display:grid!important;place-items:center;
-        perspective:760px;perspective-origin:50% 44%;
         overflow:visible;background:transparent!important;
         touch-action:none;user-select:none;-webkit-user-select:none;
         cursor:grab;
@@ -94,84 +92,163 @@
       .ssc-native-cube3d-root:active{cursor:grabbing}
       .ssc-native-cube3d-root.ssc-native-cube3d-static{cursor:default}
       .ssc-native-cube3d-root::after{
-        content:'';
-        position:absolute;
-        left:50%;top:68%;
+        content:'';position:absolute;left:50%;top:68%;z-index:0;
         width:min(54%,330px);height:min(12%,72px);
-        transform:translate(-50%,-50%);
-        border-radius:50%;
-        background:rgba(0,0,0,.17);
-        filter:blur(14px);
-        pointer-events:none;
+        transform:translate(-50%,-50%);border-radius:50%;
+        background:rgba(0,0,0,.17);filter:blur(14px);pointer-events:none;
       }
-      .ssc-native-cube3d-stage{
-        position:relative;
-        width:var(--ssc-native-cube-size);
-        height:var(--ssc-native-cube-size);
-        transform-style:preserve-3d;
-        z-index:1;
+      .ssc-native-cube3d-canvas{
+        position:absolute;inset:0;z-index:1;
+        width:100%;height:100%;display:block;
+        background:transparent;pointer-events:none;
       }
-      .ssc-native-cube3d-cube{
-        position:absolute;inset:0;
-        transform-style:preserve-3d;
-        transform-origin:50% 50%;
-        will-change:transform;
-      }
-      .ssc-native-cube3d-face{
-        position:absolute;inset:0;
-        box-sizing:border-box;
-        display:grid;
-        direction:ltr;
-        grid-template-columns:repeat(var(--ssc-native-order),minmax(0,1fr));
-        grid-template-rows:repeat(var(--ssc-native-order),minmax(0,1fr));
-        gap:2.4%;
-        padding:3.6%;
-        border:1px solid rgba(0,0,0,.88);
-        border-radius:7.5%;
-        background:linear-gradient(145deg,#24272c,#07080a 76%);
-        box-shadow:
-          inset 0 0 0 1px rgba(255,255,255,.035),
-          0 0 0 .5px rgba(0,0,0,.65);
-        backface-visibility:hidden;
-        overflow:hidden;
-      }
-      .ssc-native-cube3d-face[data-side="F"]{transform:translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-face[data-side="B"]{transform:rotateY(180deg) translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-face[data-side="R"]{transform:rotateY(90deg) translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-face[data-side="L"]{transform:rotateY(-90deg) translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-face[data-side="U"]{transform:rotateX(90deg) translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-face[data-side="D"]{transform:rotateX(-90deg) translateZ(var(--ssc-native-cube-half))}
-      .ssc-native-cube3d-sticker{
-        min-width:0;min-height:0;
-        display:block;
-        box-sizing:border-box;
-        border-radius:10%;
-        background:var(--sticker,#777);
-        border:1px solid rgba(0,0,0,.28);
-        box-shadow:
-          inset 0 1px 1px rgba(255,255,255,.24),
-          inset 0 -1px 1px rgba(0,0,0,.12);
-      }
-      .ssc-preview-3d-viewer .ssc-native-cube3d-root{perspective:1080px}
-      .cube-preview-card .ssc-native-cube3d-root{perspective:620px}
-      html[data-theme="dark"] .ssc-native-cube3d-face{background:linear-gradient(145deg,#2a2e34,#050608 78%)}
-      html[data-theme="oled"] .ssc-native-cube3d-face{background:linear-gradient(145deg,#16181b,#000 80%)}
       html[data-theme="dark"] .ssc-native-cube3d-root::after,
       html[data-theme="oled"] .ssc-native-cube3d-root::after{background:rgba(0,0,0,.34)}
-      @media(max-width:560px){
-        .ssc-native-cube3d-face{gap:2.2%;padding:3.4%}
-      }
     `;
     document.head.appendChild(style);
   }
 
   function palette(){return{...DEFAULT_COLORS,...(window.SSCCubePreview?.getColors?.()||{})};}
 
+  function rotatePoint(point,camera,includeScale=true){
+    const scale=includeScale?camera.scale:1;
+    const x=point[0]*scale,y=point[1]*scale,z=point[2]*scale;
+    const ry=camera.y*DEG;
+    const rx=-camera.x*DEG;
+    const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+    const x1=x*cy+z*sy;
+    const z1=-x*sy+z*cy;
+    const y1=y;
+    return [x1,y1*cx-z1*sx,y1*sx+z1*cx];
+  }
+
+  function facePoint(def,u,v){
+    return [
+      def.center[0]+def.u[0]*u+def.v[0]*v,
+      def.center[1]+def.u[1]*u+def.v[1]*v,
+      def.center[2]+def.u[2]*u+def.v[2]*v
+    ];
+  }
+
+  function projected(state,point){
+    const rotated=rotatePoint(point,state.camera,true);
+    const shortSide=Math.max(1,Math.min(state.cssWidth,state.cssHeight));
+    const focal=shortSide*(state.order===2?1.48:1.42);
+    const denominator=Math.max(.3,CAMERA_DISTANCE-rotated[2]);
+    const perspective=focal/denominator;
+    return {
+      x:(state.cssWidth*.5)+(rotated[0]*perspective),
+      y:(state.cssHeight*.49)-(rotated[1]*perspective),
+      z:rotated[2]
+    };
+  }
+
+  function polygon(ctx,points,fill){
+    if(!points.length)return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x,points[0].y);
+    for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+    ctx.closePath();
+    ctx.fillStyle=fill;
+    ctx.fill();
+  }
+
+  function visibleFaces(state){
+    const faces=[];
+    for(const side of FACE_ORDER){
+      const def=FACE_DEFS[side];
+      const normal=rotatePoint(def.normal,state.camera,false);
+      if(normal[2]<=.0001)continue;
+      const corners=[
+        facePoint(def,-1,-1),facePoint(def,1,-1),
+        facePoint(def,1,1),facePoint(def,-1,1)
+      ];
+      const rotated=corners.map(point=>rotatePoint(point,state.camera,true));
+      const depth=rotated.reduce((sum,p)=>sum+p[2],0)/rotated.length;
+      faces.push({side,def,depth});
+    }
+    faces.sort((a,b)=>a.depth-b.depth);
+    return faces;
+  }
+
+  function drawFace(state,face){
+    const {ctx,order,cubeState,colors}=state;
+    const {side,def}=face;
+    const faceCorners=[
+      projected(state,facePoint(def,-1,-1)),
+      projected(state,facePoint(def,1,-1)),
+      projected(state,facePoint(def,1,1)),
+      projected(state,facePoint(def,-1,1))
+    ];
+    const theme=document.documentElement.dataset.theme;
+    polygon(ctx,faceCorners,theme==='dark'||theme==='oled'?'#050608':'#07080a');
+
+    const cell=2/order;
+    const halfGap=INTERNAL_GAP/2;
+    for(let row=0;row<order;row++){
+      for(let col=0;col<order;col++){
+        let u0=-1+(col*cell),u1=-1+((col+1)*cell);
+        let v0=-1+(row*cell),v1=-1+((row+1)*cell);
+        if(col>0)u0+=halfGap;
+        if(col<order-1)u1-=halfGap;
+        if(row>0)v0+=halfGap;
+        if(row<order-1)v1-=halfGap;
+        const identity=cubeState.faces?.[side]?.[row]?.[col]||side;
+        const color=colors[identity]||DEFAULT_COLORS[identity]||'#777';
+        polygon(ctx,[
+          projected(state,facePoint(def,u0,v0)),
+          projected(state,facePoint(def,u1,v0)),
+          projected(state,facePoint(def,u1,v1)),
+          projected(state,facePoint(def,u0,v1))
+        ],color);
+      }
+    }
+  }
+
+  function renderCanvas(state){
+    if(!state?.ctx||!state.cssWidth||!state.cssHeight)return;
+    const {ctx}=state;
+    ctx.save();
+    ctx.setTransform(state.renderScale,0,0,state.renderScale,0,0);
+    ctx.clearRect(0,0,state.cssWidth,state.cssHeight);
+    ctx.imageSmoothingEnabled=true;
+    if('imageSmoothingQuality' in ctx)ctx.imageSmoothingQuality='high';
+    for(const face of visibleFaces(state))drawFace(state,face);
+    ctx.restore();
+  }
+
+  function scheduleRender(state){
+    if(!state||state.raf)return;
+    state.raf=requestAnimationFrame(()=>{
+      state.raf=0;
+      renderCanvas(state);
+    });
+  }
+
+  function resizeCanvas(state){
+    if(!state?.root?.isConnected)return;
+    const rect=state.root.getBoundingClientRect();
+    const width=Math.max(1,rect.width||0),height=Math.max(1,rect.height||0);
+    const renderScale=Math.min(MAX_RENDER_SCALE,Math.max(MIN_RENDER_SCALE,Number(window.devicePixelRatio)||1));
+    const pixelWidth=Math.max(1,Math.round(width*renderScale));
+    const pixelHeight=Math.max(1,Math.round(height*renderScale));
+    const changed=state.canvas.width!==pixelWidth||state.canvas.height!==pixelHeight||state.renderScale!==renderScale;
+    state.cssWidth=width;
+    state.cssHeight=height;
+    state.renderScale=renderScale;
+    if(changed){
+      state.canvas.width=pixelWidth;
+      state.canvas.height=pixelHeight;
+      state.ctx=state.canvas.getContext('2d',{alpha:true,desynchronized:true})||state.canvas.getContext('2d');
+    }
+    renderCanvas(state);
+  }
+
   function setCamera(state,x,y,scale=state.camera.scale){
     state.camera.x=Math.max(-82,Math.min(82,Number(x)||0));
     state.camera.y=Number(y)||0;
     state.camera.scale=Math.max(.62,Math.min(1.55,Number(scale)||1));
-    state.cube.style.transform=`rotateX(${state.camera.x}deg) rotateY(${state.camera.y}deg) scale3d(${state.camera.scale},${state.camera.scale},${state.camera.scale})`;
+    scheduleRender(state);
   }
 
   function resetNativeCamera(container){
@@ -185,7 +262,8 @@
     let pointerId=null,startX=0,startY=0,startCamX=0,startCamY=0;
     const down=event=>{
       if(!interactiveEnabled||root.style.pointerEvents==='none')return;
-      pointerId=event.pointerId;startX=event.clientX;startY=event.clientY;
+      pointerId=event.pointerId;
+      startX=event.clientX;startY=event.clientY;
       startCamX=state.camera.x;startCamY=state.camera.y;
       root.setPointerCapture?.(pointerId);
       event.preventDefault();
@@ -198,7 +276,8 @@
     };
     const up=event=>{
       if(pointerId!==event.pointerId)return;
-      root.releasePointerCapture?.(pointerId);pointerId=null;
+      root.releasePointerCapture?.(pointerId);
+      pointerId=null;
     };
     const wheel=event=>{
       if(!interactiveEnabled||root.closest('.cube-preview-card'))return;
@@ -233,50 +312,21 @@
 
   function disposeNative(container,{clear=true}={}){
     const state=states.get(container);
-    if(state){unbindInteraction(state);state.resizeObserver?.disconnect();states.delete(container);}
+    if(state){
+      unbindInteraction(state);
+      state.resizeObserver?.disconnect();
+      if(state.raf)cancelAnimationFrame(state.raf);
+      states.delete(container);
+    }
     activeContainers.delete(container);
     clearMetadata(container);
     if(clear)container.replaceChildren();
   }
 
-  function createFace(side,faces,colors,order){
-    const face=document.createElement('div');
-    face.className='ssc-native-cube3d-face';
-    face.dataset.side=side;
-    for(let row=0;row<order;row++){
-      for(let col=0;col<order;col++){
-        const identity=faces?.[side]?.[row]?.[col]||side;
-        const sticker=document.createElement('span');
-        sticker.className='ssc-native-cube3d-sticker';
-        sticker.dataset.side=side;
-        sticker.dataset.row=String(row);
-        sticker.dataset.col=String(col);
-        sticker.dataset.identity=identity;
-        sticker.style.setProperty('--sticker',colors[identity]||DEFAULT_COLORS[identity]||'#777');
-        face.appendChild(sticker);
-      }
-    }
-    return face;
-  }
-
-  function updateGeometry(state){
-    if(!state?.root?.isConnected)return;
-    const rect=state.root.getBoundingClientRect();
-    const shortSide=Math.max(120,Math.min(rect.width||0,rect.height||0));
-    const modal=Boolean(state.root.closest('.ssc-preview-3d-viewer'));
-    const isTwoByTwo=state.order===2;
-    const factor=isTwoByTwo?(modal?.66:.76):(modal?.60:.68);
-    const minSize=modal?(isTwoByTwo?205:190):(isTwoByTwo?98:92);
-    const maxSize=modal?(isTwoByTwo?455:430):(isTwoByTwo?172:166);
-    const cubeSize=Math.max(minSize,Math.min(maxSize,shortSide*factor));
-    state.root.style.setProperty('--ssc-native-cube-size',`${cubeSize}px`);
-    state.root.style.setProperty('--ssc-native-cube-half',`${cubeSize/2}px`);
-  }
-
   function observeGeometry(state){
-    updateGeometry(state);
+    resizeCanvas(state);
     if(typeof ResizeObserver!=='function')return;
-    const observer=new ResizeObserver(()=>updateGeometry(state));
+    const observer=new ResizeObserver(()=>resizeCanvas(state));
     observer.observe(state.root);
     state.resizeObserver=observer;
   }
@@ -286,7 +336,7 @@
     container.classList.add('ssc-native-cube3d-host','ssc-preview-mode-3d','ssc-preview-3d-ready','wca-preview-ready','wca-family-cube',`wca-event-${event.id}`);
     container.classList.remove('ssc-preview-mode-2d','ssc-preview-3d-unavailable');
     container.dataset.previewMode='3d';
-    container.dataset.previewEngine='ssc-native-css3d-solid';
+    container.dataset.previewEngine='ssc-native-canvas3d-hidpi';
     container.dataset.previewReady='true';
     container.dataset.wcaEvent=event.id;
     container.dataset.wcaPuzzle=event.puzzle;
@@ -304,31 +354,32 @@
     const order=nativeOrder(event?.id)||event?.order||3;
     const cubeState=window.SSCNxNState.buildState(scramble,order,{strict:true});
     const colors=palette();
+
     const root=document.createElement('div');
     root.className='ssc-native-cube3d-root ssc-puzzle-3d-player';
     root.dataset.cubeOrder=String(order);
-    root.style.setProperty('--ssc-native-order',String(order));
     root.tabIndex=interactiveEnabled?0:-1;
     root.setAttribute('role','img');
     const sizeLabel=`${order}x${order}`;
     root.setAttribute('aria-label',document.documentElement.lang==='en'?`Interactive 3D ${sizeLabel} scramble preview`:`תצוגת ערבוב תלת־ממדית אינטראקטיבית של ${sizeLabel}`);
 
-    const stage=document.createElement('div');
-    stage.className='ssc-native-cube3d-stage';
-    const cube=document.createElement('div');
-    cube.className='ssc-native-cube3d-cube';
-    FACE_ORDER.forEach(side=>cube.appendChild(createFace(side,cubeState.faces,colors,order)));
-    stage.appendChild(cube);
-    root.appendChild(stage);
+    const canvas=document.createElement('canvas');
+    canvas.className='ssc-native-cube3d-canvas';
+    canvas.setAttribute('aria-hidden','true');
+    root.appendChild(canvas);
     container.replaceChildren(root);
 
-    const state={root,cube,cubeState,event,order,camera:{...INITIAL_CAMERA},listeners:null,resizeObserver:null};
+    const state={
+      root,canvas,ctx:null,cubeState,event,order,colors,
+      camera:{...INITIAL_CAMERA},listeners:null,resizeObserver:null,
+      cssWidth:0,cssHeight:0,renderScale:1,raf:0
+    };
     states.set(container,state);
     activeContainers.add(container);
     bindInteraction(root,state);
     observeGeometry(state);
-    setCamera(state,INITIAL_CAMERA.x,INITIAL_CAMERA.y,INITIAL_CAMERA.scale);
     applyMetadata(container,event);
+    setCamera(state,INITIAL_CAMERA.x,INITIAL_CAMERA.y,INITIAL_CAMERA.scale);
     return root;
   }
 
@@ -354,9 +405,11 @@
   function setInteractive(enabled){
     interactiveEnabled=Boolean(enabled);
     activeContainers.forEach(container=>{
-      const state=states.get(container);if(!state)return;
+      const state=states.get(container);
+      if(!state)return;
       state.root.tabIndex=interactiveEnabled?0:-1;
       state.root.classList.toggle('ssc-native-cube3d-static',!interactiveEnabled);
+      container.classList.toggle('ssc-preview-3d-static',!interactiveEnabled);
     });
     LEGACY_3D?.setInteractive?.(interactiveEnabled);
     return interactiveEnabled;
@@ -367,6 +420,7 @@
     if(states.has(container))disposeNative(container);
     else LEGACY_3D?.clear?.(container);
   }
+
   function dispose(container){
     if(!(container instanceof Element))return;
     if(states.has(container))disposeNative(container);
