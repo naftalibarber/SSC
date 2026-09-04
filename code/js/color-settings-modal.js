@@ -33,7 +33,7 @@
     style.id='sscColorSettingsModalStyles';
     style.textContent=`
       html{--ssc-cube-line-width:${FIXED_CUBE_LINE_WIDTH}!important}
-      #colorSettingsButton svg{display:block;width:19px;height:19px;flex:0 0 auto}
+      #colorSettingsButton img{display:block;width:19px;height:19px;object-fit:contain;flex:0 0 auto}
       .color-settings-dialog{width:min(720px,94vw)}
       .color-settings-grid{gap:16px}
       .color-settings-grid .general-setting-row{padding:8px 0}
@@ -73,9 +73,7 @@
     button.className='toolbar-button';
     button.type='button';
     button.innerHTML=`
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-        <path d="M12 3C7.03 3 3 6.58 3 11c0 3.87 3.13 7 7 7h1.65c.74 0 1.35.6 1.35 1.35 0 .91.74 1.65 1.65 1.65H15c3.87 0 7-3.13 7-7 0-5.52-4.48-10-10-10ZM6.5 12A1.5 1.5 0 1 1 6.5 9a1.5 1.5 0 0 1 0 3Zm3-4A1.5 1.5 0 1 1 9.5 5a1.5 1.5 0 0 1 0 3Zm5 0A1.5 1.5 0 1 1 14.5 5a1.5 1.5 0 0 1 0 3Zm3 4A1.5 1.5 0 1 1 17.5 9a1.5 1.5 0 0 1 0 3Z"/>
-      </svg>
+      <img src="./Color%20settings%20icon.png" alt="" aria-hidden="true" width="19" height="19">
       <span id="colorSettingsButtonText">APPEARANCE</span>
     `;
 
