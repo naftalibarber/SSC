@@ -231,3 +231,35 @@ html body .ssc-preview-3d-viewer{
   .ssc-puzzle-3d-loading::before{animation-duration:1.5s}
   html body .cube-preview-card.ssc-preview-mode-3d{transition:none!important}
 }
+
+/* 2x face supersampling.
+   Each physical face is painted at double CSS resolution and reduced back to
+   its original size inside the same 3D geometry. This preserves the exact
+   camera, colors and line proportions while giving transformed diagonal edges
+   more source pixels for browser anti-aliasing. */
+html body .ssc-native-cube3d-face{
+  inset:auto!important;
+  top:-50%!important;
+  left:-50%!important;
+  width:200%!important;
+  height:200%!important;
+  transform-origin:50% 50%!important;
+}
+html body .ssc-native-cube3d-face[data-side="F"]{
+  transform:translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
+html body .ssc-native-cube3d-face[data-side="B"]{
+  transform:rotateY(180deg) translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
+html body .ssc-native-cube3d-face[data-side="R"]{
+  transform:rotateY(90deg) translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
+html body .ssc-native-cube3d-face[data-side="L"]{
+  transform:rotateY(-90deg) translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
+html body .ssc-native-cube3d-face[data-side="U"]{
+  transform:rotateX(90deg) translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
+html body .ssc-native-cube3d-face[data-side="D"]{
+  transform:rotateX(-90deg) translateZ(var(--ssc-native-cube-half)) scale3d(.5,.5,1)!important;
+}
