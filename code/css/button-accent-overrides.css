@@ -156,3 +156,158 @@ button:focus-visible img,
 button:active img {
   filter: brightness(0) invert(1);
 }
+
+/* Supplied toolbar/navigation icons: render as masks so their color follows the live primary color. */
+html body #generalSettingsButton > img,
+html body #colorSettingsButton > img,
+html body #importExportButton > img {
+  display: none !important;
+}
+
+#generalSettingsButton::before,
+#colorSettingsButton::before,
+#importExportButton::before,
+#focusModeButton::before,
+#fullscreenButton::before,
+#analyticsButton::before,
+#sessionMenuButton::before,
+#prevScramble::before,
+#newScramble::before {
+  content: "" !important;
+  display: block !important;
+  width: 19px !important;
+  height: 19px !important;
+  flex: 0 0 19px !important;
+  background: var(--text) !important;
+  background-image: none !important;
+  filter: none !important;
+  -webkit-mask-position: center !important;
+  mask-position: center !important;
+  -webkit-mask-repeat: no-repeat !important;
+  mask-repeat: no-repeat !important;
+  -webkit-mask-size: contain !important;
+  mask-size: contain !important;
+  transition: background-color .15s ease !important;
+}
+
+#generalSettingsButton::before {
+  width: 18px !important;
+  height: 18px !important;
+  flex-basis: 18px !important;
+  -webkit-mask-image: url("../../Settings%20icon.png") !important;
+  mask-image: url("../../Settings%20icon.png") !important;
+}
+
+#colorSettingsButton::before {
+  -webkit-mask-image: url("../../Color%20settings%20icon.png") !important;
+  mask-image: url("../../Color%20settings%20icon.png") !important;
+}
+
+#importExportButton::before {
+  width: 18px !important;
+  height: 18px !important;
+  flex-basis: 18px !important;
+  -webkit-mask-image: url("../../Icon%20Import-Export.png") !important;
+  mask-image: url("../../Icon%20Import-Export.png") !important;
+}
+
+#focusModeButton::before {
+  -webkit-mask-image: url("../../Focus%20icon.png") !important;
+  mask-image: url("../../Focus%20icon.png") !important;
+}
+
+#fullscreenButton::before {
+  -webkit-mask-image: url("../../Full-screen%20icon.png") !important;
+  mask-image: url("../../Full-screen%20icon.png") !important;
+}
+
+#analyticsButton::before {
+  -webkit-mask-image: url("../../Progress%20analysis%20icon.png") !important;
+  mask-image: url("../../Progress%20analysis%20icon.png") !important;
+}
+
+#sessionMenuButton::before {
+  -webkit-mask-image: url("../../Three-dot%20icon.png") !important;
+  mask-image: url("../../Three-dot%20icon.png") !important;
+  margin: 0 !important;
+}
+
+#prevScramble::before {
+  -webkit-mask-image: url("../../Previous%20icon.png") !important;
+  mask-image: url("../../Previous%20icon.png") !important;
+}
+
+#newScramble::before {
+  -webkit-mask-image: url("../../Next%20icon.png") !important;
+  mask-image: url("../../Next%20icon.png") !important;
+}
+
+/* For these updated controls the button stays neutral; only the icon adopts the primary color. */
+#generalSettingsButton:hover,
+#colorSettingsButton:hover,
+#importExportButton:hover,
+#focusModeButton:hover,
+#fullscreenButton:hover,
+#analyticsButton:hover,
+#sessionMenuButton:hover,
+#prevScramble:hover,
+#newScramble:hover,
+#generalSettingsButton:focus-visible,
+#colorSettingsButton:focus-visible,
+#importExportButton:focus-visible,
+#focusModeButton:focus-visible,
+#fullscreenButton:focus-visible,
+#analyticsButton:focus-visible,
+#sessionMenuButton:focus-visible,
+#prevScramble:focus-visible,
+#newScramble:focus-visible {
+  background: var(--soft) !important;
+  color: var(--text) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}
+
+#generalSettingsButton:hover::before,
+#colorSettingsButton:hover::before,
+#importExportButton:hover::before,
+#focusModeButton:hover::before,
+#fullscreenButton:hover::before,
+#analyticsButton:hover::before,
+#sessionMenuButton:hover::before,
+#prevScramble:hover::before,
+#newScramble:hover::before,
+#generalSettingsButton:focus-visible::before,
+#colorSettingsButton:focus-visible::before,
+#importExportButton:focus-visible::before,
+#focusModeButton:focus-visible::before,
+#fullscreenButton:focus-visible::before,
+#analyticsButton:focus-visible::before,
+#sessionMenuButton:focus-visible::before,
+#prevScramble:focus-visible::before,
+#newScramble:focus-visible::before,
+#generalSettingsButton:active::before,
+#colorSettingsButton:active::before,
+#importExportButton:active::before,
+#focusModeButton:active::before,
+#fullscreenButton:active::before,
+#analyticsButton:active::before,
+#sessionMenuButton:active::before,
+#prevScramble:active::before,
+#newScramble:active::before {
+  background: var(--accent) !important;
+  filter: none !important;
+}
+
+#generalSettingsButton:active,
+#colorSettingsButton:active,
+#importExportButton:active,
+#focusModeButton:active,
+#fullscreenButton:active,
+#analyticsButton:active,
+#sessionMenuButton:active,
+#prevScramble:active,
+#newScramble:active {
+  background: var(--soft2) !important;
+  color: var(--text) !important;
+  border-color: var(--accent) !important;
+}
