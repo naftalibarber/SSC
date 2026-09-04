@@ -138,6 +138,18 @@ html[data-theme="oled"] #newScramble::before,
   filter: brightness(0) invert(1);
 }
 
+/* Keep the session management icon geometrically centered in its square button. */
+#sessionMenuButton {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+}
+
+#sessionMenuButton::before {
+  margin: 0 !important;
+}
+
 /* Keep image icons readable when a button turns into the primary color. */
 button:hover img,
 button:focus-visible img,
