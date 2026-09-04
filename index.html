@@ -28,7 +28,9 @@
   <script src="https://cdn.cubing.net/v0/js/scramble-display" type="module"></script>
   <style>
     #timer{font-family:var(--timer-font,var(--app-font))!important}
-    #importExportButton svg,#deleteSession svg,#addSession svg{display:block!important;width:18px;height:18px;flex:0 0 auto;stroke:currentColor!important}
+    #importExportButton img,#deleteSession svg,#addSession svg{display:block!important;width:18px;height:18px;flex:0 0 auto}
+    #importExportButton img{object-fit:contain;filter:none;transition:filter .16s ease}
+    html[data-theme="dark"] #importExportButton img,html[data-theme="oled"] #importExportButton img{filter:brightness(0) invert(1)}
     #addSession,#deleteSession{display:none!important}
     .cube-colors-control{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
     .cube-color-item{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:7px;border:1px solid var(--border);border-radius:8px}
@@ -45,7 +47,7 @@
           <img src="./Settings%20icon.png" alt="" aria-hidden="true" width="18" height="18" style="display:block;width:18px;height:18px;object-fit:contain;flex:0 0 auto"><span>SETTINGS</span>
         </button>
         <button id="importExportButton" class="toolbar-button" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h10m-3-3 3 3-3 3M17 17H7m3-3-3 3 3 3"/></svg><span>IMPORT / EXPORT</span>
+          <img src="./Icon%20Import-Export.png" alt="" aria-hidden="true" width="18" height="18"><span>IMPORT / EXPORT</span>
         </button>
       </div>
       <div class="topbar-center">
