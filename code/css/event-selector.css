@@ -33,7 +33,7 @@
 }
 #previewModeSettingRow:has(#previewModeSelect option[value="2d"]:checked)::after{content:"2d"}
 #previewModeSettingRow:has(#previewModeSelect option[value="3d"]:checked)::after{content:"3d"}
-#previewModeSettingRow:has(#previewModeSelect option[value="faces"]:checked)::after{content:"view_quilt"}
+#previewModeSettingRow:has(#previewModeSelect option[value="faces"]:checked)::after{content:"square"}
 @media(max-width:700px){
   #previewModeSettingRow::after{grid-column:1;grid-row:2}
 }
