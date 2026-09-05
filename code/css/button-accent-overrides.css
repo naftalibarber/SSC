@@ -311,3 +311,40 @@ html body .remove-custom {
   font-size: 0 !important;
 }
 html body .remove-custom::before { content: "close" !important; }
+
+/* Theme choices in General Settings use the same Material Symbols language as the toolbar. */
+html body .theme-options button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+}
+
+html body .theme-options button::before {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: currentColor !important;
+  font-family: "Material Symbols Rounded" !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  direction: ltr !important;
+  font-feature-settings: "liga" !important;
+  -webkit-font-feature-settings: "liga" !important;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+  -webkit-font-smoothing: antialiased;
+}
+
+html body .theme-options button[data-theme-choice="light"]::before { content: "light_mode" !important; }
+html body .theme-options button[data-theme-choice="dark"]::before { content: "dark_mode" !important; }
+html body .theme-options button[data-theme-choice="oled"]::before { content: "contrast" !important; }
