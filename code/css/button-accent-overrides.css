@@ -152,7 +152,7 @@ html body .modal-close::before {
 
 html body #generalSettingsButton::before { content: "settings" !important; }
 html body #colorSettingsButton::before { content: "palette" !important; }
-html body #importExportButton::before { content: "swap_vert" !important; }
+html body #importExportButton::before { content: "sync_alt" !important; }
 html body #focusModeButton::before { content: "filter_center_focus" !important; }
 html body #fullscreenButton::before { content: "fullscreen" !important; }
 html body #fullscreenButton[aria-pressed="true"]::before { content: "fullscreen_exit" !important; }
