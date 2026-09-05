@@ -160,13 +160,15 @@ html body #analyticsButton::before { content: "monitoring" !important; }
 html body #sessionMenuButton::before { content: "more_horiz" !important; }
 html body #prevScramble::before { content: "chevron_left" !important; }
 html body #newScramble::before { content: "chevron_right" !important; }
-html body #addSession::before { content: "add_circle" !important; }
-html body #deleteSession::before { content: "delete" !important; }
+html body #addSession::before { content: "add" !important; }
+html body #deleteSession::before { content: "close" !important; }
 html body #keyboardShortcutsButton::before { content: "keyboard" !important; }
 html body .modal-close::before { content: "close" !important; }
 
 /* Icon-only text sources are visually retired; existing titles/aria labels remain intact. */
 html body #sessionMenuButton,
+html body #addSession,
+html body #deleteSession,
 html body #keyboardShortcutsButton,
 html body .modal-close {
   font-size: 0 !important;
@@ -180,6 +182,8 @@ html body #sessionMenuButton {
 }
 
 html body #sessionMenuButton::before,
+html body #addSession::before,
+html body #deleteSession::before,
 html body #keyboardShortcutsButton::before,
 html body .modal-close::before {
   font-size: 21px !important;
