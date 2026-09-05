@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0");
+
 /* Interaction color rules: buttons stay neutral by default and use the primary color only on hover/focus/press. */
 button,
 .toolbar-button,
@@ -90,164 +92,100 @@ button:active,
   padding: 4px 8px;
 }
 
-/* Previous scramble uses the supplied image icon instead of the inline SVG. */
-#prevScramble svg {
+/* Retire the old local PNG/SVG icon sources without touching button actions. */
+html body #generalSettingsButton > img,
+html body #colorSettingsButton > img,
+html body #importExportButton > img,
+html body #focusModeButton [data-toolbar-icon="focus-crosshair"],
+html body #fullscreenButton [data-toolbar-icon^="fullscreen-"],
+html body #analyticsButton [data-toolbar-icon="progress-chart"],
+html body #prevScramble svg,
+html body #newScramble svg,
+html body #addSession svg,
+html body #deleteSession svg {
   display: none !important;
 }
 
-#prevScramble::before {
-  content: "";
-  display: block;
-  width: 19px;
-  height: 19px;
-  flex: 0 0 auto;
-  background: url("../../Previous%20icon.png") center/contain no-repeat;
-  filter: none;
-  transition: filter .16s ease;
+/* Shared Google Material Symbols icon surface. High specificity intentionally overrides the older icon stylesheets loaded later. */
+html body #generalSettingsButton::before,
+html body #colorSettingsButton::before,
+html body #importExportButton::before,
+html body #focusModeButton::before,
+html body #fullscreenButton::before,
+html body #analyticsButton::before,
+html body #sessionMenuButton::before,
+html body #prevScramble::before,
+html body #newScramble::before,
+html body #addSession::before,
+html body #deleteSession::before,
+html body #keyboardShortcutsButton::before,
+html body .modal-close::before {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 20px !important;
+  height: 20px !important;
+  flex: 0 0 20px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+  filter: none !important;
+  color: currentColor !important;
+  font-family: "Material Symbols Rounded" !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-size: 21px !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  white-space: nowrap !important;
+  direction: ltr !important;
+  font-feature-settings: "liga" !important;
+  -webkit-font-feature-settings: "liga" !important;
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24 !important;
+  -webkit-font-smoothing: antialiased;
+  transition: color .15s ease !important;
 }
 
-html[data-theme="dark"] #prevScramble::before,
-html[data-theme="oled"] #prevScramble::before,
-#prevScramble:hover::before,
-#prevScramble:focus-visible::before,
-#prevScramble:active::before {
-  filter: brightness(0) invert(1);
+html body #generalSettingsButton::before { content: "settings" !important; }
+html body #colorSettingsButton::before { content: "palette" !important; }
+html body #importExportButton::before { content: "import_export" !important; }
+html body #focusModeButton::before { content: "center_focus_strong" !important; }
+html body #fullscreenButton::before { content: "fullscreen" !important; }
+html body #fullscreenButton[aria-pressed="true"]::before { content: "fullscreen_exit" !important; }
+html body #analyticsButton::before { content: "query_stats" !important; }
+html body #sessionMenuButton::before { content: "more_horiz" !important; }
+html body #prevScramble::before { content: "chevron_left" !important; }
+html body #newScramble::before { content: "chevron_right" !important; }
+html body #addSession::before { content: "add_circle" !important; }
+html body #deleteSession::before { content: "delete" !important; }
+html body #keyboardShortcutsButton::before { content: "keyboard" !important; }
+html body .modal-close::before { content: "close" !important; }
+
+/* Icon-only text sources are visually retired; existing titles/aria labels remain intact. */
+html body #sessionMenuButton,
+html body #keyboardShortcutsButton,
+html body .modal-close {
+  font-size: 0 !important;
 }
 
-/* Next scramble uses the supplied image icon instead of the inline SVG. */
-#newScramble svg {
-  display: none !important;
-}
-
-#newScramble::before {
-  content: "";
-  display: block;
-  width: 19px;
-  height: 19px;
-  flex: 0 0 auto;
-  background: url("../../Next%20icon.png") center/contain no-repeat;
-  filter: none;
-  transition: filter .16s ease;
-}
-
-html[data-theme="dark"] #newScramble::before,
-html[data-theme="oled"] #newScramble::before,
-#newScramble:hover::before,
-#newScramble:focus-visible::before,
-#newScramble:active::before {
-  filter: brightness(0) invert(1);
-}
-
-/* Keep the session management icon geometrically centered in its square button. */
-#sessionMenuButton {
+html body #sessionMenuButton {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: 0 !important;
 }
 
-#sessionMenuButton::before {
-  margin: 0 !important;
+html body #sessionMenuButton::before,
+html body #keyboardShortcutsButton::before,
+html body .modal-close::before {
+  font-size: 21px !important;
 }
 
-/* Keep image icons readable when a button turns into the primary color. */
-button:hover img,
-button:focus-visible img,
-button:active img {
-  filter: brightness(0) invert(1);
-}
-
-/* Supplied toolbar/navigation icons: render as masks so their color follows the live primary color. */
-html body #generalSettingsButton > img,
-html body #colorSettingsButton > img,
-html body #importExportButton > img {
-  display: none !important;
-}
-
-#generalSettingsButton::before,
-#colorSettingsButton::before,
-#importExportButton::before,
-#focusModeButton::before,
-#fullscreenButton::before,
-#analyticsButton::before,
-#sessionMenuButton::before,
-#prevScramble::before,
-#newScramble::before {
-  content: "" !important;
-  display: block !important;
-  width: 19px !important;
-  height: 19px !important;
-  flex: 0 0 19px !important;
-  background: var(--text) !important;
-  background-image: none !important;
-  filter: none !important;
-  -webkit-mask-position: center !important;
-  mask-position: center !important;
-  -webkit-mask-repeat: no-repeat !important;
-  mask-repeat: no-repeat !important;
-  -webkit-mask-size: contain !important;
-  mask-size: contain !important;
-  transition: background-color .15s ease !important;
-}
-
-#generalSettingsButton::before {
-  width: 18px !important;
-  height: 18px !important;
-  flex-basis: 18px !important;
-  -webkit-mask-image: url("../../Settings%20icon.png") !important;
-  mask-image: url("../../Settings%20icon.png") !important;
-}
-
-#colorSettingsButton::before {
-  -webkit-mask-image: url("../../Color%20settings%20icon.png") !important;
-  mask-image: url("../../Color%20settings%20icon.png") !important;
-}
-
-#importExportButton::before {
-  width: 18px !important;
-  height: 18px !important;
-  flex-basis: 18px !important;
-  -webkit-mask-image: url("../../Icon%20Import-Export.png") !important;
-  mask-image: url("../../Icon%20Import-Export.png") !important;
-}
-
-#focusModeButton::before {
-  -webkit-mask-image: url("../../Focus%20icon.png") !important;
-  mask-image: url("../../Focus%20icon.png") !important;
-}
-
-#fullscreenButton::before {
-  -webkit-mask-image: url("../../Full-screen%20icon.png") !important;
-  mask-image: url("../../Full-screen%20icon.png") !important;
-}
-
-#fullscreenButton[aria-pressed="true"]::before {
-  -webkit-mask-image: url("../../Small%20screen%20icon.png") !important;
-  mask-image: url("../../Small%20screen%20icon.png") !important;
-}
-
-#analyticsButton::before {
-  -webkit-mask-image: url("../../Progress%20analysis%20icon.png") !important;
-  mask-image: url("../../Progress%20analysis%20icon.png") !important;
-}
-
-#sessionMenuButton::before {
-  -webkit-mask-image: url("../../Three-dot%20icon.png") !important;
-  mask-image: url("../../Three-dot%20icon.png") !important;
-  margin: 0 !important;
-}
-
-#prevScramble::before {
-  -webkit-mask-image: url("../../Previous%20icon.png") !important;
-  mask-image: url("../../Previous%20icon.png") !important;
-}
-
-#newScramble::before {
-  -webkit-mask-image: url("../../Next%20icon.png") !important;
-  mask-image: url("../../Next%20icon.png") !important;
-}
-
-/* For these updated controls the button stays neutral; only the icon adopts the primary color. */
+/* The primary toolbar/navigation icon buttons stay neutral; their Material Symbol alone follows the live primary color. */
 #generalSettingsButton:hover,
 #colorSettingsButton:hover,
 #importExportButton:hover,
@@ -272,35 +210,34 @@ html body #importExportButton > img {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent) !important;
 }
 
-#generalSettingsButton:hover::before,
-#colorSettingsButton:hover::before,
-#importExportButton:hover::before,
-#focusModeButton:hover::before,
-#fullscreenButton:hover::before,
-#analyticsButton:hover::before,
-#sessionMenuButton:hover::before,
-#prevScramble:hover::before,
-#newScramble:hover::before,
-#generalSettingsButton:focus-visible::before,
-#colorSettingsButton:focus-visible::before,
-#importExportButton:focus-visible::before,
-#focusModeButton:focus-visible::before,
-#fullscreenButton:focus-visible::before,
-#analyticsButton:focus-visible::before,
-#sessionMenuButton:focus-visible::before,
-#prevScramble:focus-visible::before,
-#newScramble:focus-visible::before,
-#generalSettingsButton:active::before,
-#colorSettingsButton:active::before,
-#importExportButton:active::before,
-#focusModeButton:active::before,
-#fullscreenButton:active::before,
-#analyticsButton:active::before,
-#sessionMenuButton:active::before,
-#prevScramble:active::before,
-#newScramble:active::before {
-  background: var(--accent) !important;
-  filter: none !important;
+html body #generalSettingsButton:hover::before,
+html body #colorSettingsButton:hover::before,
+html body #importExportButton:hover::before,
+html body #focusModeButton:hover::before,
+html body #fullscreenButton:hover::before,
+html body #analyticsButton:hover::before,
+html body #sessionMenuButton:hover::before,
+html body #prevScramble:hover::before,
+html body #newScramble:hover::before,
+html body #generalSettingsButton:focus-visible::before,
+html body #colorSettingsButton:focus-visible::before,
+html body #importExportButton:focus-visible::before,
+html body #focusModeButton:focus-visible::before,
+html body #fullscreenButton:focus-visible::before,
+html body #analyticsButton:focus-visible::before,
+html body #sessionMenuButton:focus-visible::before,
+html body #prevScramble:focus-visible::before,
+html body #newScramble:focus-visible::before,
+html body #generalSettingsButton:active::before,
+html body #colorSettingsButton:active::before,
+html body #importExportButton:active::before,
+html body #focusModeButton:active::before,
+html body #fullscreenButton:active::before,
+html body #analyticsButton:active::before,
+html body #sessionMenuButton:active::before,
+html body #prevScramble:active::before,
+html body #newScramble:active::before {
+  color: var(--accent) !important;
 }
 
 #generalSettingsButton:active,
