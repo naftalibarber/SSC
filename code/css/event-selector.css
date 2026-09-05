@@ -1,6 +1,6 @@
 .event-select{height:34px;min-width:108px;max-width:150px;border:0;background:var(--card-solid);color:var(--text);border-radius:10px;padding:0 28px 0 10px;font-weight:900;cursor:pointer;outline:none}.event-select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}#scramble[data-event-id="444"],#scramble[data-event-id="555"],#scramble[data-event-id="666"],#scramble[data-event-id="777"],#scramble[data-event-id="minx"],#scramble[data-event-id="333mbf"]{font-size:clamp(12px,1.15vw,18px);line-height:1.35;word-spacing:4px;max-height:76px;overflow:auto;scrollbar-width:thin}.event-select-wrap{min-width:0}.puzzle-selector.compact{flex:0 0 auto}@media(max-width:900px){.event-select{min-width:92px;max-width:125px}.event-select-wrap{max-width:100%}#scramble[data-event-id="444"],#scramble[data-event-id="555"],#scramble[data-event-id="666"],#scramble[data-event-id="777"],#scramble[data-event-id="minx"],#scramble[data-event-id="333mbf"]{font-size:12px;max-height:96px}}
 
-/* Material Symbols for the preview-mode setting. The icon follows the selected 2D/3D mode. */
+/* Material Symbols for every preview-mode setting option. */
 #previewModeSettingRow{position:relative}
 #previewModeSelect{padding-inline-start:38px!important}
 #previewModeSettingRow::after{
@@ -31,8 +31,9 @@
   font-variation-settings:"FILL" 0,"wght" 400,"GRAD" 0,"opsz" 24;
   -webkit-font-smoothing:antialiased;
 }
-#previewModeSettingRow:has(#previewModeSelect option[value="2d"]:checked)::after{content:"grid_view"}
-#previewModeSettingRow:has(#previewModeSelect option[value="3d"]:checked)::after{content:"view_in_ar"}
+#previewModeSettingRow:has(#previewModeSelect option[value="2d"]:checked)::after{content:"2d"}
+#previewModeSettingRow:has(#previewModeSelect option[value="3d"]:checked)::after{content:"3d"}
+#previewModeSettingRow:has(#previewModeSelect option[value="faces"]:checked)::after{content:"view_quilt"}
 @media(max-width:700px){
   #previewModeSettingRow::after{grid-column:1;grid-row:2}
 }
